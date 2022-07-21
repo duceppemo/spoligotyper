@@ -26,7 +26,7 @@ git clone https://github.com/duceppemo/spoligotyper
 cd spoligotyper
 
 # Test spoligotyper
-python spoligotyper -h
+python spoligotyper.py -h
 ```
 ## Usage
 ```commandline
