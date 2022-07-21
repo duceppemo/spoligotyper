@@ -58,7 +58,7 @@ python spoligotyper.py \
 ```commandline
 python spoligotyper.py \
     -r1 ERR2747598_R1.fastq.gz \
-    -r2 ERR2747598_R2.fastq.gz
+    -r2 ERR2747598_R2.fastq.gz \
     -o spoligotyper_output/
 ```
 3. Fasta input file (genome assembly):
