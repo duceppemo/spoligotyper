@@ -70,6 +70,16 @@ class SpoligoMethods(object):
         return OrderedDict(sorted(spacer_count_dict.items()))  # Order dictionary by keys
 
     @staticmethod
+    def count_binary(count_summary_dict, min_count):
+        binary_rep = ''
+        for k, v in count_summary_dict.items():
+            if v >= min_count:  # call cut off
+                binary_rep += '1'
+            else:
+                binary_rep += '0'
+        return binary_rep
+
+    @staticmethod
     def binary_to_octal(binary_rep):
         i = 0
         ie = 1
@@ -95,16 +105,6 @@ class SpoligoMethods(object):
                 pass
             octal_rep = octal_rep + str(octal)
         return octal_rep
-
-    @staticmethod
-    def spoligo(count_summary_dict):
-        binary_rep = ''
-        for k, v in count_summary_dict.items():
-            if v > 4:  # call cut off
-                binary_rep += '1'
-            else:
-                binary_rep += '0'
-        return binary_rep
 
     @staticmethod
     def binary_to_sbcode(binary_code, spoligo_db):
