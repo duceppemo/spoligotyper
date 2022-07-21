@@ -10,6 +10,7 @@ from argparse import ArgumentParser
 from multiprocessing import cpu_count
 from time import time
 from spoligotyper_methods import SpoligoMethods
+import pkg_resources
 
 
 class Spoligo(object):
@@ -25,10 +26,9 @@ class Spoligo(object):
         # Performance
         self.cpu = args.threads
 
-        # Data
-        self.spoligo_db = './dependencies/spoligotype_db.txt'
-        self.spacer_folder = './dependencies/spacers'
-        self.spoligo_spacers = './dependencies/spoligo_spacers.fasta'
+        # Data - Need to create a package for that
+        self.spoligo_db = pkg_resources.resource_filename('dep', 'spoligotype_db.txt')
+        self.spoligo_spacers = pkg_resources.resource_filename('dep', 'spoligo_spacers.fasta')
 
         # Run
         self.run()
