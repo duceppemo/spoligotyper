@@ -1,2 +1,0 @@
-spoligotype_db.txt
-spoligo_spacers.fasta
