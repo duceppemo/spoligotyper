@@ -52,16 +52,14 @@ optional arguments:
 ```commandline
 python spoligotyper.py \
     -r1 ERR1744454_1.fastq.gz \
-    -o spoligotyper_output/ \
-    -t 16
+    -o spoligotyper_output/
 ```
 2. Paired-end fastq input file:
 ```commandline
 python spoligotyper.py \
     -r1 ERR2747598_R1.fastq.gz \
     -r2 ERR2747598_R2.fastq.gz
-    -o spoligotyper_output/ \
-    -t 16
+    -o spoligotyper_output/
 ```
 3. Fasta input file (genome assembly):
 ```commandline
@@ -69,6 +67,5 @@ python spoligotyper.py \
 python spoligotyper.py \
     -r1 NC_002945.4.fasta \
     --min-count 1 \
-    -o spoligotyper_output/ \
-    -t 16
+    -o spoligotyper_output/
 ```
