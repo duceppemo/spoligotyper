@@ -146,4 +146,5 @@ class SpoligoMethods(object):
         days, hours = divmod(hours, 24)
         periods = [('d', days), ('h', hours), ('m', minutes), ('s', seconds)]
         time_string = ''.join('{}{}'.format(int(round(value)), name) for name, value in periods if value)
+
         return time_string
