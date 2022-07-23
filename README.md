@@ -1,6 +1,7 @@
 # Spoligotyper
 ## Description
-*In silico* spoligotyper for Mycobacterium bovis from NGS sequencing (fastq) and assembly (fasta) data. Designed to run on Linux. Tested on Ubuntu 18.
+*In silico* spoligotyper for Mycobacterium tuberculosis complex (MTC or MTBC) from NGS sequencing (fastq) and assembly (fasta) data. Will match all MTBC strains from animal origin. It comprises all mycobacteria species included in the M. tuberculosis complex (*M. bovis*, *M. caprae*, *M. pinnipedii*, *M. microti*, *M. tuberculosis*, *M. africanum*, and *M. canetti*).
+Designed to run on Linux. Tested on Ubuntu 18.
 
 ## Workflow
 1. Single- or paired-end fastq files or fasta assembly are searched for the spoligo spacers using `Seal` from `BBtools`.

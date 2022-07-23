@@ -55,11 +55,14 @@ class Spoligo(object):
         # Convert binary to octal
         octal_code = SpoligoMethods.binary_to_octal(binary_code)
 
+        # Convert binary to hexadecimal
+        hex_code = SpoligoMethods.binary_to_hexa(binary_code)
+
         # Convert binary to spoligotype
         sb_code = SpoligoMethods.binary_to_sbcode(binary_code, self.spoligo_db)
 
         # Print report on scree and to file
-        SpoligoMethods.print_report(self.output, sample, spacer_count_dict, binary_code, octal_code, sb_code)
+        SpoligoMethods.print_report(self.output, sample, spacer_count_dict, binary_code, octal_code, hex_code, sb_code)
 
         # Print elapsed time
         print('Elapsed time: {}'.format(SpoligoMethods.elapsed_time(time() - start_time)))

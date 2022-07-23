@@ -1,19 +1,28 @@
 import os
 from collections import OrderedDict
 import subprocess
+import pathlib
 
 
 class SpoligoMethods(object):
+    @staticmethod
+    def make_folder(folder):
+        # Will create parent directories if don't exist and will not return error if already exists
+        pathlib.Path(folder).mkdir(parents=True, exist_ok=True)
+
     @staticmethod
     def count_spacers_seal(ref, output_folder, fastq_list, sample, cpu):
         # Stats file
         stats_file = output_folder + '/' + sample + '_stats.tsv'
 
+        # Create output folder
+        SpoligoMethods.make_folder(output_folder)
+
         if len(fastq_list) == 1:
             cmd = ['seal.sh',
                    'in={}'.format(fastq_list[0]),
                    'ref={}'.format(ref),
-                   'k=21',
+                   'k=25',
                    'rcomp=t',
                    'hdist=1',  # up to 1 missmatch
                    'clearzone=999999',
@@ -28,7 +37,7 @@ class SpoligoMethods(object):
                    'in={}'.format(fastq_list[0]),
                    'in2={}'.format(fastq_list[1]),
                    'ref={}'.format(ref),
-                   'k=21',
+                   'k=25',
                    'rcomp=t',
                    'hdist=1',  # up to 1 missmatch
                    'clearzone=999999',
@@ -81,30 +90,18 @@ class SpoligoMethods(object):
 
     @staticmethod
     def binary_to_octal(binary_rep):
-        i = 0
-        ie = 1
-        octal_rep = ""
-        while ie < 43:
-            ie = i + 3
-            region = binary_rep[i:ie]
-            region_len = len(region)
-            i += 3
-            if int(region[0]) == 1:
-                if region_len < 2:  # for the lone spacer 43.  When present needs to be 1 not 4.
-                    octal = 1
-                else:
-                    octal = 4
-            else:
-                octal = 0
-            try:
-                if int(region[1]) == 1:
-                    octal += 2
-                if int(region[2]) == 1:
-                    octal += 1
-            except IndexError:
-                pass
-            octal_rep = octal_rep + str(octal)
-        return octal_rep
+        oct_rep = ''
+        for octal_bloc in [binary_rep[i:i + 3] for i in range(0, len(binary_rep), 3)]:
+            oct_rep += str(oct(int(octal_bloc, 2)))[-1]
+        return oct_rep
+
+    @staticmethod
+    def binary_to_hexa(binary_rep):
+        hex_bloc_list = [(0, 7), (7, 14), (14, 21), (21, 28), (28, 36), (36, 43)]
+        hex_rep = ''
+        for hex_bloc in [binary_rep[hex_bloc_list[i][0]:hex_bloc_list[i][1]] for i in range(0, len(hex_bloc_list))]:
+            hex_rep += str(hex(int(hex_bloc, 2)))[-2:].upper().replace('X', '0') + '-'
+        return hex_rep[:-1]
 
     @staticmethod
     def binary_to_sbcode(binary_code, spoligo_db):
@@ -124,12 +121,12 @@ class SpoligoMethods(object):
             return "Spoligo not found"
 
     @staticmethod
-    def print_report(output_folder, sample, spacer_count_dict, binary_code, octal_code, sb_code):
+    def print_report(output_folder, sample, spacer_count_dict, binary_code, octal_code, hex_code, sb_code):
         report_file = output_folder + '/' + sample + '_spoligotyping.txt'
 
         spacer_counts = ':'.join([str(x) for x in list(spacer_count_dict.values())])
-        header = 'Sample\tSpacerCount\tBinary\tOctal\tSpoligotype\n'
-        results = '{}\t{}\t{}\t{}\t{}\n'.format(sample, spacer_counts, binary_code, octal_code, sb_code)
+        header = 'Sample\tSpacerCount\tBinary\tOctal\tHexadecimal\tSpoligotype\n'
+        results = '{}\t{}\t{}\t{}\t{}\t{}\n'.format(sample, spacer_counts, binary_code, octal_code, hex_code, sb_code)
 
         with open(report_file, 'w') as f:
             f.write(header)
