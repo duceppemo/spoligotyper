@@ -31,6 +31,7 @@ class SpoligoMethods(object):
                    'ow=t',
                    'stats={}'.format(stats_file),
                    'nzo=f',
+                   'qin=33', # Need to force the quality score scheme for lower quality nanopore data
                    'threads={}'.format(cpu)]
         else:
             cmd = ['seal.sh',
@@ -46,6 +47,7 @@ class SpoligoMethods(object):
                    'ow=t',
                    'stats={}'.format(stats_file),
                    'nzo=f',
+                   'qin=33', # Need to force the quality score scheme for lower quality nanopore data
                    'threads={}'.format(cpu)]
 
         subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
