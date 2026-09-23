@@ -11,7 +11,7 @@ package:
 
 source:
   url: https://github.com/duceppemo/spoligotyper/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: 0000000000000000000000000000000000000000000000000000000000000000  # TODO: set once v{{ version }} is tagged
+  sha256: db5d630c4717bbba9a121615c24ee672cdff71e3f828857b7dd18d1be15dd3ee
 
 build:
   number: 0
@@ -42,6 +42,8 @@ test:
     # Typing the spacer sequences themselves finds all 43 spacers (octal 777777777777771): checks Seal and Java
     - spoligotyper -r1 "$(python -c 'from spoligotyper.spoligotype import SPACERS_FASTA; print(SPACERS_FASTA)')" -o test_out -t 1 | grep 777777777777771
     - test -s test_out/spoligo_spacers_spoligotyping.pdf
+    # Bioconda also runs the tests as root in a container: leave no root-owned folder behind
+    - rm -rf test_out
 
 about:
   home: https://github.com/duceppemo/spoligotyper
