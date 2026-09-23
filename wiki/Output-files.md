@@ -1,16 +1,24 @@
 # Output files
 
-## `<sample>_spoligotyping.txt`
+## Table: `spoligotyping.tsv` or `<sample>_spoligotyping.txt`
 A tab-separated table with a header and one line per sample. The same table is printed to the screen.
 
 | Column | Example | Description |
 |---|---|---|
 | `Sample` | `AF2122_97` | Sample name |
 | `SpacerCount` | `56:47:0:58:...` | Number of reads containing each spacer, spacers 1 to 43, separated by `:`. For assemblies, the number of contigs |
-| `Binary` | `1101101000001...` | 43 digits: 1 = spacer present (count ≥ `--min-count`), 0 = absent |
+| `Binary` | `1101101000001...` | 43 digits: 1 = spacer present (count ≥ `MinCount`), 0 = absent |
 | `Octal` | `664073777777600` | 15-digit octal code |
 | `Hexadecimal` | `6D-03-5F-7F-FF-60` | Hexadecimal code, 6 blocks |
 | `Spoligotype` | `SB0140` | SB number of the pattern in the [Mbovis.org](https://www.mbovis.org/) database, or `Spoligo not found` |
+| `FileType` | `fastq` | `fastq` (reads) or `fasta` (assembly) |
+| `Reads` | `1212727` | Number of reads (or contigs) in the input |
+| `Depth` | `65` | Reads only: estimated sequencing depth, all bases divided by 4.4 Mb |
+| `MinCount` | `5` | Minimum count used to call a spacer present |
+| `Status` | `ok` | `ok`, `warning` (see the next column) or `failed` |
+| `Warnings` | | Warnings, separated by `\|`, or the error for failed samples |
+
+The first 6 columns are the same as in version 0.2.0 and earlier.
 
 ### Octal code
 The binary pattern is cut into 14 groups of 3 spacers, and each group is written as one octal digit (000 = 0,
@@ -23,9 +31,33 @@ hexadecimal number.
 
 ### Reading the counts
 `SpacerCount` shows how confident each call is:
-* **Reads**: present spacers usually have tens of reads and absent spacers 0. Counts close to `--min-count`
-  deserve a second look, and spoligotyper warns about absent spacers seen in 1 to 4 reads. See
+* **Reads**: present spacers usually have tens of reads and absent spacers 0. Counts close to `MinCount`
+  deserve a second look, and spoligotyper warns about absent spacers seen in a few reads. See
   [How it works](How-it-works#minimum-count).
 * **Paired-end reads**: when a spacer is found in one read of a pair, both reads are counted, so counts are about
   twice the number of DNA fragments containing the spacer.
 * **Assemblies**: counts are 0 or 1 (occasionally 2, if a spacer is split over two contigs or repeated).
+
+## PDF report: `spoligotyping_report.pdf` or `<sample>_spoligotyping.pdf`
+Made for quality assurance: everything needed to check a result, and to trace how it was produced.
+
+![Summary page of the PDF report](https://raw.githubusercontent.com/duceppemo/spoligotyper/main/assets/report_summary.png)
+
+1. **Summary**: date, operator, and for each sample the spoligotype, octal code, pattern and status. Warnings and
+   errors are listed below, followed by a box for the reviewer's name, date and signature.
+2. **Samples**: one section per sample, with
+   * the spoligotype, octal, hexadecimal and binary codes, and the pattern;
+   * the input files: full path (and the real file when it is a symbolic link), size, modification date and MD5
+     checksum;
+   * the number of reads and bases, estimated depth, minimum count, number of present spacers and their median count;
+   * the reads (or contigs) per spacer: present spacers in blue, absent spacers seen in some reads in orange;
+   * the warnings, or the error of a failed sample.
+3. **Run information**: operator, user, computer, operating system, start and end time (with time zone), working
+   directory, the exact command, parameters, versions of spoligotyper, Python, BBTools and Java, path and MD5
+   checksum of the spoligotype database and of the spacer sequences, the method, and references.
+
+Every page has the spoligotyper version, the date, user and computer, and "Page x of y" in the footer.
+
+![Sample section of the PDF report](https://raw.githubusercontent.com/duceppemo/spoligotyper/main/assets/report_sample.png)
+
+MD5 checksums take one to two seconds per GB of input. Use `--no-md5` to skip them, and `--no-pdf` to skip the PDF.

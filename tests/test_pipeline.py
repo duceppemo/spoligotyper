@@ -1,9 +1,11 @@
 import gzip
+import hashlib
 
 import pytest
 
 from spoligotyper import seal
-from spoligotyper.pipeline import Result, check_inputs, file_type, sample_name, write_report
+from spoligotyper.pipeline import InputFile, Result, check_inputs, file_md5, file_type, write_tsv
+from spoligotyper.samples import sample_name
 from spoligotyper.spoligotype import SpoligoError
 
 
@@ -57,15 +59,17 @@ def test_check_inputs(tmp_path):
         check_inputs(r1, tmp_path / 'missing.fq')
     with pytest.raises(SpoligoError, match='same file'):
         check_inputs(r1, r1)
-    with pytest.raises(SpoligoError, match='both -r1 and -r2 must be fastq'):
+    with pytest.raises(SpoligoError, match='both R1 and R2 must be fastq'):
         check_inputs(fasta, r2)
 
 
 def test_parse_stats(tmp_path):
     stats = tmp_path / 'stats.tsv'
-    stats.write_text('#File\tx.fq\n#Total\t100\n#Matched\t3\t3%\n#Name\tReads\tReadsPct\n'
+    stats.write_text('#File\tx.fq\n#Total\t100\t15000\n#Matched\t3\t3%\n#Name\tReads\tReadsPct\n'
                      'spacer25\t2\t2%\nspacer02\t1\t1%\nspacer03\t0\t0%\n')
-    assert seal.parse_stats(stats) == {'spacer25': 2, 'spacer02': 1, 'spacer03': 0}
+    parsed = seal.parse_stats(stats)
+    assert parsed.counts == {'spacer25': 2, 'spacer02': 1, 'spacer03': 0}
+    assert (parsed.reads, parsed.bases) == (100, 15000)
     stats.write_text('spacer25\tmany\n')
     with pytest.raises(seal.SealError, match='Unexpected line'):
         seal.parse_stats(stats)
@@ -85,9 +89,40 @@ def test_seal_missing(monkeypatch):
         seal.check_seal()
 
 
-def test_write_report(tmp_path):
-    result = Result('S1', [3, 0] + [1] * 41, '10' + '1' * 41, 'x', 'y', 'SB0000')
-    write_report([result], tmp_path / 'report.txt')
-    lines = (tmp_path / 'report.txt').read_text().splitlines()
-    assert lines[0] == 'Sample\tSpacerCount\tBinary\tOctal\tHexadecimal\tSpoligotype'
-    assert lines[1].split('\t')[:2] == ['S1', '3:0:' + ':'.join(['1'] * 41)]
+def test_write_tsv(tmp_path):
+    ok = Result('S1', counts=[3, 0] + [1] * 41, binary='10' + '1' * 41, octal='x', hexadecimal='y',
+                spoligotype='SB0000', file_type='fastq', min_count=1, reads=1000, bases=88_000_000)
+    ok.warnings.append('a warning')
+    failed = Result('S2', file_type='fasta', error='Seal failed: boom\nmore details')
+    write_tsv([ok, failed], tmp_path / 'report.tsv')
+    lines = [line.split('\t') for line in (tmp_path / 'report.tsv').read_text().splitlines()]
+    assert lines[0] == ['Sample', 'SpacerCount', 'Binary', 'Octal', 'Hexadecimal', 'Spoligotype',
+                        'FileType', 'Reads', 'Depth', 'MinCount', 'Status', 'Warnings']
+    assert lines[1][:2] == ['S1', '3:0:' + ':'.join(['1'] * 41)]
+    assert lines[1][6:] == ['fastq', '1000', '20', '1', 'warning', 'a warning']
+    assert lines[2][0] == 'S2' and lines[2][-2:] == ['failed', 'Seal failed: boom']
+    assert all(len(line) == 12 for line in lines)
+
+
+def test_result_properties():
+    r = Result('S', counts=[10, 0, 30] + [0] * 40, binary='101' + '0' * 40, file_type='fasta', bases=5)
+    assert r.depth is None and r.median_present_count == 20 and r.status == 'ok' and not r.found
+    r.file_type = 'fastq'
+    assert r.depth == 5 / 4.4e6
+
+
+def test_input_file(tmp_path):
+    real = tmp_path / 'real.fq'
+    real.write_text('@r1\nACGT\n+\nIIII\n')
+    link = tmp_path / 'link.fq'
+    link.symlink_to(real)
+    info = InputFile.describe(link)
+    assert info.path == str(link) and info.target == str(real)
+    assert info.size == real.stat().st_size
+    assert info.md5 == file_md5(real) == hashlib.md5(b'@r1\nACGT\n+\nIIII\n').hexdigest()
+    assert InputFile.describe(real, md5=False).md5 == '' and InputFile.describe(real).target == ''
+
+
+def test_seal_versions(monkeypatch):
+    monkeypatch.setattr(seal, 'executable', lambda: None)
+    assert seal.versions() == {'BBTools': 'unknown', 'Java': 'unknown'}

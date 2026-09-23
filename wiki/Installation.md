@@ -2,7 +2,7 @@
 
 ## Requirements
 * Linux or macOS
-* Python 3.10 or later (no other Python package needed)
+* Python 3.10 or later, with [ReportLab](https://www.reportlab.com/opensource/) 4 or later (for the PDF report)
 * [BBTools](https://sourceforge.net/projects/bbmap/) 38 or later, for `seal.sh`, and Java (installed with BBTools by
   conda)
 
@@ -38,6 +38,11 @@ From the cloned folder, as long as `seal.sh` is in your `PATH`:
 ```
 python3 -m spoligotyper -h
 ```
+
+## Updating from 0.2
+Version 0.3.0 needs ReportLab: `conda install -c conda-forge reportlab` or `pip install reportlab` (installed
+automatically with conda or pip). The table has 6 new columns after the original 6, and a PDF report is written
+next to it (`--no-pdf` to skip it). See the [Changelog](Changelog).
 
 ## Updating from 0.1
 Version 0.2.0 is an installable package with a `spoligotyper` command; the `spoligotyper.py` script is gone.

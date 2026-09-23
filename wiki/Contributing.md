@@ -20,3 +20,10 @@ request instead.
 * Page file names become page titles: `Output-files.md` → "Output files".
 * Link to other pages without the extension: `[Usage](Usage)`.
 * `_Sidebar.md` is the navigation shown on every page.
+* Images are stored in the repository's `assets/` folder and linked with their
+  `https://raw.githubusercontent.com/duceppemo/spoligotyper/main/assets/...` URL.
+
+## Logo
+`assets/logo_source.svg` is the original logo. Its text needs the Sora font, so `assets/make_logo.py` converts it to
+outlines and writes `assets/logo.svg`, `assets/logo_dark.svg` (for dark backgrounds) and the bitmap used in the PDF
+report, `spoligotyper/data/logo.png`. See the script for its requirements.

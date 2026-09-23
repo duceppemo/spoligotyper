@@ -33,13 +33,15 @@ spoligotyper -r1 data/AF2122_97.fastq.gz -o results/
 ```
 ```
 12:00:00 INFO    Spoligotyping AF2122_97 (fastq, minimum count 5)
-Sample     SpacerCount                                                                                                                  Binary                                       Octal            Hexadecimal        Spoligotype
-AF2122_97  56:47:0:58:63:0:76:0:0:0:0:0:50:43:38:0:36:29:45:50:47:51:50:54:140:74:73:78:57:56:50:46:39:41:45:45:54:53:0:0:0:0:0  1101101000001110111111111111111111111100000  664073777777600  6D-03-5F-7F-FF-60  SB0140
-12:00:04 INFO    AF2122_97: SB0140 (octal 664073777777600)
-12:00:04 INFO    Report saved in results/AF2122_97_spoligotyping.txt (4.2 s)
+12:00:03 INFO    AF2122_97: SB0140 (octal 664073777777600)
+Sample     SpacerCount                                                                                                                  Binary                                       Octal            Hexadecimal        Spoligotype  FileType  Reads    Depth  MinCount  Status  Warnings
+AF2122_97  56:47:0:58:63:0:76:0:0:0:0:0:50:43:38:0:36:29:45:50:47:51:50:54:140:74:73:78:57:56:50:46:39:41:45:45:54:53:0:0:0:0:0  1101101000001110111111111111111111111100000  664073777777600  6D-03-5F-7F-FF-60  SB0140       fastq     1212727  65     5         ok
+12:00:03 INFO    Report saved in results/AF2122_97_spoligotyping.txt
+12:00:03 INFO    Report saved in results/AF2122_97_spoligotyping.pdf
+12:00:03 INFO    Done in 4.3 s
 ```
-The sample is named after the file. Each spacer is either found in about 30 to 80 reads (present), or in none
-(absent): a clear-cut result. Spacer 25 has about twice as many reads as the others because it is present twice in
+The sample is named after the file, and the results are saved as a table and a PDF report. Each spacer is either found in about 30 to 80 reads (present), or in none
+(absent): a clear-cut result. The depth, 65x, is estimated from the number of bases. Spacer 25 has about twice as many reads as the others because it is present twice in
 the DR locus of AF2122/97. With paired-end reads, add `-r2 R2.fastq.gz`.
 
 The pattern, 1101101000001110111111111111111111111100000, is SB0140, the spoligotype of AF2122/97.
@@ -57,13 +59,17 @@ H37Rv gives `Spoligo not found`: SB numbers only exist for the animal-adapted li
 777777477760771, is the one to use for *M. tuberculosis*, for example to look up its shared international type
 (SIT) in SITVIT (see the [FAQ](FAQ#my-sample-is-spoligo-not-found)).
 
-## 4. Combine the reports
-Each sample has its own report. To make one table, with the header once:
+## 4. All at once, with a PDF report
+Type every sample of the `data/` folder in one run:
 ```
-awk 'FNR == 1 && NR > 1 {next} 1' results/*_spoligotyping.txt > all_samples.tsv
+spoligotyper -i data/ -o batch/ --operator "Your Name"
 ```
+The reads and the two assemblies are detected automatically. `batch/spoligotyping.tsv` has one line per sample, and
+`batch/spoligotyping_report.pdf` has a summary page, one section per sample with the reads supporting each spacer,
+and the run information (software versions, checksums, parameters) for quality assurance. See
+[Output files](Output-files#pdf-report-spoligotyping_reportpdf-or-sample_spoligotypingpdf).
 
 ## Next steps
-* [Output files](Output-files): what each column means
+* [Output files](Output-files): what each column and each part of the PDF report means
 * [How it works](How-it-works): how spacers are detected, and when to change `--min-count`
 * [Usage](Usage): all the options

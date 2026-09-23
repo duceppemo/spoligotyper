@@ -2,11 +2,13 @@
 
 import logging
 import os
+import re
 import shlex
 import shutil
 import subprocess
 import sys
 import tempfile
+from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
 
@@ -65,27 +67,38 @@ def seal_command(inputs, spacers_fasta, stats_file, threads, memory):
     return cmd
 
 
+@dataclass
+class SealStats:
+    counts: dict  # {spacer name: number of matching reads}
+    reads: int | None = None  # Total number of reads (or contigs) in the input
+    bases: int | None = None
+
+
 def parse_stats(stats_file):
     """
-    Read Seal's stats file into {spacer name: number of matching reads}.
+    Read Seal's stats file.
 
     #File	sample_R1.fastq.gz
-    #Total	822714
+    #Total	822714	123407100
     #Matched	799	0.09712%
     #Name	Reads	ReadsPct
     spacer25	62	0.00754%
     """
-    counts = {}
+    stats = SealStats({})
     with open(stats_file) as f:
         for line in f:
-            if not line.strip() or line.startswith('#'):
-                continue
             fields = line.rstrip('\n').split('\t')
+            if not line.strip():
+                continue
             try:
-                counts[fields[0]] = int(fields[1])
+                if fields[0] == '#Total':
+                    stats.reads = int(fields[1])
+                    stats.bases = int(fields[2]) if len(fields) > 2 else None
+                elif not line.startswith('#'):
+                    stats.counts[fields[0]] = int(fields[1])
             except (IndexError, ValueError):
                 raise SealError('Unexpected line in Seal stats file {}: {}'.format(stats_file, line.strip())) from None
-    return counts
+    return stats
 
 
 def count_spacers(inputs, spacers_fasta, threads=1, memory='1g'):
@@ -95,7 +108,7 @@ def count_spacers(inputs, spacers_fasta, threads=1, memory='1g'):
     :param inputs: one fasta/fastq file, or two paired-end fastq files
     :param spacers_fasta: fasta file of the spacer sequences
     :param memory: Java heap size given to Seal, e.g. "1g"
-    :return: {spacer name: count}
+    :return: SealStats
     """
     with tempfile.TemporaryDirectory(prefix='spoligotyper_') as tmp:
         stats_file = Path(tmp) / 'stats.tsv'
@@ -103,8 +116,32 @@ def count_spacers(inputs, spacers_fasta, threads=1, memory='1g'):
         log.debug('Running: %s', shlex.join(cmd))
         proc = subprocess.run(cmd, capture_output=True, text=True)
         if proc.returncode != 0 or not stats_file.exists():
-            detail = (proc.stderr or proc.stdout).strip().splitlines()
-            raise SealError('Seal failed (exit code {}): {}\n{}'.format(
-                proc.returncode, shlex.join(cmd), '\n'.join(detail[-10:])))
+            detail = (proc.stderr or proc.stdout).strip().splitlines() or ['no output']
+            reason = next((line for line in reversed(detail) if re.search(r'Exception|Error|error', line)), detail[-1])
+            raise SealError('Seal failed (exit code {}): {}\nCommand: {}\n{}'.format(
+                proc.returncode, reason.strip(), shlex.join(cmd), '\n'.join(detail[-10:])))
         log.debug('Seal output:\n%s', proc.stderr.strip())
         return parse_stats(stats_file)
+
+
+def versions():
+    """{"BBTools": version, "Java": version} of the Seal installation, "unknown" when they cannot be read."""
+    found = {'BBTools': 'unknown', 'Java': 'unknown'}
+    path = executable()
+    if path is None:
+        return found
+    try:  # A small heap: without -Xmx, seal.sh reserves most of the free memory, even for --version
+        out = subprocess.run([path, '-Xmx64m', '--version'], capture_output=True, text=True, timeout=60)
+        match = re.search(r'(?:BBMap|BBTools) version (\S+)', out.stdout + out.stderr)
+        if match:
+            found['BBTools'] = match.group(1)
+        java = Path(path).parent / 'java'
+        java = str(java) if java.exists() else shutil.which('java')
+        if java:
+            out = subprocess.run([java, '-version'], capture_output=True, text=True, timeout=60)
+            first = (out.stderr or out.stdout).strip().splitlines()
+            if first:
+                found['Java'] = first[0]
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return found

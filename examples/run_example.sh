@@ -3,7 +3,7 @@
 #   AF2122_97  M. bovis AF2122/97, Illumina single-end reads (ENA ERR1744454, 210 MB)  -> SB0140
 #   NC_002945  M. bovis AF2122/97 reference genome assembly (NCBI NC_002945.4)         -> SB0140
 #   H37Rv      M. tuberculosis H37Rv reference genome assembly (NCBI NC_000962.3)      -> not an SB pattern
-# Downloads go to ./data/ (kept for later runs) and results to ./results/.
+# Downloads go to ./data/ (kept for later runs) and the reports to ./results/.
 # Usage: bash run_example.sh [threads]
 set -euo pipefail
 
@@ -23,16 +23,12 @@ download https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR174/004/ERR1744454/ERR1744454.f
 download "${efetch}NC_002945.4" data/NC_002945.fasta
 download "${efetch}NC_000962.3" data/H37Rv.fasta
 
-spoligotyper -r1 data/AF2122_97.fastq.gz -o results/ -t "$threads"
-spoligotyper -r1 data/NC_002945.fasta -o results/ -t "$threads"
-spoligotyper -r1 data/H37Rv.fasta -o results/ -t "$threads"
+# Batch mode: every fasta file, single-end fastq file or pair of R1/R2 fastq files in data/ is a sample
+spoligotyper -i data/ -o results/ -t "$threads"
 
-# One table for all the samples: the header once, then one line per sample
-awk 'FNR == 1 && NR > 1 {next} 1' results/*_spoligotyping.txt > results/all_samples.tsv
-
-# SpacerCount (column 2) depends on the BBTools version; the spoligotype does not
-if diff <(cut -f 1,3- expected_results.tsv) <(cut -f 1,3- results/all_samples.tsv); then
-    echo "OK: results match expected_results.tsv (results/all_samples.tsv)"
+# Compare the sample names and codes: spacer counts may vary slightly between BBTools versions
+if diff <(cut -f 1,3-6 expected_results.tsv) <(cut -f 1,3-6 results/spoligotyping.tsv); then
+    echo "OK: results match expected_results.tsv. Reports: results/spoligotyping.tsv and results/spoligotyping_report.pdf"
 else
     echo "Results differ from expected_results.tsv" >&2
     exit 1

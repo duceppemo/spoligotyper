@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.3.0 (unreleased)
+**New**
+* Batch mode: `-i FOLDER` types every sample of a folder and its subfolders. fastq and fasta files are detected,
+  R1/R2 files are paired, and ambiguous sample names are reported rather than guessed. A sample that fails is
+  reported and the others are still typed. See [Usage](Usage#a-folder-of-samples-batch-mode).
+* PDF report for quality assurance: summary with the spoligotype patterns, one section per sample with the reads
+  supporting each spacer, input files with size, date and MD5 checksum, and the run information (operator, user,
+  computer, time zone, command, parameters, versions of spoligotyper, Python, BBTools and Java, checksums of the
+  reference data), with a review and signature box. New options `--no-pdf`, `--no-md5` and `--operator`.
+  See [Output files](Output-files#pdf-report-spoligotyping_reportpdf-or-sample_spoligotypingpdf).
+* The table has 6 new columns after the original 6: `FileType`, `Reads`, `Depth`, `MinCount`, `Status` and
+  `Warnings`.
+* Warning when the estimated sequencing depth is below 20x.
+* Logo.
+
+**Changed**
+* ReportLab is now required (installed automatically with conda and pip).
+* Seal errors start with their cause instead of the full command.
+
 ## 0.2.0 (2026-09-23)
 Package revamp: installable with conda (bioconda) or pip, with a `spoligotyper` command.
 

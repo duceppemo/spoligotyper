@@ -23,6 +23,15 @@ on a login node or in a small container), lower it: `--memory 500m`.
 Before version 0.2.0, Seal sized its memory from the computer's free memory (196 GB on a 512 GB server), which
 failed on shared computers and clusters.
 
+### `Several files give the same sample name`
+In batch mode (`-i`), each sample name must come from a single fasta file, a single fastq file, or an R1/R2 pair.
+The message lists the conflicting files: rename, move or remove them. See
+[Usage](Usage#a-folder-of-samples-batch-mode) for how sample names are derived from file names.
+
+### Some samples `failed`
+In batch mode, a sample that cannot be typed (truncated file, not a sequence file, ...) is reported as `failed` with
+its error in the table and the PDF report, and the other samples are still typed. spoligotyper exits with code 1.
+
 ### `No spacer found`
 None of the 43 spacers is in the file. Check that the sample is from the *M. tuberculosis* complex (e.g. with
 [Kraken2](https://github.com/DerrickWood/kraken2) or [mashID](https://github.com/duceppemo/mashID)), and that the

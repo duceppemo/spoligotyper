@@ -1,4 +1,9 @@
-<h1 align="center">spoligotyper</h1>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/duceppemo/spoligotyper/main/assets/logo_dark.svg">
+    <img src="https://raw.githubusercontent.com/duceppemo/spoligotyper/main/assets/logo.svg" width="520" alt="spoligotyper: in silico spoligotyping of the M. tuberculosis complex">
+  </picture>
+</p>
 
 <p align="center">
   <a href="https://github.com/duceppemo/spoligotyper/actions/workflows/tests.yml"><img src="https://github.com/duceppemo/spoligotyper/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
@@ -16,16 +21,21 @@ genome assemblies (fasta). spoligotyper finds the 43 spacers of the direct repea
 [Seal](https://sourceforge.net/projects/bbmap/) from BBTools and reports the spoligotype as binary, octal and
 hexadecimal codes, and as an SB number from the [Mbovis.org](https://www.mbovis.org/) database.
 
-```
-Sample     SpacerCount           Binary                                       Octal            Hexadecimal        Spoligotype
-AF2122_97  56:47:0:58:63:0:...   1101101000001110111111111111111111111100000  664073777777600  6D-03-5F-7F-FF-60  SB0140
-```
+<p align="center">
+  <img src="https://raw.githubusercontent.com/duceppemo/spoligotyper/main/assets/report_summary.png" width="49%" alt="Summary page of the PDF report, with the spoligotype pattern of three samples">
+  <img src="https://raw.githubusercontent.com/duceppemo/spoligotyper/main/assets/report_sample.png" width="49%" alt="Sample page of the PDF report, with the reads supporting each spacer">
+  <br>
+  <sub>PDF report of the <a href="https://github.com/duceppemo/spoligotyper/wiki/Tutorial">tutorial</a>: summary, and the evidence for each sample.</sub>
+</p>
 
 ## Features
 * **Reads or assemblies**: single-end or paired-end fastq, or fasta, gzipped or not. Illumina and nanopore reads.
-* **Fast**: a few seconds per sample, with 1 GB of memory.
+* **Batch mode**: point it at a folder; fastq and fasta files are detected and R1/R2 files paired automatically.
 * **All the standard codes**: binary, octal, hexadecimal, and SB number for *M. bovis* and other animal-adapted lineages.
-* **Transparent**: the number of reads supporting each spacer is reported, and borderline calls are flagged.
+* **PDF report for QA**: results, reads supporting each spacer, input files with checksums, software versions,
+  parameters, operator, date, and a review box. Plus a tab-separated table for pipelines.
+* **Transparent**: borderline calls, low depth and failed samples are flagged, never hidden.
+* **Fast**: a few seconds per sample, with 1 GB of memory.
 
 ## Installation
 ```
@@ -39,8 +49,9 @@ See [Installation](https://github.com/duceppemo/spoligotyper/wiki/Installation) 
 spoligotyper -r1 sample_R1.fastq.gz -r2 sample_R2.fastq.gz -o results/   # Paired-end reads
 spoligotyper -r1 sample.fastq.gz -o results/                             # Single-end or nanopore reads
 spoligotyper -r1 assembly.fasta -o results/                              # Assembly
+spoligotyper -i folder/ -o results/                                      # All the samples in a folder
 ```
-The report is printed and saved as `results/<sample>_spoligotyping.txt`. New to the tool? The
+The results are printed and saved in `results/` as a table and a PDF report. New to the tool? The
 **[tutorial](https://github.com/duceppemo/spoligotyper/wiki/Tutorial)** types three public genomes in a few minutes.
 
 ## Documentation

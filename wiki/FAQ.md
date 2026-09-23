@@ -10,6 +10,11 @@ The pattern is not in the [Mbovis.org](https://www.mbovis.org/) database. Either
 * **A spacer is miscalled**: look at the `SpacerCount` column for counts close to `--min-count`, and see
   [How it works](How-it-works#minimum-count).
 
+### A sample with no spacer is SB2277
+SB2277 is the pattern with no spacer at all. A sample that is not from the *M. tuberculosis* complex, or a file with
+no MTBC reads, also has no spacer, and so gets SB2277. spoligotyper flags these samples with a "no spacer found"
+warning: check the species before reporting SB2277.
+
 ### Can I use another database?
 Yes, with `--db my_database.txt`. The file has one pattern per line, with 3 columns separated by spaces or tabs:
 the octal code, the name, and the binary pattern. Lines starting with `#` are ignored. For example, with SIT numbers:
@@ -37,6 +42,16 @@ The 43 spacers are those of the standard spoligotyping membrane
 ([Kamerbeek *et al.* 1997](https://doi.org/10.1128/jcm.35.4.907-914.1997)), so that *in silico* results can be
 compared with laboratory spoligotyping. Other spacers exist in some strains but are not part of the standard
 pattern.
+
+### How do I type many samples?
+Put them in a folder and use `-i`: see [Usage](Usage#a-folder-of-samples-batch-mode). fastq and fasta files are
+detected, and R1/R2 files are paired automatically. You get one table and one PDF report for the whole run.
+
+### Can the PDF report be used for accredited (ISO 17025) work?
+It is designed for it: it records the operator, date and time with time zone, computer, exact command, parameters,
+versions of all the software, checksums of the input files and of the reference data, and the evidence behind each
+call, and it has a review and signature box. Validating the method for your scope remains your laboratory's
+responsibility; the [tutorial](Tutorial) data, with known spoligotypes, can be part of it.
 
 ### Should I type reads or the assembly?
 Reads, when you have them: the DR locus is repetitive and can be broken or collapsed in short-read assemblies.
