@@ -1,0 +1,43 @@
+name: Bug report
+description: Something does not work as expected, or a spoligotype looks wrong
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report! Please check the [troubleshooting page](https://github.com/duceppemo/spoligotyper/wiki/Troubleshooting) and the [FAQ](https://github.com/duceppemo/spoligotyper/wiki/FAQ) first.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `spoligotyper --version`
+      placeholder: spoligotyper 0.2.0
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: The exact command you ran
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened, and what did you expect?
+      description: For an unexpected spoligotype, please include the report line (with the SpacerCount column), the expected pattern and, if public, the accession of the reads.
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: Messages printed by spoligotyper, ideally from a run with `-v`
+      render: text
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, how you installed spoligotyper (bioconda, pip, ...), BBTools version (`seal.sh --version`)
+      placeholder: Ubuntu 24.04, bioconda, BBTools 39.13

@@ -1,0 +1,58 @@
+cff-version: 1.2.0
+message: "If you use spoligotyper, please cite it as below, together with BBTools."
+title: "spoligotyper: in silico spoligotyping of Mycobacterium tuberculosis complex genomes"
+type: software
+abstract: >-
+  spoligotyper finds the 43 spacers of the direct repeat (DR) locus of Mycobacterium tuberculosis complex genomes in
+  sequencing reads (fastq) or genome assemblies (fasta), using Seal from BBTools. It reports the spoligotype as
+  binary, octal and hexadecimal codes, and as an SB number from the Mbovis.org database of spoligotype patterns.
+authors:
+  - family-names: Duceppe
+    given-names: Marc-Olivier
+    email: marc-olivier.duceppe@inspection.gc.ca
+    affiliation: Canadian Food Inspection Agency
+version: 0.2.0
+date-released: "2026-09-23"
+license: MIT
+repository-code: "https://github.com/duceppemo/spoligotyper"
+url: "https://github.com/duceppemo/spoligotyper/wiki"
+keywords:
+  - bioinformatics
+  - spoligotyping
+  - Mycobacterium tuberculosis complex
+  - Mycobacterium bovis
+  - genotyping
+references:
+  - type: software
+    title: "BBTools"
+    authors:
+      - family-names: Bushnell
+        given-names: Brian
+    url: "https://sourceforge.net/projects/bbmap/"
+  - type: article
+    title: "Simultaneous detection and strain differentiation of Mycobacterium tuberculosis for diagnosis and epidemiology"
+    authors:
+      - family-names: Kamerbeek
+        given-names: J.
+      - name: "et al."
+    journal: Journal of Clinical Microbiology
+    volume: 35
+    issue: 4
+    start: 907
+    end: 914
+    year: 1997
+    doi: 10.1128/jcm.35.4.907-914.1997
+  - type: article
+    title: "Naming spoligotype patterns for the RD9-deleted lineage of the Mycobacterium tuberculosis complex; www.Mbovis.org"
+    authors:
+      - family-names: Smith
+        given-names: Noel H.
+      - family-names: Upton
+        given-names: Paul
+    journal: Infection, Genetics and Evolution
+    volume: 12
+    issue: 4
+    start: 873
+    end: 876
+    year: 2012
+    doi: 10.1016/j.meegid.2011.08.002
