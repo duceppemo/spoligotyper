@@ -11,7 +11,7 @@ package:
 
 source:
   url: https://github.com/duceppemo/spoligotyper/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: 0000000000000000000000000000000000000000000000000000000000000000  # TODO: set once v{{ version }} is tagged
+  sha256: ad31a8153d14cb71f7045c4a77f67a169ea1860d5d9ae051e0a7ff7b1ce8eb99
 
 build:
   number: 0
