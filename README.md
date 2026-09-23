@@ -14,6 +14,7 @@
   <img src="https://img.shields.io/badge/python-3.10%E2%80%933.14-blue" alt="Python 3.10–3.14">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/duceppemo/spoligotyper" alt="License"></a>
   <a href="https://github.com/duceppemo/spoligotyper/wiki"><img src="https://img.shields.io/badge/docs-wiki-informational" alt="Documentation"></a>
+  <a href="https://doi.org/10.5281/zenodo.22926160"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.22926160.svg" alt="DOI"></a>
 </p>
 
 *In silico* spoligotyping of *Mycobacterium tuberculosis* complex (MTBC) samples, from sequencing reads (fastq) or
@@ -63,8 +64,16 @@ The **[wiki](https://github.com/duceppemo/spoligotyper/wiki)** covers
 [FAQ](https://github.com/duceppemo/spoligotyper/wiki/FAQ).
 
 ## Citing
-If you use spoligotyper, please cite this repository (GitHub's **"Cite this repository"** button gives APA and
-BibTeX formats), and BBTools: Bushnell B. BBTools. https://sourceforge.net/projects/bbmap/
+If you use spoligotyper, please cite it and BBTools, which finds the spacers:
+
+> Duceppe M-O. spoligotyper: in silico spoligotyping of Mycobacterium tuberculosis complex genomes. Zenodo.
+> https://doi.org/10.5281/zenodo.22926160
+
+This DOI always points to the latest version; each release also has its own DOI, listed on
+[Zenodo](https://doi.org/10.5281/zenodo.22926160). GitHub's **"Cite this repository"** button gives the same citation in APA and BibTeX
+formats.
+
+> Bushnell B. BBTools. https://sourceforge.net/projects/bbmap/
 
 ## Contributing
 Bug reports, questions and pull requests are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).

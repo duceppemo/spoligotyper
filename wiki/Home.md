@@ -34,6 +34,6 @@ It works for all members of the complex (*M. tuberculosis*, *M. bovis*, *M. capr
 * [Contributing](Contributing)
 
 ## Citing
-Please cite spoligotyper (GitHub's "Cite this repository" button on the
-[repository page](https://github.com/duceppemo/spoligotyper)) and BBTools: Bushnell B. BBTools.
-https://sourceforge.net/projects/bbmap/
+Please cite spoligotyper: Duceppe M-O. spoligotyper: in silico spoligotyping of Mycobacterium tuberculosis complex
+genomes. Zenodo. https://doi.org/10.5281/zenodo.22926160 (all versions; each release also has its own DOI on Zenodo). Please also cite
+BBTools: Bushnell B. BBTools. https://sourceforge.net/projects/bbmap/

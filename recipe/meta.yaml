@@ -57,5 +57,7 @@ about:
   doc_url: https://github.com/duceppemo/spoligotyper/wiki
 
 extra:
+  identifiers:
+    - doi:10.5281/zenodo.22926160
   recipe-maintainers:
     - duceppemo

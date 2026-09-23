@@ -21,7 +21,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from . import __version__
+from . import DOI, __version__
 from .seal import KMER_SIZE
 from .spoligotype import N_SPACERS, data_file
 
@@ -282,7 +282,8 @@ def run_section(run):
              'tuberculosis complex; www.Mbovis.org. Infect Genet Evol 12:873-876 (2012). '
              'doi:10.1016/j.meegid.2011.08.002', SMALL),
         text('Bushnell B. BBTools. https://sourceforge.net/projects/bbmap/', SMALL),
-        text('spoligotyper {}. https://github.com/duceppemo/spoligotyper'.format(__version__), SMALL),
+        text('Duceppe M-O. spoligotyper {}: in silico spoligotyping of Mycobacterium tuberculosis complex genomes. '
+             'Zenodo. https://doi.org/{}'.format(__version__, DOI), SMALL),
     ]
 
 

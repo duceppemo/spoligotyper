@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 (unreleased)
+## 0.3.0 (2026-09-24)
 **New**
 * Batch mode: `-i FOLDER` types every sample of a folder and its subfolders. fastq and fasta files are detected,
   R1/R2 files are paired, and ambiguous sample names are reported rather than guessed. A sample that fails is
@@ -14,6 +14,7 @@
   `Warnings`.
 * Warning when the estimated sequencing depth is below 20x.
 * Logo.
+* Zenodo DOI: https://doi.org/10.5281/zenodo.22926160 (all versions), in the README, `CITATION.cff` and the PDF report.
 
 **Changed**
 * ReportLab is now required (installed automatically with conda and pip).

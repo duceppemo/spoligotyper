@@ -37,6 +37,7 @@ Homepage = "https://github.com/duceppemo/spoligotyper"
 Documentation = "https://github.com/duceppemo/spoligotyper/wiki"
 Changelog = "https://github.com/duceppemo/spoligotyper/wiki/Changelog"
 Issues = "https://github.com/duceppemo/spoligotyper/issues"
+DOI = "https://doi.org/10.5281/zenodo.22926160"
 
 [project.scripts]
 spoligotyper = "spoligotyper.cli:main"
