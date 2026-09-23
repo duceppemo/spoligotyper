@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 (unreleased)
+## 0.2.0 (2026-09-23)
 Package revamp: installable with conda (bioconda) or pip, with a `spoligotyper` command.
 
 **Fixes**
