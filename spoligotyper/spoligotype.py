@@ -97,3 +97,29 @@ def load_database(path=SPOLIGOTYPE_DB):
 def lookup(binary, database):
     """SB number of a binary pattern, or NOT_FOUND."""
     return database.get(binary, NOT_FOUND)
+
+
+def closest(binary, database, max_distance=3, limit=3):
+    """
+    Closest patterns of the database, for a pattern that is not in it.
+
+    :return: list of (SB number, [spacers that differ]), with the smallest number of differences (at most
+             max_distance), up to limit patterns. Empty if the pattern is in the database or none is close enough.
+    """
+    if binary in database:
+        return []
+    best, found = max_distance + 1, []
+    for pattern, name in database.items():
+        differences = [i + 1 for i, (a, b) in enumerate(zip(binary, pattern, strict=True)) if a != b]
+        if len(differences) < best:
+            best, found = len(differences), []
+        if len(differences) == best:
+            found.append((name, differences))
+    return sorted(found)[:limit] if best <= max_distance else []
+
+
+def describe_closest(matches):
+    """e.g. "SB0140 (spacer 7 differs); SB0265 (spacers 7, 13 differ)"."""
+    return '; '.join('{} (spacer{} {} differ{})'.format(name, 's' if len(diff) > 1 else '', ', '.join(map(str, diff)),
+                                                       '' if len(diff) > 1 else 's')
+                     for name, diff in matches)

@@ -50,18 +50,20 @@ typed; spoligotyper then exits with code 1 so that pipelines notice.
 | `--no-pdf` | | Do not write the PDF report |
 | `--no-md5` | | Do not compute the MD5 checksums of the input files for the PDF report |
 | `--operator` | user name | Name of the person running the analysis, shown in the PDF report |
+| `--no-species` | | Skip the [species check and the lineage](Species-and-lineage): one pass over the reads instead of two |
 | `-m`, `--min-count` | 5 for fastq, 1 for fasta | Minimum number of reads containing a spacer to call it present. See [How it works](How-it-works#minimum-count) |
 | `--db` | Mbovis.org database | Spoligotype database, see [FAQ](FAQ#can-i-use-another-database) |
 | `-t`, `--threads` | all available | Number of threads |
+| `-j`, `--jobs` | 1 | With `-i`: number of samples typed at the same time, sharing the threads. Each job uses `--memory` |
 | `--memory` | `1g` | Java memory for Seal. 1 GB is plenty; see [Troubleshooting](Troubleshooting#java-memory-errors) |
 | `-v`, `--verbose` | | Also show the Seal commands and their output |
 | `--version` | | Show the version |
 
 ## Output
-| Mode | Table | PDF report |
-|---|---|---|
-| One sample | `<output>/<sample>_spoligotyping.txt` | `<output>/<sample>_spoligotyping.pdf` |
-| Folder | `<output>/spoligotyping.tsv` | `<output>/spoligotyping_report.pdf` |
+| Mode | Table | PDF report | JSON | MultiQC |
+|---|---|---|---|---|
+| One sample | `<sample>_spoligotyping.txt` | `<sample>_spoligotyping.pdf` | `<sample>_spoligotyping.json` | `<sample>_spoligotyping_mqc.json` |
+| Folder | `spoligotyping.tsv` | `spoligotyping_report.pdf` | `spoligotyping.json` | `spoligotyping_mqc.json` |
 
 The table is also printed to the screen (standard output), and progress and warnings go to standard error, so
 `spoligotyper ... > results.tsv` saves just the table. See [Output files](Output-files).
@@ -73,4 +75,11 @@ from spoligotyper.pipeline import spoligotype
 
 result = spoligotype('S1_R1.fastq.gz', 'S1_R2.fastq.gz', threads=4)
 print(result.sample, result.octal, result.spoligotype, result.counts, result.warnings)
+print(result.species.species, result.lineage.lineage, result.species.mtbc_fraction)
 ```
+
+## Workflow managers
+An [nf-core module](https://github.com/duceppemo/spoligotyper/tree/main/integrations/nf-core) and a
+[Galaxy tool](https://github.com/duceppemo/spoligotyper/tree/main/integrations/galaxy) are available in the
+repository. The per-sample MultiQC files (`*_mqc.json`) add a "Spoligotyping" table to MultiQC reports: run `multiqc`
+on the output folder(s).

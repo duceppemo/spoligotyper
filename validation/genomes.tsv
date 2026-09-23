@@ -1,0 +1,21 @@
+# Reference genomes with a known species, lineage and, when documented, spoligotype.
+# Lineages: predictions of Coll et al. 2014 (Nat Commun 5:4812, Supplementary Table 4) for the same genomes.
+# expected_octal: documented spoligotypes (H37Rv SIT451; AF2122/97 SB0140; BCG SB0120), or "Beijing" for the Beijing
+# signature (spacers 1-34 absent, 35-43 present). Empty: not documented, compared with SpoTyping in the wiki instead.
+sample	accession	organism	expected_species	expected_lineage	expected_octal
+H37Rv	NC_000962.3	M. tuberculosis H37Rv	M. tuberculosis	4.9	777777477760771
+CDC1551	NC_002755.2	M. tuberculosis CDC1551	M. tuberculosis	4.1.1.3	
+Erdman	AP012340.1	M. tuberculosis Erdman ATCC 35801	M. tuberculosis	4.1.2.1	
+F11	NC_009565.1	M. tuberculosis F11	M. tuberculosis	4.3.2.1	
+KZN1435	NC_012943.1	M. tuberculosis KZN 1435	M. tuberculosis	4.3.3	
+CCDC5079	NC_017523.1	M. tuberculosis CCDC5079 (Beijing)	M. tuberculosis	2.2.1	Beijing
+CAS_NITR204	NC_021193.1	M. tuberculosis CAS/NITR204	M. tuberculosis	3	
+EAI5_NITR206	NC_021194.1	M. tuberculosis EAI5/NITR206	M. tuberculosis	1.1	
+RGTB423	NC_017528.1	M. tuberculosis RGTB423	M. tuberculosis	1.2.2	
+GM041182	NC_015758.1	M. africanum GM041182 (lineage 6)	M. africanum	6	
+AF2122_97	NC_002945.4	M. bovis AF2122/97	M. bovis	BOV	664073777777600
+BCG_Pasteur	NC_008769.1	M. bovis BCG Pasteur 1173P2	M. bovis BCG	BOV	676773777777600
+M_canettii	NC_015848.1	M. canettii CIPT 140010059	MTBC, RD9 intact, no lineage (e.g. M. canettii)		
+M_marinum	NC_010612.1	M. marinum M	MTBC not detected		
+M_kansasii	NC_022663.1	M. kansasii ATCC 12478	MTBC not detected		
+M_avium	NC_008595.1	M. avium 104	MTBC not detected		

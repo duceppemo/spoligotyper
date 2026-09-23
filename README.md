@@ -20,7 +20,8 @@
 *In silico* spoligotyping of *Mycobacterium tuberculosis* complex (MTBC) samples, from sequencing reads (fastq) or
 genome assemblies (fasta). spoligotyper finds the 43 spacers of the direct repeat (DR) locus with
 [Seal](https://sourceforge.net/projects/bbmap/) from BBTools and reports the spoligotype as binary, octal and
-hexadecimal codes, and as an SB number from the [Mbovis.org](https://www.mbovis.org/) database.
+hexadecimal codes, and as an SB number from the [Mbovis.org](https://www.mbovis.org/) database. It also identifies
+the species and the lineage, and flags contaminated or mixed samples.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/duceppemo/spoligotyper/main/assets/report_summary.png" width="49%" alt="Summary page of the PDF report, with the spoligotype pattern of three samples">
@@ -33,8 +34,15 @@ hexadecimal codes, and as an SB number from the [Mbovis.org](https://www.mbovis.
 * **Reads or assemblies**: single-end or paired-end fastq, or fasta, gzipped or not. Illumina and nanopore reads.
 * **Batch mode**: point it at a folder; fastq and fasta files are detected and R1/R2 files paired automatically.
 * **All the standard codes**: binary, octal, hexadecimal, and SB number for *M. bovis* and other animal-adapted lineages.
+* **Species and lineage**: *M. tuberculosis*, *M. africanum*, *M. bovis*, BCG, ... from regions of difference, and
+  the lineage (1 to 7 and sublineages) from a 62-SNP barcode.
+* **Quality checks**: fraction of MTBC reads (contamination), mixed samples, consistency between the spoligotype,
+  species and lineage, and the closest known patterns for new spoligotypes.
 * **PDF report for QA**: results, reads supporting each spacer, input files with checksums, software versions,
-  parameters, operator, date, and a review box. Plus a tab-separated table for pipelines.
+  parameters, operator, date, and a review box. Plus a table, JSON and a MultiQC section for pipelines.
+* **Validated** on 16 reference genomes and 8 read sets of known species, lineage and spoligotype
+  ([Validation](https://github.com/duceppemo/spoligotyper/wiki/Validation)).
+* **Workflow ready**: nf-core module and Galaxy tool in [`integrations/`](integrations/).
 * **Transparent**: borderline calls, low depth and failed samples are flagged, never hidden.
 * **Fast**: a few seconds per sample, with 1 GB of memory.
 
@@ -60,6 +68,8 @@ The **[wiki](https://github.com/duceppemo/spoligotyper/wiki)** covers
 [usage and options](https://github.com/duceppemo/spoligotyper/wiki/Usage),
 [output files](https://github.com/duceppemo/spoligotyper/wiki/Output-files),
 [how it works](https://github.com/duceppemo/spoligotyper/wiki/How-it-works),
+[species and lineage](https://github.com/duceppemo/spoligotyper/wiki/Species-and-lineage),
+[validation](https://github.com/duceppemo/spoligotyper/wiki/Validation),
 [troubleshooting](https://github.com/duceppemo/spoligotyper/wiki/Troubleshooting) and the
 [FAQ](https://github.com/duceppemo/spoligotyper/wiki/FAQ).
 
@@ -74,6 +84,11 @@ This DOI always points to the latest version; each release also has its own DOI,
 formats.
 
 > Bushnell B. BBTools. https://sourceforge.net/projects/bbmap/
+
+For the lineage, please also cite the SNP barcode:
+
+> Coll F *et al.* A robust SNP barcode for typing *Mycobacterium tuberculosis* complex strains. *Nat Commun* 5, 4812
+> (2014). https://doi.org/10.1038/ncomms5812
 
 ## Contributing
 Bug reports, questions and pull requests are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).

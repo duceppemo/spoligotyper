@@ -25,6 +25,15 @@ The tests run on GitHub Actions for Python 3.10, 3.12 and 3.14.
 
 To check the results on real data, run the [example](examples/run_example.sh): `bash examples/run_example.sh`.
 
+## Reference data and validation
+* `spoligotyper/data/` holds the reference data; its README gives the source of each file.
+* `python scripts/make_reference_data.py` rebuilds the species markers and lineage SNP sequences from public genomes
+  (needs BBTools and internet access); the result is deterministic.
+* `bash validation/run_validation.sh` checks the results on reference genomes and read sets of known species,
+  lineage and spoligotype; update the [Validation](https://github.com/duceppemo/spoligotyper/wiki/Validation) page
+  with its report when the results change.
+* `integrations/` holds the nf-core module and the Galaxy tool: update their version for each release.
+
 ## Pull requests
 * Branch from `main` and keep each pull request focused on one change.
 * Add or update tests for any change in behaviour.

@@ -23,7 +23,7 @@ from reportlab.platypus import (
 
 from . import DOI, __version__
 from .seal import KMER_SIZE
-from .spoligotype import N_SPACERS, data_file
+from .spoligotype import N_SPACERS, data_file, describe_closest
 
 # Colours of the logo
 NAVY = colors.HexColor('#1C2541')
@@ -149,12 +149,15 @@ def summary_section(results, run):
             counts['warning'], counts['failed'], run.operator), SUBTITLE),
         Paragraph('Summary', H2),
     ]
-    header = [text(h, SMALL) for h in ('Sample', 'Spoligotype', 'Octal', 'Pattern (spacers 1 to 43)', 'Status')]
+    header = [text(h, SMALL) for h in ('Sample', 'Spoligotype', 'Octal', 'Species', 'Lineage',
+                                       'Pattern (spacers 1 to 43)', 'Status')]
     rows = [header]
     for r in results:
         rows.append([text(r.sample, WRAP), text(r.spoligotype or '-', SMALL), text(r.octal or '-', MONO),
-                     pattern(r.binary) if not r.error else text('-', SMALL), status_label(r.status)])
-    widths = [1.5 * inch, 1.05 * inch, 1.2 * inch, 2.85 * inch, WIDTH - 6.6 * inch]
+                     text(r.species.species if r.species else '-', SMALL),
+                     text((r.lineage.lineage if r.lineage else '') or '-', WRAP),
+                     pattern(r.binary, square=2.4) if not r.error else text('-', SMALL), status_label(r.status)])
+    widths = [1.0 * inch, 0.8 * inch, 1.05 * inch, 1.15 * inch, 0.7 * inch, 1.95 * inch, WIDTH - 6.65 * inch]
     table = Table(rows, colWidths=widths, repeatRows=1)
     table.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)]))
     story.append(table)
@@ -237,13 +240,56 @@ def sample_section(result):
              ('Present spacers', '{} of {}, median count {:g}'.format(result.binary.count('1'), N_SPACERS,
                                                                       result.median_present_count)),
              ('Run time', '{:.1f} s'.format(result.seconds))]
-    story += [key_values(rows),
-              KeepTogether([Paragraph('{} per spacer'.format(unit.capitalize()), H3), spacer_table(result),
+    if result.closest:
+        rows.insert(1, ('Closest patterns', describe_closest(result.closest)))
+    story += [key_values(rows)]
+    if result.species:
+        story.append(KeepTogether(species_block(result)))
+    story += [KeepTogether([Paragraph('{} per spacer'.format(unit.capitalize()), H3), spacer_table(result),
                             text('Blue: present (count ≥ {}). Orange: called absent but seen in some {}.'.format(
                                 result.min_count, unit), SMALL)])]
     if result.warnings:
         story += [Paragraph('Warnings', H3)] + [text('• ' + w, SMALL) for w in result.warnings]
     return [KeepTogether(story[:3])] + story[3:]
+
+
+def species_block(result):
+    check, call = result.species, result.lineage
+    rows = [('Species', Paragraph('<b>{}</b>'.format(escape(check.species)), BODY))]
+    if call.lineage:
+        rows.append(('Lineage', '{}{}{}'.format(call.lineage, ' · {}'.format(call.name) if call.name else '',
+                                              ' · typical spoligotypes: {}'.format(call.spoligotypes.replace(';', ', '))
+                                              if call.spoligotypes else '')))
+    elif check.mtbc:
+        rows.append(('Lineage', 'no lineage SNP found (lineages 1 to 7 and animal lineages are not detected)'))
+    unit = 'reads' if result.file_type == 'fastq' else 'contigs'
+    fraction = check.mtbc_fraction
+    rows.append(('MTBC DNA', 'median {:g} {} per control region, {:.0f}% of the control regions found{}'.format(
+        check.control_depth, unit, check.control_found * 100,
+        '' if fraction is None else '; about {:.0f}% of the reads are MTBC'.format(fraction * 100))))
+    story = [Paragraph('Species and lineage', H3), key_values(rows)]
+    if check.regions:
+        table = [[text(h, SMALL) for h in ('Region', 'Deleted in', 'Depth relative to MTBC control', 'Call')]]
+        deleted_in = {'RD9': 'M. africanum and animal lineages (incl. M. bovis)', 'RD4': 'M. bovis and BCG',
+                      'RD1': 'BCG (and M. microti)'}
+        for region, (state, ratio) in check.regions.items():
+            table.append([text(region, SMALL), text(deleted_in[region], SMALL), text('{:.2f}'.format(ratio), SMALL),
+                          text(state, SMALL)])
+        t = Table(table, colWidths=[0.7 * inch, 3.0 * inch, 2.0 * inch, WIDTH - 5.7 * inch])
+        t.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)]))
+        story += [Spacer(1, 4), t]
+    informative = [s for s in call.snps if s.fraction >= 0.1]  # Not the odd read with a sequencing error
+    if informative or call.mixed:
+        snps = sorted({s.position: s for s in informative + call.mixed}.values(), key=lambda s: s.position)
+        table = [[text(h, SMALL) for h in ('Lineage SNP', 'Position (H37Rv)', 'Gene', 'Reads with lineage allele',
+                                          'Other reads')]]
+        for s in snps:
+            table.append([text(s.lineage, SMALL), text('{:,}'.format(s.position), SMALL), text(s.locus, SMALL),
+                          text(s.lineage_reads, SMALL), text(s.other_reads, SMALL)])
+        t = Table(table, colWidths=[1.2 * inch, 1.3 * inch, 1.2 * inch, 1.8 * inch, WIDTH - 5.5 * inch], repeatRows=1)
+        t.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)]))
+        story += [Spacer(1, 4), t]
+    return story
 
 
 def run_section(run):
@@ -252,7 +298,14 @@ def run_section(run):
               'on both strands, allowing 1 mismatch (k={k}, hdist=1, rcomp=t, maskmiddle=f, ambiguous=all). A '
               'spacer is present when it is found in at least the minimum count of reads (contigs for assemblies). '
               'The binary pattern is converted to the octal code (Dale et al. 2001) and the hexadecimal code, and '
-              'looked up in the spoligotype database for its SB number.').format(n=N_SPACERS, k=KMER_SIZE)
+              'looked up in the spoligotype database for its SB number. '
+              'Species: the read depth of regions of difference RD9, RD4 and RD1 (100 bp segments, same Seal '
+              'parameters) is compared with the depth of MTBC-specific control regions; a region is deleted when its '
+              'relative depth is at most 0.1, present when it is at least 0.5. The fraction of MTBC reads is the '
+              'control depth divided by the depth expected from the number of bases. Lineage: reads carrying each '
+              'allele of the 62 SNPs of the Coll et al. (2014) barcode are counted with exact 31-mers (k=31, '
+              'hdist=0); a lineage is called when at least 80% of the reads (and at least 3, or 1 contig) carry its '
+              'allele.').format(n=N_SPACERS, k=KMER_SIZE)
     duration = (run.finished - run.started).total_seconds() if run.finished else 0
     return [
         PageBreak(),
@@ -269,7 +322,9 @@ def run_section(run):
         Paragraph('Reference data', H3),
         key_values([('Spoligotype database', text('{path}\n{patterns:,} patterns · MD5 {md5}'.format(**run.database),
                                                   WRAP)),
-                    ('Spacer sequences', text('{path}\n{spacers} spacers · MD5 {md5}'.format(**run.spacers), WRAP))]),
+                    ('Spacer sequences', text('{path}\n{spacers} spacers · MD5 {md5}'.format(**run.spacers), WRAP))]
+                   + [(name, text('{path}\nMD5 {md5}'.format(**info), WRAP))
+                      for name, info in run.species_data.items()]),
         Paragraph('Method', H3),
         text(method, SMALL),
         Paragraph('References', H3),
@@ -281,6 +336,10 @@ def run_section(run):
         text('Smith NH, Upton P. Naming spoligotype patterns for the RD9-deleted lineage of the Mycobacterium '
              'tuberculosis complex; www.Mbovis.org. Infect Genet Evol 12:873-876 (2012). '
              'doi:10.1016/j.meegid.2011.08.002', SMALL),
+        text('Brosch R et al. A new evolutionary scenario for the Mycobacterium tuberculosis complex. Proc Natl Acad '
+             'Sci USA 99:3684-3689 (2002). doi:10.1073/pnas.052548299', SMALL),
+        text('Coll F et al. A robust SNP barcode for typing Mycobacterium tuberculosis complex strains. Nat Commun '
+             '5:4812 (2014). doi:10.1038/ncomms5812', SMALL),
         text('Bushnell B. BBTools. https://sourceforge.net/projects/bbmap/', SMALL),
         text('Duceppe M-O. spoligotyper {}: in silico spoligotyping of Mycobacterium tuberculosis complex genomes. '
              'Zenodo. https://doi.org/{}'.format(__version__, DOI), SMALL),

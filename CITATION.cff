@@ -6,12 +6,14 @@ abstract: >-
   spoligotyper finds the 43 spacers of the direct repeat (DR) locus of Mycobacterium tuberculosis complex genomes in
   sequencing reads (fastq) or genome assemblies (fasta), using Seal from BBTools. It reports the spoligotype as
   binary, octal and hexadecimal codes, and as an SB number from the Mbovis.org database of spoligotype patterns.
+  It also identifies the species from regions of difference (RD9, RD4, RD1) and the lineage from a SNP barcode,
+  estimates the fraction of MTBC reads, and flags mixed or contaminated samples.
 authors:
   - family-names: Duceppe
     given-names: Marc-Olivier
     email: marc-olivier.duceppe@inspection.gc.ca
     affiliation: Canadian Food Inspection Agency
-version: 0.3.0
+version: 0.4.0
 date-released: "2026-09-24"
 doi: 10.5281/zenodo.22926160
 identifiers:
@@ -31,6 +33,17 @@ keywords:
   - Mycobacterium bovis
   - genotyping
 references:
+  - type: article
+    title: "A robust SNP barcode for typing Mycobacterium tuberculosis complex strains"
+    authors:
+      - family-names: Coll
+        given-names: Francesc
+      - name: "et al."
+    journal: Nature Communications
+    volume: 5
+    start: 4812
+    year: 2014
+    doi: 10.1038/ncomms5812
   - type: software
     title: "BBTools"
     authors:

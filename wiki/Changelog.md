@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.4.0 (unreleased)
+**New**
+* Species check from the regions of difference RD9, RD4 and RD1: *M. tuberculosis*, *M. africanum*, *M. bovis*,
+  BCG, other animal-adapted lineages, or "MTBC not detected". See [Species and lineage](Species-and-lineage).
+* Lineage from the 62-SNP barcode of Coll *et al.* (2014): lineages 1 to 7 and their sublineages, *M. bovis*, with
+  the lineage name and its typical spoligotype families.
+* Contamination: estimated fraction of MTBC reads, with a warning below 60%.
+* Mixed samples: flagged from the lineage SNPs (both alleles), incompatible lineages, partial regions of difference
+  and weak spacers.
+* Consistency warnings between the spoligotype, the regions of difference and the lineage.
+* Closest known patterns (up to 3 spacers different) for patterns not in the database.
+* JSON output with all the results and run information, and a MultiQC custom content file.
+* `-j`/`--jobs`: type several samples at the same time in batch mode. `--no-species` to skip the new checks.
+* PDF report: species, lineage, regions of difference and lineage SNPs for each sample; checksums of the new
+  reference data; updated method and references.
+* [Validation](Validation) on 16 reference genomes and 8 read sets (`validation/run_validation.sh`), and a comparison
+  with SpoTyping.
+* nf-core module and Galaxy tool, in `integrations/`.
+* `scripts/make_reference_data.py` rebuilds the species and lineage reference data from public genomes.
+
+**Changed**
+* The table has 8 new columns at the end: `Species`, `Lineage`, `LineageName`, `RD9`, `RD4`, `RD1`,
+  `MTBCFraction` and `Closest`.
+* A second pass over the reads (a few seconds) for the lineage SNPs.
+
 ## 0.3.0 (2026-09-24)
 **New**
 * Batch mode: `-i FOLDER` types every sample of a folder and its subfolders. fastq and fasta files are detected,

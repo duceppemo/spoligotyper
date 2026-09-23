@@ -39,6 +39,10 @@ From the cloned folder, as long as `seal.sh` is in your `PATH`:
 python3 -m spoligotyper -h
 ```
 
+## Updating from 0.3
+Version 0.4.0 adds the species check and the lineage, a JSON file and a MultiQC file. The table has 8 new columns
+after the 12 of version 0.3. Use `--no-species` for the previous behaviour (one pass over the reads).
+
 ## Updating from 0.2
 Version 0.3.0 needs ReportLab: `conda install -c conda-forge reportlab` or `pip install reportlab` (installed
 automatically with conda or pip). The table has 6 new columns after the original 6, and a PDF report is written

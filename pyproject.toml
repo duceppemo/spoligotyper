@@ -46,7 +46,7 @@ spoligotyper = "spoligotyper.cli:main"
 packages = ["spoligotyper", "spoligotyper.data"]
 
 [tool.setuptools.package-data]
-"spoligotyper.data" = ["*.fasta", "*.txt", "*.png"]
+"spoligotyper.data" = ["*.fasta", "*.txt", "*.tsv", "*.png", "*.md"]
 
 [tool.setuptools.dynamic]
 version = {attr = "spoligotyper.__version__"}

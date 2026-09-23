@@ -33,15 +33,29 @@ spoligotyper -r1 data/AF2122_97.fastq.gz -o results/
 ```
 ```
 12:00:00 INFO    Spoligotyping AF2122_97 (fastq, minimum count 5)
-12:00:03 INFO    AF2122_97: SB0140 (octal 664073777777600)
-Sample     SpacerCount                                                                                                                  Binary                                       Octal            Hexadecimal        Spoligotype  FileType  Reads    Depth  MinCount  Status  Warnings
-AF2122_97  56:47:0:58:63:0:76:0:0:0:0:0:50:43:38:0:36:29:45:50:47:51:50:54:140:74:73:78:57:56:50:46:39:41:45:45:54:53:0:0:0:0:0  1101101000001110111111111111111111111100000  664073777777600  6D-03-5F-7F-FF-60  SB0140       fastq     1212727  65     5         ok
-12:00:03 INFO    Report saved in results/AF2122_97_spoligotyping.txt
-12:00:03 INFO    Report saved in results/AF2122_97_spoligotyping.pdf
-12:00:03 INFO    Done in 4.3 s
+12:00:07 INFO    AF2122_97: SB0140 (octal 664073777777600), M. bovis, lineage BOV
+Sample     SpacerCount           Binary                                       Octal            ...  Spoligotype  ...  Species   Lineage  ...
+AF2122_97  56:47:0:58:63:0:...   1101101000001110111111111111111111111100000  664073777777600  ...  SB0140       ...  M. bovis  BOV      ...
+12:00:07 INFO    Report saved in results/AF2122_97_spoligotyping.txt
+12:00:07 INFO    Report saved in results/AF2122_97_spoligotyping.json
+12:00:07 INFO    Report saved in results/AF2122_97_spoligotyping.pdf
+12:00:07 INFO    Done in 7.8 s
 ```
+The main columns of the table:
+
+| Column | Value |
+|---|---|
+| SpacerCount | 56:47:0:58:63:0:76:0:0:0:0:0:50:43:38:0:36:29:45:50:47:51:50:54:140:74:73:78:57:56:50:46:39:41:45:45:54:53:0:0:0:0:0 |
+| Octal | 664073777777600 |
+| Spoligotype | SB0140 |
+| Depth | 65 |
+| Species | M. bovis (RD9 deleted, RD4 deleted, RD1 present) |
+| Lineage | BOV |
+| MTBCFraction | 1.00 |
 The sample is named after the file, and the results are saved as a table and a PDF report. Each spacer is either found in about 30 to 80 reads (present), or in none
-(absent): a clear-cut result. The depth, 65x, is estimated from the number of bases. Spacer 25 has about twice as many reads as the others because it is present twice in
+(absent): a clear-cut result. The depth, 65x, is estimated from the number of bases, and all the reads appear to
+be MTBC (`MTBCFraction` 1.00). The species, *M. bovis*, comes from the regions of difference RD9 and RD4, both
+deleted, and the lineage from the SNP barcode: see [Species and lineage](Species-and-lineage). Spacer 25 has about twice as many reads as the others because it is present twice in
 the DR locus of AF2122/97. With paired-end reads, add `-r2 R2.fastq.gz`.
 
 The pattern, 1101101000001110111111111111111111111100000, is SB0140, the spoligotype of AF2122/97.
@@ -57,7 +71,8 @@ assembly gives the same spoligotype as its reads, SB0140.
 
 H37Rv gives `Spoligo not found`: SB numbers only exist for the animal-adapted lineages. Its octal code,
 777777477760771, is the one to use for *M. tuberculosis*, for example to look up its shared international type
-(SIT) in SITVIT (see the [FAQ](FAQ#my-sample-is-spoligo-not-found)).
+(SIT) in SITVIT (see the [FAQ](FAQ#my-sample-is-spoligo-not-found)). The species is *M. tuberculosis* (RD9, RD4 and
+RD1 present) and the lineage 4.9, "Euro-American (H37Rv-like)".
 
 ## 4. All at once, with a PDF report
 Type every sample of the `data/` folder in one run:

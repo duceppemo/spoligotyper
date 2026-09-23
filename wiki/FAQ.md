@@ -1,10 +1,11 @@
 # FAQ
 
 ### My sample is `Spoligo not found`
-The pattern is not in the [Mbovis.org](https://www.mbovis.org/) database. Either:
-* **It is a human-adapted lineage** (*M. tuberculosis*, *M. africanum*, ...): SB numbers only exist for the
-  animal-adapted lineages (*M. bovis*, *M. caprae*, *M. pinnipedii*, *M. microti*, ...). Use the octal code, for
-  example to find the shared international type (SIT) and lineage in the
+The pattern is not in the [Mbovis.org](https://www.mbovis.org/) database. The `Closest` column lists the closest SB
+numbers (up to 3 spacers different). Either:
+* **It is a human-adapted lineage** (*M. tuberculosis*): SB numbers only exist for the RD9-deleted lineages
+  (*M. bovis*, *M. caprae*, *M. pinnipedii*, *M. microti*, *M. africanum*, ...). The `Lineage` column gives the
+  lineage and its typical spoligotype families; use the octal code to find the shared international type (SIT) in the
   SITVIT database (H37Rv, 777777477760771, is SIT451).
 * **It is a new pattern**: new *M. bovis* patterns can be submitted to Mbovis.org to get an SB number.
 * **A spacer is miscalled**: look at the `SpacerCount` column for counts close to `--min-count`, and see
@@ -13,7 +14,18 @@ The pattern is not in the [Mbovis.org](https://www.mbovis.org/) database. Either
 ### A sample with no spacer is SB2277
 SB2277 is the pattern with no spacer at all. A sample that is not from the *M. tuberculosis* complex, or a file with
 no MTBC reads, also has no spacer, and so gets SB2277. spoligotyper flags these samples with a "no spacer found"
-warning: check the species before reporting SB2277.
+warning, and the `Species` column says "MTBC not detected" when there is no MTBC DNA. *M. canettii* has no standard
+spacer either: it is reported with RD9 intact and no lineage.
+
+### How reliable are the species and the lineage?
+They were checked on 16 reference genomes and 8 read sets of known species and lineage: see [Validation](Validation).
+The lineage comes from the SNP barcode of Coll *et al.* (2014), the reference method for SNP-based lineage typing.
+For drug resistance and a finer lineage, use a dedicated tool such as [TB-Profiler](https://github.com/jodyphelan/TBProfiler).
+
+### What does "only about X% of the reads appear to be from the M. tuberculosis complex" mean?
+The MTBC-specific control regions have fewer reads than the sequencing depth predicts: part of the reads come from
+something else (contamination, host DNA, another organism). The spoligotype and species are still called from the
+MTBC reads. See [Species and lineage](Species-and-lineage#contamination-fraction-of-mtbc-reads).
 
 ### Can I use another database?
 Yes, with `--db my_database.txt`. The file has one pattern per line, with 3 columns separated by spaces or tabs:

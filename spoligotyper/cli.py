@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import __version__
-from .pipeline import REPORT_HEADER, RunInfo, spoligotype, spoligotype_samples, write_tsv
+from .pipeline import REPORT_HEADER, RunInfo, spoligotype, spoligotype_samples, write_json, write_multiqc, write_tsv
 from .samples import find_samples
 from .seal import SealError, check_seal
 from .spoligotype import SPOLIGOTYPE_DB, SpoligoError
@@ -93,6 +93,9 @@ def build_parser():
     typing.add_argument('-m', '--min-count', metavar='N', type=positive_int,
                         help='Minimum number of reads matching a spacer to call it present. '
                              'Default: 5 for fastq files, 1 for fasta files.')
+    typing.add_argument('--no-species', action='store_true',
+                        help='Skip the species check (regions of difference RD9, RD4, RD1) and the lineage '
+                             '(SNP barcode). Faster: one pass over the reads instead of two.')
     typing.add_argument('--db', metavar='FILE', default=SPOLIGOTYPE_DB,
                         help='Spoligotype database: "octal SB-number binary" on each line. '
                              'Default: the Mbovis.org database included with spoligotyper.')
@@ -100,8 +103,11 @@ def build_parser():
     other = parser.add_argument_group('performance and other options')
     other.add_argument('-t', '--threads', metavar='N', type=positive_int, default=max_cpu,
                        help='Number of threads. Default: all available ({}).'.format(max_cpu))
+    other.add_argument('-j', '--jobs', metavar='N', type=positive_int, default=1,
+                       help='With -i: number of samples typed at the same time, sharing the threads. Each job uses '
+                            'the --memory given to Seal. Default: 1.')
     other.add_argument('--memory', metavar='SIZE', type=java_memory, default='1g',
-                       help='Memory for Seal (Java heap size). Default: 1g.')
+                       help='Memory for Seal (Java heap size), per job. Default: 1g.')
     other.add_argument('-v', '--verbose', action='store_true', help='Show debug messages, including the Seal command.')
     other.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     return parser
@@ -110,6 +116,8 @@ def build_parser():
 def check_arguments(parser, args):
     if args.input and (args.r2 or args.sample):
         parser.error('-r2 and --sample are only used with -r1')
+    if args.r1 and args.jobs > 1:
+        parser.error('--jobs is only used with -i')
     if args.sample is not None and (not args.sample.strip() or '/' in args.sample or args.sample in ('.', '..')):
         parser.error('--sample must be a name, not a path: "{}"'.format(args.sample))
 
@@ -124,7 +132,7 @@ def main(argv=None):
     start = time.monotonic()
     output = Path(args.output).expanduser()
     options = dict(min_count=args.min_count, threads=args.threads, memory=args.memory, database=args.db,
-                   md5=not args.no_pdf and not args.no_md5)
+                   md5=not args.no_pdf and not args.no_md5, species_check=not args.no_species)
 
     try:
         check_seal()
@@ -132,12 +140,14 @@ def main(argv=None):
             'Input': ' '.join(os.path.abspath(f) for f in (args.input, args.r1, args.r2) if f),
             'Output folder': str(output.resolve()),
             'Minimum count': args.min_count or 'default (5 for fastq, 1 for fasta)',
-            'Threads': args.threads, 'Seal memory': args.memory})
+            'Threads': args.threads, 'Jobs': args.jobs, 'Seal memory': args.memory,
+            'Species and lineage': 'no' if args.no_species else 'yes'})
         if args.input:
             samples = find_samples(args.input, exclude=[output])
             log.info('%d sample(s) found in %s', len(samples), args.input)
-            results = spoligotype_samples(samples, **options)
-            tsv, pdf = output / 'spoligotyping.tsv', output / 'spoligotyping_report.pdf'
+            results = spoligotype_samples(samples, jobs=args.jobs, **options)
+            prefix = 'spoligotyping'
+            tsv, pdf = output / (prefix + '.tsv'), output / (prefix + '_report.pdf')
         else:
             results = [spoligotype(args.r1, args.r2, sample=args.sample, **options)]
             prefix = '{}_spoligotyping'.format(results[0].sample)
@@ -146,7 +156,9 @@ def main(argv=None):
 
         output.mkdir(parents=True, exist_ok=True)
         write_tsv(results, tsv)
-        reports = [tsv]
+        write_json(results, run, output / (prefix + '.json'))
+        write_multiqc(results, output / (prefix + '_mqc.json'))
+        reports = [tsv, output / (prefix + '.json')]
         if not args.no_pdf:
             from .pdf import write_pdf  # reportlab is only imported when needed
             write_pdf(results, run, pdf)

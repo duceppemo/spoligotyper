@@ -17,8 +17,15 @@ A tab-separated table with a header and one line per sample. The same table is p
 | `MinCount` | `5` | Minimum count used to call a spacer present |
 | `Status` | `ok` | `ok`, `warning` (see the next column) or `failed` |
 | `Warnings` | | Warnings, separated by `\|`, or the error for failed samples |
+| `Species` | `M. bovis` | From the regions of difference and the lineage SNPs, see [Species and lineage](Species-and-lineage) |
+| `Lineage` | `BOV` | Most specific lineage of the SNP barcode (e.g. `4.3.4.2`, `2.2.1`, `BOV`), or `mixed: ...` |
+| `LineageName` | `M. bovis` | e.g. "Euro-American (LAM)", "East-Asian" (Beijing) |
+| `RD9`, `RD4`, `RD1` | `deleted` | `present`, `deleted` or `partial` |
+| `MTBCFraction` | `1.00` | Reads only: estimated fraction of the reads from the *M. tuberculosis* complex |
+| `Closest` | `SB0140 (spacer 7 differs)` | For a pattern not in the database: the closest SB numbers, up to 3 spacers away |
 
-The first 6 columns are the same as in version 0.2.0 and earlier.
+Columns are only ever added at the end: the first 6 are those of version 0.2, the next 6 were added in 0.3 and the
+last 8 in 0.4. The species columns are empty with `--no-species`.
 
 ### Octal code
 The binary pattern is cut into 14 groups of 3 spacers, and each group is written as one octal digit (000 = 0,
@@ -38,6 +45,16 @@ hexadecimal number.
   twice the number of DNA fragments containing the spacer.
 * **Assemblies**: counts are 0 or 1 (occasionally 2, if a spacer is split over two contigs or repeated).
 
+## JSON: `spoligotyping.json` or `<sample>_spoligotyping.json`
+Everything in the table and the PDF report, for pipelines: for each sample the input files, codes, spacer counts,
+closest patterns, species check (with the depth of each region), lineage (with the reads supporting each SNP
+allele) and warnings, and the run information (software versions, parameters, checksums of the reference data).
+
+## MultiQC: `spoligotyping_mqc.json` or `<sample>_spoligotyping_mqc.json`
+A [MultiQC custom content](https://docs.seqera.io/multiqc/custom_content) file (JSON, so that octal codes keep their
+leading zeros) with the spoligotype, octal code,
+species, lineage and status of each sample. Run `multiqc` on the output folder to get a "Spoligotyping" section.
+
 ## PDF report: `spoligotyping_report.pdf` or `<sample>_spoligotyping.pdf`
 Made for quality assurance: everything needed to check a result, and to trace how it was produced.
 
@@ -50,6 +67,9 @@ Made for quality assurance: everything needed to check a result, and to trace ho
    * the input files: full path (and the real file when it is a symbolic link), size, modification date and MD5
      checksum;
    * the number of reads and bases, estimated depth, minimum count, number of present spacers and their median count;
+   * the closest known patterns, when the pattern is not in the database;
+   * the species and lineage: regions of difference with their relative depth, lineage with its name and typical
+     spoligotype families, amount of MTBC DNA, and the reads supporting each lineage SNP;
    * the reads (or contigs) per spacer: present spacers in blue, absent spacers seen in some reads in orange;
    * the warnings, or the error of a failed sample.
 3. **Run information**: operator, user, computer, operating system, start and end time (with time zone), working

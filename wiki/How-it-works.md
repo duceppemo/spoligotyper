@@ -26,7 +26,11 @@ flowchart LR
 2. **Presence or absence.** A spacer is present if it is found in at least `--min-count` reads.
 3. **Codes.** The binary pattern is converted to the standard [octal and hexadecimal codes](Output-files).
 4. **Name.** The pattern is looked up in the [Mbovis.org](https://www.mbovis.org/) database of SB numbers
-   (1,976 patterns, included with spoligotyper).
+   (1,976 patterns, included with spoligotyper). When it is not there, the closest patterns (up to 3 spacers
+   different) are reported.
+5. **Species and lineage.** In the same pass, Seal also counts the reads on MTBC control regions and regions of
+   difference; a second pass counts the reads carrying each allele of 62 lineage SNPs. See
+   [Species and lineage](Species-and-lineage).
 
 ## Minimum count
 Present spacers are covered like the rest of the genome, and absent spacers are not found at all: with enough
@@ -42,8 +46,9 @@ more than a few reads. spoligotyper warns when spacers called absent were seen i
 ## Limitations
 * **Assemblies**: the DR locus is repetitive, and short-read assemblers sometimes collapse or break it. A spacer
   split between two contigs is missed. When reads are available, type the reads.
-* **Mixed samples**: a mix of strains gives the union of their spacers, i.e. a pattern that may not exist. Spacer
-  counts well below the genome coverage are a hint.
-* **Other mycobacteria**: non-tuberculous mycobacteria have no DR locus, and give a pattern with no spacer
-  (spoligotyper warns about it).
+* **Mixed samples**: a mix of strains gives the union of their spacers, i.e. a pattern that may not exist.
+  spoligotyper flags them from the lineage SNPs and the regions of difference: see
+  [Species and lineage](Species-and-lineage#mixed-samples).
+* **Other mycobacteria**: non-tuberculous mycobacteria have no DR locus, and give a pattern with no spacer.
+  spoligotyper reports them as "MTBC not detected".
 * **SB numbers** are only defined for the animal-adapted lineages. See the [FAQ](FAQ#my-sample-is-spoligo-not-found).

@@ -11,3 +11,7 @@ dist/
 coverage.xml
 examples/data/
 examples/results/
+validation/data/
+validation/results/
+validation/*.log
+validation/.nf-test*

@@ -32,6 +32,15 @@ The message lists the conflicting files: rename, move or remove them. See
 In batch mode, a sample that cannot be typed (truncated file, not a sequence file, ...) is reported as `failed` with
 its error in the table and the PDF report, and the other samples are still typed. spoligotyper exits with code 1.
 
+### `mixed sample?`
+The lineage SNPs, a region of difference or the spacer counts suggest several strains. See
+[Species and lineage](Species-and-lineage#mixed-samples). Check the sample (e.g. single colony re-culture) before
+reporting its spoligotype: the pattern of a mixed sample is the union of those of its strains.
+
+### `too little MTBC DNA to check the species`
+Spacers were found but the MTBC control regions have fewer than 3 reads each: the depth is too low, or most reads
+come from something else. The species and lineage are not called.
+
 ### `No spacer found`
 None of the 43 spacers is in the file. Check that the sample is from the *M. tuberculosis* complex (e.g. with
 [Kraken2](https://github.com/DerrickWood/kraken2) or [mashID](https://github.com/duceppemo/mashID)), and that the

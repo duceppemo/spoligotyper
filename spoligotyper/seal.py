@@ -48,18 +48,24 @@ def check_seal():
     return path
 
 
-def seal_command(inputs, spacers_fasta, stats_file, threads, memory):
+def seal_command(inputs, refs, stats_file, threads, memory, k=KMER_SIZE, hdist=1):
+    """
+    :param refs: reference fasta file(s): a path or a list of paths
+    :param k: k-mer size. Spacers are 25 bp long: each spacer is a single k-mer
+    :param hdist: number of mismatches allowed in a k-mer
+    """
+    refs = [refs] if isinstance(refs, (str, os.PathLike)) else list(refs)
     cmd = [check_seal(), '-Xmx{}'.format(memory), 'in={}'.format(inputs[0])]
     if len(inputs) > 1:
         cmd.append('in2={}'.format(inputs[1]))
-    cmd += ['ref={}'.format(spacers_fasta),
-            'k={}'.format(KMER_SIZE),
+    cmd += ['ref={}'.format(','.join(str(r) for r in refs)),
+            'k={}'.format(k),
             'rcomp=t',
-            'hdist=1',  # Up to 1 mismatch
+            'hdist={}'.format(hdist),
             'maskmiddle=f',  # Do not treat the middle base of a k-mer as a wildcard
             'clearzone=999999',
-            'ambiguous=all',  # Count a read for every spacer it matches
-            'nzo=f',  # Also report spacers with no match
+            'ambiguous=all',  # Count a read for every reference sequence it matches
+            'nzo=f',  # Also report reference sequences with no match
             'qin=33',  # Force the quality encoding: autodetection fails on some low quality nanopore reads
             'ow=t',
             'stats={}'.format(stats_file),
@@ -95,24 +101,24 @@ def parse_stats(stats_file):
                     stats.reads = int(fields[1])
                     stats.bases = int(fields[2]) if len(fields) > 2 else None
                 elif not line.startswith('#'):
-                    stats.counts[fields[0]] = int(fields[1])
+                    stats.counts[fields[0].split()[0]] = int(fields[1])  # Name without the description
             except (IndexError, ValueError):
                 raise SealError('Unexpected line in Seal stats file {}: {}'.format(stats_file, line.strip())) from None
     return stats
 
 
-def count_spacers(inputs, spacers_fasta, threads=1, memory='1g'):
+def run_seal(inputs, refs, threads=1, memory='1g', k=KMER_SIZE, hdist=1):
     """
-    Count the reads (or contigs) that contain each spacer, allowing one mismatch.
+    Count the reads (or contigs) that contain each reference sequence.
 
     :param inputs: one fasta/fastq file, or two paired-end fastq files
-    :param spacers_fasta: fasta file of the spacer sequences
+    :param refs: reference fasta file(s)
     :param memory: Java heap size given to Seal, e.g. "1g"
     :return: SealStats
     """
     with tempfile.TemporaryDirectory(prefix='spoligotyper_') as tmp:
         stats_file = Path(tmp) / 'stats.tsv'
-        cmd = seal_command(inputs, spacers_fasta, stats_file, threads, memory)
+        cmd = seal_command(inputs, refs, stats_file, threads, memory, k=k, hdist=hdist)
         log.debug('Running: %s', shlex.join(cmd))
         proc = subprocess.run(cmd, capture_output=True, text=True)
         if proc.returncode != 0 or not stats_file.exists():
@@ -122,6 +128,11 @@ def count_spacers(inputs, spacers_fasta, threads=1, memory='1g'):
                 proc.returncode, reason.strip(), shlex.join(cmd), '\n'.join(detail[-10:])))
         log.debug('Seal output:\n%s', proc.stderr.strip())
         return parse_stats(stats_file)
+
+
+def count_spacers(inputs, spacers_fasta, threads=1, memory='1g'):
+    """Count the reads (or contigs) that contain each spacer, allowing one mismatch."""
+    return run_seal(inputs, spacers_fasta, threads=threads, memory=memory)
 
 
 def versions():
