@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.1 (unreleased)
+## 0.4.1 (2026-09-23)
 **Fixed**
 * Seal failed ("Could not create the Java Virtual Machine") when a path contained "xmx" or "xms", which BBTools 40
   reads as a Java memory setting: in an input file name, or, occasionally, in the random name of the temporary folder.
