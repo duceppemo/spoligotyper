@@ -1,5 +1,6 @@
 """Count reads (or contigs) matching each spacer with Seal, from BBTools."""
 
+import gzip
 import logging
 import os
 import re
@@ -75,23 +76,66 @@ def seal_command(inputs, refs, stats_file, threads, memory, k=KMER_SIZE, hdist=1
     return cmd
 
 
-UNSAFE = re.compile(r'[\s,=]')  # seal.sh splits its arguments on spaces, and ref= lists on commas
+# Paths that seal.sh cannot pass to Seal: it splits its arguments on spaces and ref= lists on commas, and BBTools 40
+# takes any argument containing "xmx" or "xms" (in any case, anywhere) for a Java memory setting.
+UNSAFE = re.compile(r'[\s,=]|xm[xs]', re.IGNORECASE)
 
 
-def safe_paths(paths, folder, prefix):
+def extensions(name):
+    """The extensions Seal uses to recognize the format, e.g. ".fastq.gz" for "S1_R1.fastq.gz"."""
+    suffixes = [s for s in Path(name).suffixes[-2:] if re.fullmatch(r'\.[A-Za-z0-9]+', s) and not UNSAFE.search(s)]
+    return ''.join(suffixes)
+
+
+SEQUENCE_EXTENSION = re.compile(r'\.(fastq|fq|fasta|fa|fna|fas|fsa)(\.gz)?$', re.IGNORECASE)
+
+
+def content_extension(path):
     """
-    Paths that Seal can read: those with a space, comma or "=" are linked into folder under a safe name, keeping the
-    extensions that Seal uses to recognize the format (e.g. ".fastq.gz").
+    Extension matching the content of a sequence file, e.g. ".fastq.gz". Seal recognizes formats and compression by
+    extension only, and Galaxy, for example, names its files "dataset_1.dat".
+    """
+    with open(path, 'rb') as f:
+        gzipped = f.read(2) == b'\x1f\x8b'
+    try:
+        with (gzip.open(path, 'rt') if gzipped else open(path)) as f:
+            first = next((line for line in f if line.strip()), '>')[0]
+    except (OSError, EOFError, UnicodeDecodeError):
+        first = '>'  # Unreadable: let Seal report the error
+    return ('.fastq' if first == '@' else '.fasta') + ('.gz' if gzipped else '')
+
+
+def safe_paths(paths, folder, prefix, check_extension=False):
+    """
+    Paths that Seal can read: unsafe ones, and with check_extension those whose extension does not match their
+    content, are linked into folder under a neutral name (e.g. "in0.fastq.gz").
     """
     safe = []
     for i, path in enumerate(paths):
         path = str(path)
-        if UNSAFE.search(path):
-            link = Path(folder) / '{}{}_{}'.format(prefix, i, re.sub(r'[^A-Za-z0-9._-]', '_', Path(path).name))
+        extension = extensions(path)
+        if check_extension:
+            detected = content_extension(path)
+            match = SEQUENCE_EXTENSION.search(Path(path).name)
+            if not match or bool(match.group(2)) != detected.endswith('.gz'):
+                extension = detected
+        if UNSAFE.search(path) or extension != extensions(path):
+            link = Path(folder) / '{}{}{}'.format(prefix, i, extension)
             link.symlink_to(Path(path).resolve())
             path = str(link)
         safe.append(path)
     return safe
+
+
+def safe_temporary_folder(attempts=20):
+    """A new temporary folder whose path Seal can read: random names can contain "xmx" or "xms", so retry."""
+    for _ in range(attempts):
+        folder = tempfile.mkdtemp(prefix='spoligotyper_')
+        if not UNSAFE.search(folder):
+            return folder
+        os.rmdir(folder)
+    raise SealError('The temporary folder "{}" contains a space, a comma, "xmx" or "xms", which Seal cannot handle. '
+                    'Set TMPDIR to another folder.'.format(tempfile.gettempdir()))
 
 
 GENERIC_ERRORS = re.compile(r'Exception in thread "main"|terminated in an error state')
@@ -160,13 +204,11 @@ def run_seal(inputs, refs, threads=1, memory='1g', k=KMER_SIZE, hdist=1):
     :return: SealStats
     """
     refs = [refs] if isinstance(refs, (str, os.PathLike)) else list(refs)
-    with tempfile.TemporaryDirectory(prefix='spoligotyper_') as tmp:
-        if UNSAFE.search(tmp):
-            raise SealError('The temporary folder "{}" contains a space or a comma, which Seal cannot handle. '
-                            'Set TMPDIR to another folder.'.format(tmp))
+    tmp = safe_temporary_folder()
+    try:
         stats_file = Path(tmp) / 'stats.tsv'
-        cmd = seal_command(safe_paths(inputs, tmp, 'in'), safe_paths(refs, tmp, 'ref'), stats_file, threads, memory,
-                           k=k, hdist=hdist)
+        cmd = seal_command(safe_paths(inputs, tmp, 'in', check_extension=True), safe_paths(refs, tmp, 'ref'),
+                           stats_file, threads, memory, k=k, hdist=hdist)
         log.debug('Running: %s', shlex.join(cmd))
         proc = subprocess.run(cmd, capture_output=True, text=True)
         if proc.returncode != 0 or not stats_file.exists():
@@ -175,6 +217,8 @@ def run_seal(inputs, refs, threads=1, memory='1g', k=KMER_SIZE, hdist=1):
                 proc.returncode, failure_reason(detail), shlex.join(cmd), '\n'.join(detail[-10:])))
         log.debug('Seal output:\n%s', proc.stderr.strip())
         return parse_stats(stats_file)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
 
 
 def count_spacers(inputs, spacers_fasta, threads=1, memory='1g'):

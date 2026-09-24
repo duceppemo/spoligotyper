@@ -157,8 +157,41 @@ def test_safe_paths(tmp_path):
     links.mkdir()
     safe = seal.safe_paths([odd, plain], links, 'in')
     assert safe[1] == str(plain)
-    assert not seal.UNSAFE.search(safe[0]) and safe[0].endswith('.fastq.gz')
-    assert Path(safe[0]).resolve() == odd.resolve()
+    assert safe[0] == str(links / 'in0.fastq.gz') and Path(safe[0]).resolve() == odd.resolve()
+    # BBTools 40 takes any argument containing "xmx" or "xms" for a Java memory setting
+    assert seal.UNSAFE.search('/tmp/spoligotyper_87mxmx1_/stats.tsv') and seal.UNSAFE.search('/d/S_XMS.fq')
+    assert not seal.UNSAFE.search('/data/run1/S1_R1.fastq.gz')
+
+
+@pytest.mark.parametrize('name, content, gz, expected', [
+    ('dataset_1.dat', '@r\nACGT\n+\nIIII\n', True, 'in0.fastq.gz'),  # Galaxy names its files .dat
+    ('dataset_2.dat', '>c\nACGT\n', False, 'in0.fasta'),
+    ('reads.fastq', '@r\nACGT\n+\nIIII\n', True, 'in0.fastq.gz'),  # Gzipped without .gz
+    ('reads.fq.gz', '@r\nACGT\n+\nIIII\n', True, None),  # Right extension: used as is
+])
+def test_extension_from_content(tmp_path, name, content, gz, expected):
+    path = tmp_path / name
+    if gz:
+        with gzip.open(path, 'wt') as f:
+            f.write(content)
+    else:
+        path.write_text(content)
+    links = tmp_path / 'links'
+    links.mkdir()
+    safe = seal.safe_paths([path], links, 'in', check_extension=True)[0]
+    assert safe == (str(links / expected) if expected else str(path))
+
+
+def test_safe_temporary_folder(monkeypatch, tmp_path):
+    names = iter(['spoligotyper_87mxmx1_', 'spoligotyper_ok'])
+
+    def mkdtemp(prefix):
+        folder = tmp_path / next(names)
+        folder.mkdir()
+        return str(folder)
+    monkeypatch.setattr(seal.tempfile, 'mkdtemp', mkdtemp)
+    assert seal.safe_temporary_folder() == str(tmp_path / 'spoligotyper_ok')
+    assert not (tmp_path / 'spoligotyper_87mxmx1_').exists()
 
 
 def test_single_input_not_interleaved(monkeypatch):
