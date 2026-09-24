@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+* PDF report: samples with the same spoligotype are grouped in the summary (largest groups first, alternate groups
+  shaded, failed samples last), and each sample has its own page, in the same order, so that its tables are never
+  split between pages. The review box is never separated from its heading.
+
 ## 0.4.1 (2026-09-23)
 **Fixed**
 * Seal failed ("Could not create the Java Virtual Machine") when a path contained "xmx" or "xms", which BBTools 40

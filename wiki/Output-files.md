@@ -61,9 +61,11 @@ Made for quality assurance: everything needed to check a result, and to trace ho
 
 ![Summary page of the PDF report](https://raw.githubusercontent.com/duceppemo/spoligotyper/main/assets/report_summary.png)
 
-1. **Summary**: date, operator, and for each sample the spoligotype, octal code, pattern and status. Warnings and
-   errors are listed below, followed by a box for the reviewer's name, date and signature.
-2. **Samples**: one section per sample, with
+1. **Summary**: date, operator, and for each sample the spoligotype, octal code, species, lineage, pattern and
+   status. Samples with the same spoligotype are grouped (the largest groups first; alternate groups shaded), and
+   failed samples come last. Warnings and errors are listed below, followed by a box for the reviewer's name, date
+   and signature.
+2. **Samples**: one page per sample, in the order of the summary, so its tables are never split, with
    * the spoligotype, octal, hexadecimal and binary codes, and the pattern;
    * the input files: full path (and the real file when it is a symbolic link), size, modification date and MD5
      checksum;

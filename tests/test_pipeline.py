@@ -232,3 +232,16 @@ def test_batch_unexpected_error(monkeypatch, tmp_path):
     results = pipeline.spoligotype_samples(samples, jobs=2)
     assert [r.sample for r in results] == ['good', 'bad']
     assert results[0].status == 'ok' and results[1].status == 'failed' and 'KeyError' in results[1].error
+
+
+def test_pdf_order_by_spoligotype():
+    from spoligotyper.pdf import by_spoligotype
+    a, b = '1' * 43, '0' * 43
+    results = [Result('S3', binary=b, spoligotype='Spoligo not found', octal='000'),
+               Result('S2', binary=a, spoligotype='SB0001', octal='777'),
+               Result('bad', error='boom'),
+               Result('S1', binary=a, spoligotype='SB0001', octal='777'),
+               Result('S0', binary='01' * 21 + '0', spoligotype='SB0002', octal='252')]
+    order = [(group, r.sample) for group, r in by_spoligotype(results)]
+    # Largest group first, then SB numbers before unnamed patterns, samples sorted within a group, failed last
+    assert order == [(0, 'S1'), (0, 'S2'), (1, 'S0'), (2, 'S3'), (3, 'bad')]

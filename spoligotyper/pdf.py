@@ -10,7 +10,6 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 from reportlab.platypus import (
-    CondPageBreak,
     Image,
     KeepTogether,
     PageBreak,
@@ -32,6 +31,7 @@ PALE_BLUE = colors.HexColor('#9DB3D4')
 MAGENTA = colors.HexColor('#C8215F')
 GREY = colors.HexColor('#56627A')
 LIGHT = colors.HexColor('#EEF2F8')
+GROUP_SHADE = colors.HexColor('#F0F3F8')  # Every other group of samples with the same spoligotype
 AMBER = colors.HexColor('#F6D8A8')
 STATUS_COLOURS = {'ok': colors.HexColor('#2E7D32'), 'warning': colors.HexColor('#B26A00'),
                   'failed': colors.HexColor('#C62828')}
@@ -138,6 +138,25 @@ class NumberedCanvas(canvas.Canvas):
         super().save()
 
 
+def by_spoligotype(results):
+    """
+    Samples grouped by spoligotype (identical 43-spacer pattern): the largest groups first, then SB numbers before
+    patterns not in the database, and by sample name within a group. Failed samples come last.
+
+    :return: [(group number, result)]
+    """
+    groups = {}
+    for r in results:
+        groups.setdefault('' if r.error else r.binary, []).append(r)
+
+    def order(members):
+        first = members[0]
+        return (bool(first.error), -len(members), not first.found, first.spoligotype if first.found else first.octal)
+
+    return [(i, r) for i, members in enumerate(sorted(groups.values(), key=order))
+            for r in sorted(members, key=lambda r: r.sample)]
+
+
 def summary_section(results, run):
     counts = {s: sum(r.status == s for r in results) for s in ('ok', 'warning', 'failed')}
     story = [
@@ -151,18 +170,21 @@ def summary_section(results, run):
     ]
     header = [text(h, SMALL) for h in ('Sample', 'Spoligotype', 'Octal', 'Species', 'Lineage',
                                        'Pattern (spacers 1 to 43)', 'Status')]
-    rows = [header]
-    for r in results:
+    rows, shading = [header], []
+    for row, (group, r) in enumerate(by_spoligotype(results), 1):
+        if group % 2:
+            shading.append(('BACKGROUND', (0, row), (-1, row), GROUP_SHADE))
         rows.append([text(r.sample, WRAP), text(r.spoligotype or '-', SMALL), text(r.octal or '-', MONO),
                      text(r.species.species if r.species else '-', SMALL),
                      text((r.lineage.lineage if r.lineage else '') or '-', WRAP),
                      pattern(r.binary, square=2.4) if not r.error else text('-', SMALL), status_label(r.status)])
     widths = [1.0 * inch, 0.8 * inch, 1.05 * inch, 1.15 * inch, 0.7 * inch, 1.95 * inch, WIDTH - 6.65 * inch]
     table = Table(rows, colWidths=widths, repeatRows=1)
-    table.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)]))
-    story.append(table)
+    table.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)] + shading))
+    story += [table, text('Samples with the same spoligotype are grouped; the sample pages follow the same order.',
+                          SMALL)]
 
-    notes = [(r.sample, r.error.splitlines()[0] if r.error else w) for r in results
+    notes = [(r.sample, r.error.splitlines()[0] if r.error else w) for _, r in by_spoligotype(results)
              for w in ([r.error] if r.error else r.warnings)]
     if notes:
         story.append(Paragraph('Warnings and errors', H2))
@@ -170,17 +192,17 @@ def summary_section(results, run):
         table.setStyle(TableStyle(GRID))
         story.append(table)
 
-    story += [Paragraph('Review', H2),
-              text('Spoligotypes are called from whole genome sequencing data. The evidence for each call (reads per '
-                   'spacer) is given in the sample sections, and the software, parameters and input files in the '
-                   'run information section.', SMALL),
-              Spacer(1, 8)]
+    review_block = [Paragraph('Review', H2),
+                    text('Spoligotypes are called from whole genome sequencing data. The evidence for each call (reads '
+                         'per spacer) is given in the sample sections, and the software, parameters and input files in '
+                         'the run information section.', SMALL),
+                    Spacer(1, 8)]
     review = Table([[text('Reviewed by', SMALL), '', text('Date', SMALL), '', text('Signature', SMALL), '']],
                    colWidths=[0.9 * inch, 1.9 * inch, 0.5 * inch, 1.2 * inch, 0.8 * inch, WIDTH - 5.3 * inch],
                    rowHeights=[0.35 * inch])
     review.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (0, 0), LIGHT), ('BACKGROUND', (2, 0), (2, 0), LIGHT),
                                        ('BACKGROUND', (4, 0), (4, 0), LIGHT)]))
-    story.append(review)
+    story.append(KeepTogether(review_block + [review]))  # Never the heading on one page and the box on the next
     return story
 
 
@@ -207,8 +229,8 @@ def spacer_table(result):
     return table
 
 
-def sample_section(result):
-    story = [CondPageBreak(2.8 * inch),
+def sample_section(result, number=1, total=1):
+    story = [text('Sample {} of {}'.format(number, total), SUBTITLE),
              Paragraph('{} &nbsp; <font size="9" color="{}">{}</font>'.format(
                  escape(result.sample), _hex(STATUS_COLOURS[result.status]), result.status.upper()), H2)]
     files = [text('{}{}\n{} · modified {}{}'.format(f.path, '\n→ {}'.format(f.target) if f.target else '',
@@ -250,7 +272,7 @@ def sample_section(result):
                                 result.min_count, unit), SMALL)])]
     if result.warnings:
         story += [Paragraph('Warnings', H3)] + [text('• ' + w, SMALL) for w in result.warnings]
-    return [KeepTogether(story[:3])] + story[3:]
+    return [KeepTogether(story[:4])] + story[4:]
 
 
 def species_block(result):
@@ -353,10 +375,10 @@ def write_pdf(results, run, path):
                             bottomMargin=0.75 * inch, title='Spoligotyping report', author=run.operator,
                             subject=producer, creator=producer)
     story = summary_section(results, run)
-    story.append(PageBreak())
-    story.append(Paragraph('Samples', H1))
-    for result in results:
-        story += sample_section(result)
+    ordered = by_spoligotype(results)
+    for i, (_, result) in enumerate(ordered, 1):
+        story.append(PageBreak())  # One sample per page: its tables are never split
+        story += sample_section(result, i, len(ordered))
     story += run_section(run)
 
     class Canvas(NumberedCanvas):
