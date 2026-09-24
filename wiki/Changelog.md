@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.2 (2026-09-24)
 * PDF report: samples with the same spoligotype are grouped in the summary (largest groups first, alternate groups
   shaded, failed samples last), and each sample has its own page, in the same order, so that its tables are never
   split between pages. The review box is never separated from its heading.
