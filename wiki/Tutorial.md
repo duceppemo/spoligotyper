@@ -53,11 +53,13 @@ The main columns of the table:
 | RD9, RD4, RD1 | deleted, deleted, present |
 | Lineage | BOV |
 | MTBCFraction | 1.00 |
-The sample is named after the file, and the results are saved as a table and a PDF report. Each spacer is either found in about 30 to 80 reads (present), or in none
-(absent): a clear-cut result. The depth, 65x, is estimated from the number of bases, and all the reads appear to
-be MTBC (`MTBCFraction` 1.00). The species, *M. bovis*, comes from the regions of difference RD9 and RD4, both
-deleted, and the lineage from the SNP barcode: see [Species and lineage](Species-and-lineage). Spacer 25 has about twice as many reads as the others because it is present twice in
-the DR locus of AF2122/97. With paired-end reads, add `-r2 R2.fastq.gz`.
+
+The sample is named after the file, and the results are saved as a table and a PDF report. Each spacer is either
+found in about 30 to 80 reads (present), or in none (absent): a clear-cut result. The depth, 65x, is estimated from
+the number of bases, and all the reads appear to be MTBC (`MTBCFraction` 1.00). The species, *M. bovis*, comes from
+the regions of difference RD9 and RD4, both deleted, and the lineage from the SNP barcode: see
+[Species and lineage](Species-and-lineage). Spacer 25 has about twice as many reads as the others because it is
+present twice in the DR locus of AF2122/97. With paired-end reads, add `-r2 R2.fastq.gz`.
 
 The pattern, 1101101000001110111111111111111111111100000, is SB0140, the spoligotype of AF2122/97.
 It shows the classic *M. bovis* signature: spacers 3, 9, 16 and 39 to 43 are absent.
