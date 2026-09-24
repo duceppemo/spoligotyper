@@ -85,7 +85,8 @@ spoligotyper -i data/ -o batch/ --operator "Your Name"
 The reads and the two assemblies are detected automatically. `batch/spoligotyping.tsv` has one line per sample, and
 `batch/spoligotyping_report.pdf` has a summary page, one section per sample with the reads supporting each spacer,
 and the run information (software versions, checksums, parameters) for quality assurance. See
-[Output files](Output-files#pdf-report-spoligotyping_reportpdf-or-sample_spoligotypingpdf).
+[Output files](Output-files#pdf-report-spoligotyping_reportpdf-or-sample_spoligotypingpdf), and the
+[report of this tutorial](https://github.com/duceppemo/spoligotyper/blob/main/assets/example_report.pdf) as an example.
 
 ## Next steps
 * [Output files](Output-files): what each column and each part of the PDF report means

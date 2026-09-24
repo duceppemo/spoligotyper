@@ -12,5 +12,6 @@
 ```
 bash run_example.sh 4   # 4 threads
 ```
-Downloads are kept in `data/` for later runs, and the reports are saved in `results/`. The
+Downloads are kept in `data/` for later runs, and the reports are saved in `results/`. The PDF report of this
+example is in [`assets/example_report.pdf`](../assets/example_report.pdf). The
 [tutorial](https://github.com/duceppemo/spoligotyper/wiki/Tutorial) walks through the same steps by hand.

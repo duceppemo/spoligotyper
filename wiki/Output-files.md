@@ -57,6 +57,7 @@ species, lineage and status of each sample. Run `multiqc` on the output folder t
 
 ## PDF report: `spoligotyping_report.pdf` or `<sample>_spoligotyping.pdf`
 Made for quality assurance: everything needed to check a result, and to trace how it was produced.
+[Example report](https://github.com/duceppemo/spoligotyper/blob/main/assets/example_report.pdf) (the three samples of the [tutorial](Tutorial)).
 
 ![Summary page of the PDF report](https://raw.githubusercontent.com/duceppemo/spoligotyper/main/assets/report_summary.png)
 

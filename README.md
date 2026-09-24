@@ -27,7 +27,7 @@ the species and the lineage, and flags contaminated or mixed samples.
   <img src="https://raw.githubusercontent.com/duceppemo/spoligotyper/main/assets/report_summary.png" width="49%" alt="Summary page of the PDF report, with the spoligotype pattern of three samples">
   <img src="https://raw.githubusercontent.com/duceppemo/spoligotyper/main/assets/report_sample.png" width="49%" alt="Sample page of the PDF report, with the reads supporting each spacer">
   <br>
-  <sub>PDF report of the <a href="https://github.com/duceppemo/spoligotyper/wiki/Tutorial">tutorial</a>: summary, and the evidence for each sample.</sub>
+  <sub>PDF report of the <a href="https://github.com/duceppemo/spoligotyper/wiki/Tutorial">tutorial</a>: summary, and the evidence for each sample. <a href="assets/example_report.pdf">Full example report (PDF)</a>.</sub>
 </p>
 
 ## Features
