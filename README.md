@@ -8,9 +8,9 @@
 <p align="center">
   <a href="https://github.com/duceppemo/spoligotyper/actions/workflows/tests.yml"><img src="https://github.com/duceppemo/spoligotyper/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
   <a href="https://codecov.io/gh/duceppemo/spoligotyper"><img src="https://codecov.io/gh/duceppemo/spoligotyper/graph/badge.svg" alt="Coverage"></a>
-  <a href="https://github.com/duceppemo/spoligotyper/releases/latest"><img src="https://img.shields.io/github/v/release/duceppemo/spoligotyper" alt="Release"></a>
-  <a href="https://pypi.org/project/spoligotyper/"><img src="https://img.shields.io/pypi/v/spoligotyper" alt="PyPI"></a>
-  <a href="https://bioconda.github.io/recipes/spoligotyper/README.html"><img src="https://img.shields.io/conda/vn/bioconda/spoligotyper?label=bioconda" alt="Bioconda"></a>
+  <a href="https://github.com/duceppemo/spoligotyper/releases/latest"><img src="https://img.shields.io/github/v/release/duceppemo/spoligotyper?cacheSeconds=3600" alt="Release"></a>
+  <a href="https://pypi.org/project/spoligotyper/"><img src="https://img.shields.io/pypi/v/spoligotyper?cacheSeconds=3600" alt="PyPI"></a>
+  <a href="https://bioconda.github.io/recipes/spoligotyper/README.html"><img src="https://img.shields.io/conda/vn/bioconda/spoligotyper?label=bioconda&cacheSeconds=3600" alt="Bioconda"></a>
   <img src="https://img.shields.io/badge/python-3.10%E2%80%933.14-blue" alt="Python 3.10–3.14">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/duceppemo/spoligotyper" alt="License"></a>
   <a href="https://github.com/duceppemo/spoligotyper/wiki"><img src="https://img.shields.io/badge/docs-wiki-informational" alt="Documentation"></a>
