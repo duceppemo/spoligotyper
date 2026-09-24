@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.0 (unreleased)
+## 0.4.0 (2026-09-23)
 **New**
 * Species check from the regions of difference RD9, RD4 and RD1: *M. tuberculosis*, *M. africanum*, *M. bovis*,
   BCG, other animal-adapted lineages, or "MTBC not detected". See [Species and lineage](Species-and-lineage).
@@ -24,8 +24,23 @@
 * The table has 8 new columns at the end: `Species`, `Lineage`, `LineageName`, `RD9`, `RD4`, `RD1`,
   `MTBCFraction` and `Closest`.
 * A second pass over the reads (a few seconds) for the lineage SNPs.
+* The low-depth warning uses the estimated MTBC depth (total depth times the fraction of MTBC reads), shown to one
+  decimal.
+* Fasta files with more than 1,000 sequences and 13 Mb are typed as reads (reads in fasta format), not as an assembly.
+* `--no-pdf` no longer drops the MD5 checksums from the JSON; only `--no-md5` does.
+* Symbolic links to folders are followed in batch mode.
 
-## 0.3.0 (2026-09-24)
+**Fixed**
+* Input files, output folders or an installation path with a space or a comma made Seal fail. They are now passed
+  to Seal through links with safe names.
+* A single fastq file of interleaved pairs was processed by Seal as paired-end reads, doubling the counts and the
+  estimated MTBC fraction.
+* Seal errors are reported with their cause (e.g. "truncated or corrupt input") instead of a generic Java message.
+* A sample failing with an unexpected error no longer stops a batch.
+* Nanopore data: type the assembly rather than the reads, which gave inaccurate spoligotypes in our tests (see the
+  [FAQ](FAQ#can-i-type-nanopore-reads)).
+
+## 0.3.0 (2026-09-23)
 **New**
 * Batch mode: `-i FOLDER` types every sample of a folder and its subfolders. fastq and fasta files are detected,
   R1/R2 files are paired, and ambiguous sample names are reported rather than guessed. A sample that fails is

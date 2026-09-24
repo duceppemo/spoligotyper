@@ -9,10 +9,12 @@ spoligotyper -i FOLDER -o FOLDER [options]               # All the samples in a 
 | Data | Command |
 |---|---|
 | Paired-end reads | `spoligotyper -r1 S1_R1.fastq.gz -r2 S1_R2.fastq.gz -o results/` |
-| Single-end reads (Illumina, Ion Torrent, nanopore, ...) | `spoligotyper -r1 S1.fastq.gz -o results/` |
-| Assembly (contigs or complete genome) | `spoligotyper -r1 S1.fasta -o results/` |
+| Single-end reads (Illumina, Ion Torrent, ...) | `spoligotyper -r1 S1.fastq.gz -o results/` |
+| Assembly (contigs or complete genome). Recommended for nanopore data: see the [FAQ](FAQ#can-i-type-nanopore-reads) | `spoligotyper -r1 S1.fasta -o results/` |
 
-Files can be gzipped or not. The file type is detected from the content, not from the extension.
+Files can be gzipped or not. The file type is detected from the content, not from the extension. A fasta file with
+more than 1,000 sequences and 13 Mb is typed as reads in fasta format rather than as an assembly. A single fastq
+file is always typed as single-end reads, even if it contains interleaved pairs.
 Use raw or trimmed reads: trimming is not needed.
 
 The sample is named after the `-r1` file, without its extension (`.fastq.gz`, `.fasta`, ...). For fastq files, the
@@ -23,7 +25,8 @@ choose another name.
 ```
 spoligotyper -i run_2026-09/ -o results/
 ```
-The folder and its subfolders are searched for sequence files (hidden files and folders are skipped):
+The folder and its subfolders are searched for sequence files (hidden files and folders are skipped, symbolic links
+to folders are followed):
 
 | Files | Sample |
 |---|---|
@@ -48,7 +51,7 @@ typed; spoligotyper then exits with code 1 so that pipelines notice.
 | `-s`, `--sample` | from the file name | With `-r1`: sample name |
 | `-o`, `--output` | required | Folder for the reports, created if needed |
 | `--no-pdf` | | Do not write the PDF report |
-| `--no-md5` | | Do not compute the MD5 checksums of the input files for the PDF report |
+| `--no-md5` | | Do not compute the MD5 checksums of the input files (shown in the PDF and JSON reports) |
 | `--operator` | user name | Name of the person running the analysis, shown in the PDF report |
 | `--no-species` | | Skip the [species check and the lineage](Species-and-lineage): one pass over the reads instead of two |
 | `-m`, `--min-count` | 5 for fastq, 1 for fasta | Minimum number of reads containing a spacer to call it present. See [How it works](How-it-works#minimum-count) |

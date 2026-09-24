@@ -49,7 +49,8 @@ The main columns of the table:
 | Octal | 664073777777600 |
 | Spoligotype | SB0140 |
 | Depth | 65 |
-| Species | M. bovis (RD9 deleted, RD4 deleted, RD1 present) |
+| Species | M. bovis |
+| RD9, RD4, RD1 | deleted, deleted, present |
 | Lineage | BOV |
 | MTBCFraction | 1.00 |
 The sample is named after the file, and the results are saved as a table and a PDF report. Each spacer is either found in about 30 to 80 reads (present), or in none

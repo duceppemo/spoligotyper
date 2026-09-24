@@ -23,7 +23,7 @@ A region is **deleted** when its depth is at most 10% of the control depth, **pr
 | RD9 | RD4 | RD1 | Species |
 |---|---|---|---|
 | present | present | present | *M. tuberculosis* (or *M. canettii* when no lineage SNP is found) |
-| deleted | present | present | *M. africanum* (lineage 5 or 6), or an animal-adapted lineage that is not *M. bovis* (*M. caprae*, *M. pinnipedii*, ...) |
+| deleted | present | present | *M. africanum* (with the SNPs of lineage 5 or 6), an animal-adapted lineage that is not *M. bovis* (*M. caprae*, *M. pinnipedii*, ...; BOV_AFRI SNP only), or either when no lineage SNP is found |
 | deleted | present | deleted | Animal-adapted lineage with an RD1 deletion, e.g. *M. microti* |
 | deleted | deleted | present | *M. bovis* |
 | deleted | deleted | deleted | *M. bovis* BCG |

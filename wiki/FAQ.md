@@ -41,9 +41,20 @@ It is a snapshot of the Mbovis.org database with 1,976 SB patterns. To use a new
 Mbovis.org, format it as above and use `--db`.
 
 ### Can I type nanopore reads?
-Yes. Seal allows 1 mismatch per 25 bp spacer, which suits accurate reads (recent flow cells and basecallers).
-With less accurate reads, fewer reads match each spacer: check the `SpacerCount` column, and lower `--min-count` if
-present spacers have low counts.
+Type the **assembly**, not the reads. In our hands, spoligotypes called directly from nanopore reads were often
+wrong, while spoligotypes called from assemblies of the same long reads were almost always right.
+
+Spacers are 25 bp long and spoligotyper allows 1 mismatch per spacer: individual nanopore reads carry enough errors
+(substitutions and, above all, small insertions and deletions) that many reads covering a present spacer are missed,
+and present spacers can fall below `--min-count`. The consensus sequence of an assembly corrects these errors. So:
+1. assemble the long reads (e.g. [Flye](https://github.com/mikolmogorov/Flye) or
+   [Autocycler](https://github.com/rrwick/Autocycler)), ideally with polishing (e.g.
+   [Medaka](https://github.com/nanoporetech/medaka));
+2. type the assembly: `spoligotyper -r1 assembly.fasta -o results/`.
+
+The direct repeat locus is repetitive, but long reads usually span it entirely, so it assembles well.
+If you type nanopore reads anyway, treat the result as provisional: check the `SpacerCount` column for present
+spacers with low counts, and confirm with the assembly.
 
 ### Does spoligotyper work on *M. tuberculosis*?
 Yes: spacer detection and the binary, octal and hexadecimal codes work for the whole complex. Only the SB number

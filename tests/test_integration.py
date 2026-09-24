@@ -1,5 +1,6 @@
 """End-to-end tests on synthetic data. Skipped when Seal (BBTools) is not installed."""
 
+import gzip
 import json
 import logging
 import os
@@ -205,3 +206,67 @@ def test_batch_arguments(data, tmp_path):
         with pytest.raises(SystemExit) as e:
             main([*args, '-o', str(tmp_path)])
         assert e.value.code == 2
+
+
+def test_odd_file_names(data, tmp_path, capsys):
+    """seal.sh splits its arguments on spaces: such paths are linked under safe names."""
+    folder = tmp_path / 'my folder'
+    folder.mkdir()
+    odd = folder / 'my sample,1.fasta'
+    odd.write_text((data / 'AF2122.fasta').read_text())
+    row = run(capsys, '-r1', odd, '-o', tmp_path / 'out put')
+    assert row['Sample'] == 'my sample,1' and row['Spoligotype'] == 'SB0140' and row['Species'] == 'M. bovis'
+    assert (tmp_path / 'out put' / 'my sample,1_spoligotyping.txt').exists()
+
+
+def test_reads_in_fasta_format(data, tmp_path, capsys):
+    """Reads converted to fasta are typed as reads (minimum count 5), not as an assembly."""
+    fasta = tmp_path / 'reads.fasta'
+    with gzip.open(data / 'bovis_single.fq.gz', 'rt') as f, open(fasta, 'w') as out:
+        lines = f.read().splitlines()
+        for i in range(0, len(lines), 4):
+            out.write('>{}\n{}\n'.format(lines[i][1:], lines[i + 1]))
+    monkey_threshold = 'spoligotyper.pipeline.FASTA_READS_MIN_BASES'  # The synthetic reads are small
+    import unittest.mock
+    with unittest.mock.patch(monkey_threshold, 100_000):
+        row = run(capsys, '-r1', fasta, '-o', tmp_path)
+    assert row['FileType'] == 'fasta' and row['MinCount'] == '5' and row['Spoligotype'] == 'SB0140'
+    assert 'typed as reads in fasta format' in row['Warnings']
+
+
+def test_interleaved_fastq_is_not_paired(data, tmp_path, capsys):
+    """A single fastq file is typed as single-end reads even when its reads are interleaved pairs."""
+    with gzip.open(data / 'bovis_R1.fastq.gz', 'rt') as f1, gzip.open(data / 'bovis_R2.fastq.gz', 'rt') as f2:
+        r1, r2 = f1.read().splitlines(), f2.read().splitlines()
+    interleaved = tmp_path / 'interleaved.fastq'
+    with open(interleaved, 'w') as out:
+        for i in range(0, len(r1), 4):
+            out.write('\n'.join(r1[i:i + 4] + r2[i:i + 4]) + '\n')
+    counts = {}
+    for name in ('R1', 'R2'):
+        counts[name] = run(capsys, '-r1', data / 'bovis_{}.fastq.gz'.format(name), '-o', tmp_path, '-s', name)
+    row = run(capsys, '-r1', interleaved, '-o', tmp_path)
+    total = [int(a) + int(b) for a, b in zip(counts['R1']['SpacerCount'].split(':'),
+                                               counts['R2']['SpacerCount'].split(':'), strict=True)]
+    assert [int(c) for c in row['SpacerCount'].split(':')] == total
+
+
+def test_md5_without_pdf(data, tmp_path, capsys):
+    run(capsys, '-r1', data / 'AF2122.fasta', '-o', tmp_path)  # run() uses --no-pdf
+    sample = json.loads((tmp_path / 'AF2122_spoligotyping.json').read_text())['samples'][0]
+    assert len(sample['files'][0]['md5']) == 32
+
+
+def test_package_path_with_space(tmp_path, data):
+    """The package data (spacers, markers) is found and usable from a folder with a space."""
+    import shutil
+
+    import spoligotyper
+    target = tmp_path / 'pkg dir'
+    shutil.copytree(os.path.dirname(spoligotyper.__file__), target / 'spoligotyper')
+    env = dict(os.environ, PYTHONPATH=str(target))
+    proc = subprocess.run([sys.executable, '-m', 'spoligotyper', '-r1', str(data / 'AF2122.fasta'), '-o',
+                           str(tmp_path / 'out'), '-t', '2', '--memory', '500m', '--no-pdf'],
+                          capture_output=True, text=True, env=env, cwd=tmp_path)
+    assert proc.returncode == 0, proc.stderr
+    assert 'SB0140' in proc.stdout and str(target) in (tmp_path / 'out' / 'AF2122_spoligotyping.json').read_text()

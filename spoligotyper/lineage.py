@@ -65,12 +65,18 @@ def read_barcode(path=BARCODE):
 
 
 def on_one_path(lineages):
-    """True when the lineages are nested, e.g. 4, 4.3 and 4.3.4 (animal clades: BOV within BOV_AFRI, 6 too)."""
-    numeric = sorted((lin for lin in lineages if lin[0].isdigit() and lin not in ('5', '6', '7')), key=len)
-    if any(not numeric[i + 1].startswith(numeric[i] + '.') for i in range(len(numeric) - 1)):
+    """
+    True when the lineages can occur in one strain: nested human lineages (4, 4.3, 4.3.4), or one of the other
+    lineages (5, 6, 7, BOV). BOV_AFRI is the clade of M. bovis and lineage 6: it only goes with BOV or 6.
+    """
+    lineages = set(lineages)
+    human = sorted((lin for lin in lineages if lin[0] in '1234'), key=len)
+    if any(not human[i + 1].startswith(human[i] + '.') for i in range(len(human) - 1)):
         return False
     groups = {'human' if lin[0] in '1234' else lin for lin in lineages}
-    groups.discard('BOV_AFRI')
+    if 'BOV_AFRI' in groups:
+        groups.discard('BOV_AFRI')
+        return groups <= {'BOV'} or groups <= {'6'}
     return len(groups) <= 1
 
 

@@ -51,8 +51,17 @@ Some spacers were found, but in too few reads to be called present. This happens
 mixed or contaminated samples. See [How it works](How-it-works#minimum-count) to decide whether to lower
 `--min-count`.
 
-### `is a fasta file: with --min-count N, spacers are probably missed`
-Assemblies contain each spacer once. Do not set `--min-count` for fasta files: it is 1 by default.
+### `assembly typed with minimum count N: spacers are probably missed`
+Assemblies contain each spacer once. Do not set `--min-count` for assemblies: it is 1 by default.
+
+### `typed as reads in fasta format`
+The fasta file has more than 1,000 sequences and more than 13 Mb (3 times the genome): it holds reads (e.g. from
+`fasterq-dump --fasta`), not an assembly, and is typed as reads (minimum count 5, depth and MTBC fraction estimated).
+If it really is an assembly (e.g. a metagenome assembly), use `--min-count 1`.
+
+### Paths with spaces or commas
+They are supported: Seal cannot read them, so spoligotyper gives Seal links with safe names in a temporary folder.
+Only the temporary folder itself must not contain a space or a comma (set `TMPDIR` otherwise).
 
 ### `-r2 is only for paired-end fastq files`
 `-r2` must be the R2 reads of a paired-end run. Assemblies are given with `-r1` alone.

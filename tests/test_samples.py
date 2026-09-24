@@ -57,3 +57,10 @@ def test_no_samples(tmp_path):
         find_samples(tmp_path)
     with pytest.raises(SpoligoError, match='not found'):
         find_samples(tmp_path / 'missing')
+
+
+def test_symlinked_folders(tmp_path):
+    touch(tmp_path, 'real/S1.fasta', 'input/S2.fasta')
+    (tmp_path / 'input' / 'linked').symlink_to(tmp_path / 'real')
+    (tmp_path / 'input' / 'loop').symlink_to(tmp_path / 'input')  # Must not loop forever
+    assert [s.name for s in find_samples(tmp_path / 'input')] == ['S1', 'S2']

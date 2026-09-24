@@ -85,7 +85,7 @@ def build_parser():
                         help='Folder to hold the reports. Created if needed.')
     output.add_argument('--no-pdf', action='store_true', help='Do not write the PDF report.')
     output.add_argument('--no-md5', action='store_true',
-                        help='Do not compute the MD5 checksums of the input files for the PDF report.')
+                        help='Do not compute the MD5 checksums of the input files (PDF and JSON reports).')
     output.add_argument('--operator', metavar='NAME',
                         help='Name of the person running the analysis, shown in the PDF report. Default: user name.')
 
@@ -132,7 +132,7 @@ def main(argv=None):
     start = time.monotonic()
     output = Path(args.output).expanduser()
     options = dict(min_count=args.min_count, threads=args.threads, memory=args.memory, database=args.db,
-                   md5=not args.no_pdf and not args.no_md5, species_check=not args.no_species)
+                   md5=not args.no_md5, species_check=not args.no_species)
 
     try:
         check_seal()

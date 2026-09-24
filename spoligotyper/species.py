@@ -111,7 +111,9 @@ def call_species(check, lineages=()):
         return 'M. africanum'
     if rd1 == DELETED:
         return 'Animal-adapted MTBC, not M. bovis (RD1 deleted, e.g. M. microti)'
-    return 'Animal-adapted MTBC, not M. bovis (e.g. M. caprae, M. pinnipedii)'
+    if 'BOV_AFRI' in main:  # The clade of M. bovis and lineage 6, without the SNPs of either
+        return 'Animal-adapted MTBC, not M. bovis (e.g. M. caprae, M. pinnipedii)'
+    return 'M. africanum or animal-adapted MTBC, not M. bovis (RD9 deleted, RD4 present)'
 
 
 def consistency_warnings(check, lineages):
@@ -124,7 +126,7 @@ def consistency_warnings(check, lineages):
         warnings.append('RD9 is {} but the lineage SNPs indicate lineage {}'.format(rd9, '/'.join(sorted(main))))
     if 'BOV' in main and rd4 == PRESENT:
         warnings.append('the lineage SNPs indicate M. bovis but RD4 is present')
-    if rd4 == DELETED and main and 'BOV' not in main:
+    if rd4 == DELETED and main - {'BOV', 'BOV_AFRI'}:
         warnings.append('RD4 is deleted (M. bovis) but the lineage SNPs indicate lineage {}'.format(
             '/'.join(sorted(main))))
     return warnings

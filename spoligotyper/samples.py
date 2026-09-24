@@ -67,7 +67,13 @@ def find_samples(folder, exclude=()):
         raise SpoligoError('Input folder not found: {}'.format(folder))
     exclude = {Path(p).resolve() for p in exclude}
     found = {}  # {sample name: [(file type, mate number or None, path)]}
-    for root, dirs, filenames in os.walk(folder):
+    visited = set()  # Real paths of the folders searched: symbolic links to folders are followed, loops are not
+    for root, dirs, filenames in os.walk(folder, followlinks=True):
+        real = Path(root).resolve()
+        if real in visited:
+            dirs[:] = []
+            continue
+        visited.add(real)
         dirs[:] = sorted(d for d in dirs if Path(root, d).resolve() not in exclude and not d.startswith('.'))
         for filename in sorted(filenames):
             parsed = split_extension(filename)

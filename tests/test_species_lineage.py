@@ -23,6 +23,8 @@ def marker_counts(control=30, rd9=30, rd4=30, rd1=30):
     (0, 0, 0, ['BOV', 'BOV_AFRI'], 'M. bovis BCG'),
     (0, 30, 30, ['6', 'BOV_AFRI'], 'M. africanum'),
     (0, 30, 30, ['BOV_AFRI'], 'Animal-adapted MTBC, not M. bovis (e.g. M. caprae, M. pinnipedii)'),
+    (0, 30, 30, [], 'M. africanum or animal-adapted MTBC, not M. bovis (RD9 deleted, RD4 present)'),
+    (0, 0, 30, ['BOV_AFRI'], 'M. bovis'),  # The BOV SNP not covered
     (0, 30, 0, ['BOV_AFRI'], 'Animal-adapted MTBC, not M. bovis (RD1 deleted, e.g. M. microti)'),
     (9, 30, 30, ['4'], 'MTBC (mixed or unclear RD profile)'),
 ])
@@ -50,12 +52,19 @@ def test_mtbc_fraction():
     assert species.check_species(marker_counts(), 'fasta').mtbc_fraction is None
 
 
+def test_expected_control_reads():
+    assert species.expected_control_reads(30, 150, paired=False) == pytest.approx(40.2)
+    assert species.expected_control_reads(30, 150, paired=True) == pytest.approx(80.4)
+
+
 def test_consistency_warnings():
     check = species.check_species(marker_counts(30, 30, 30, 30), 'fastq', lineages=['BOV', 'BOV_AFRI'])
     warnings = species.consistency_warnings(check, ['BOV', 'BOV_AFRI'])
     assert any('RD9 is present' in w for w in warnings) and any('RD4 is present' in w for w in warnings)
     check = species.check_species(marker_counts(30, 0, 0, 30), 'fastq', lineages=['4'])
     assert len(species.consistency_warnings(check, ['4'])) == 2
+    assert species.consistency_warnings(check, ['BOV_AFRI']) == []  # Consistent with M. bovis
+    assert species.consistency_warnings(check, ['BOV', 'BOV_AFRI']) == []
 
 
 def snp_counts(alt_lineages=(), reads=20, mixed=None):
@@ -93,6 +102,10 @@ def test_lineage_mixed_and_conflict():
     assert call.lineage.startswith('mixed: ') and len(call.mixed) == 4
     call = lineage.call_lineage(snp_counts(('2', '2.2')), 'fastq')  # 2 and the H37Rv-like 4.9: impossible
     assert call.conflict and call.lineage == 'mixed: 2, 2.2, 4, 4.9'
+    call = lineage.call_lineage(snp_counts(('BOV_AFRI',)), 'fastq')  # H37Rv-like with the BOV_AFRI allele
+    assert call.conflict and call.lineage == 'mixed: 4, 4.9, BOV_AFRI'
+    call = lineage.call_lineage(snp_counts(('4', '4.9', 'BOV_AFRI')), 'fastq')  # The BOV SNP not covered
+    assert not call.conflict and call.lineage == 'BOV_AFRI'
 
 
 def test_on_one_path():
@@ -100,6 +113,9 @@ def test_on_one_path():
     assert lineage.on_one_path(['BOV', 'BOV_AFRI']) and lineage.on_one_path(['6', 'BOV_AFRI'])
     assert not lineage.on_one_path(['4.1', '4.3']) and not lineage.on_one_path(['2', '4'])
     assert not lineage.on_one_path(['BOV', '6'])
+    assert lineage.on_one_path(['BOV_AFRI'])
+    for other in (['4', '4.9'], ['5'], ['1'], ['7'], ['2', '2.2']):
+        assert not lineage.on_one_path(other + ['BOV_AFRI']), other
 
 
 def test_closest():

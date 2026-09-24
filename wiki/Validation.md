@@ -51,14 +51,15 @@ is SB2277, the pattern with no spacer, flagged with a warning (see the [FAQ](FAQ
 | sim_Beijing_30x | Spoligo not found | 000000000003771 | M. tuberculosis | 2.2.1 | 1.00 | - | OK |
 | sim_AF2122_97_30x | SB0140 | 664073777777600 | M. bovis | BOV | 1.00 | - | OK |
 | sim_mixed_H37Rv70_AF2122_30 | Spoligo not found | 777777777767771 | MTBC, mixed sample? | mixed: 4 68%, BOV 35%, BOV_AFRI 26% | 1.00 | mixed sample, spacers with few reads | OK |
-| sim_contaminated_H37Rv15x_marinum15x | Spoligo not found | 777777477760771 | M. tuberculosis | 4.9 | 0.40 | contamination | OK |
+| sim_contaminated_H37Rv15x_marinum15x | Spoligo not found | 777777477760771 | M. tuberculosis | 4.9 | 0.40 | contamination, low MTBC depth | OK |
 
 * At 10x, three present spacers get fewer than 5 reads and are called absent: the pattern is wrong, but flagged
   ("low depth", "spacers with few reads"). Use `--min-count 2` or `3` for low depth data, see
   [How it works](How-it-works#minimum-count).
 * The mixed sample is detected from both alleles of the lineage SNPs; its spoligotype is the union of the two
   strains' patterns.
-* The contaminated sample keeps its spoligotype, species and lineage, with a contamination warning.
+* The contaminated sample keeps its spoligotype, species and lineage, with warnings for the contamination and for
+  the low MTBC depth (15x).
 
 ## Comparison with SpoTyping
 [SpoTyping](https://github.com/xiaeryu/SpoTyping-v2.0) 2.1 (Xia *et al.* 2016, BLAST-based), an independent in silico

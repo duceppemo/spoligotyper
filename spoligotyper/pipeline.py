@@ -37,7 +37,10 @@ from .spoligotype import (
 log = logging.getLogger(__name__)
 
 # Default minimum count for a spacer to be called present. A genome assembly contains each spacer once at most.
-MIN_COUNT = {'fastq': 5, 'fasta': 1}
+MIN_COUNT = {'reads': 5, 'assembly': 1}
+# A fasta file with more sequences and bases than this holds reads (e.g. from fasterq-dump --fasta), not an assembly
+FASTA_READS_MIN_SEQUENCES = 1000
+FASTA_READS_MIN_BASES = 3 * 4.4e6
 GENOME_SIZE = 4.4e6  # M. tuberculosis complex, used to estimate the sequencing depth
 LOW_DEPTH = 20  # Below this depth, present spacers may get fewer reads than the default minimum count
 LOW_MTBC_FRACTION = 0.6  # Below this estimated fraction of MTBC reads, the sample is probably contaminated
@@ -70,7 +73,8 @@ class InputFile:
 class Result:
     sample: str
     files: list = field(default_factory=list)  # InputFile
-    file_type: str = ''
+    file_type: str = ''  # File format: "fasta" or "fastq"
+    data: str = ''  # "reads" or "assembly": fastq files hold reads, fasta files usually an assembly
     min_count: int = 0
     counts: list = field(default_factory=list)  # Number of reads (or contigs) matching each spacer, in order
     binary: str = ''
@@ -97,11 +101,26 @@ class Result:
         return self.spoligotype not in ('', NOT_FOUND)
 
     @property
+    def is_reads(self):
+        return self.data == 'reads'
+
+    @property
+    def unit(self):
+        """What the counts count: "reads" or "contigs"."""
+        return 'reads' if self.is_reads else 'contigs'
+
+    @property
     def depth(self):
         """Estimated sequencing depth for reads, assuming all the reads are from the sample: None for assemblies."""
-        if self.file_type != 'fastq' or not self.bases:
+        if not self.is_reads or not self.bases:
             return None
         return self.bases / GENOME_SIZE
+
+    @property
+    def mtbc_depth(self):
+        """Estimated depth of the MTBC genome: the depth times the fraction of MTBC reads, when known."""
+        fraction = self.species.mtbc_fraction if self.species else None
+        return None if self.depth is None else self.depth * (1.0 if fraction is None else fraction)
 
     @property
     def paired(self):
@@ -109,7 +128,7 @@ class Result:
 
     @property
     def read_length(self):
-        return self.bases / self.reads if self.file_type == 'fastq' and self.reads and self.bases else None
+        return self.bases / self.reads if self.is_reads and self.reads and self.bases else None
 
     @property
     def median_present_count(self):
@@ -243,7 +262,7 @@ def spoligotype(r1, r2=None, sample=None, min_count=None, threads=1, memory='1g'
     Spoligotype a sample from single-end or paired-end reads, or from an assembly.
 
     :param min_count: minimum number of reads (or contigs) matching a spacer to call it present.
-                      Default: 5 for fastq files, 1 for fasta files.
+                      Default: 5 for reads, 1 for assemblies.
     :param md5: compute the MD5 checksum of the input files, for the report
     :param species_check: also check the species (regions of difference) and the lineage (SNP barcode)
     :return: Result. Errors are raised, not stored in the result.
@@ -251,8 +270,9 @@ def spoligotype(r1, r2=None, sample=None, min_count=None, threads=1, memory='1g'
     start = time.monotonic()
     kind = check_inputs(r1, r2)
     inputs = [f for f in (r1, r2) if f]
-    result = Result(sample or sample_name(r1, kind), [InputFile.describe(f, md5) for f in inputs], kind)
-    result.min_count = MIN_COUNT[kind] if min_count is None else min_count
+    result = Result(sample or sample_name(r1, kind), [InputFile.describe(f, md5) for f in inputs], kind,
+                    data='reads' if kind == 'fastq' else 'assembly')
+    result.min_count = MIN_COUNT[result.data] if min_count is None else min_count
     spacer_names = read_spacer_names(spacers)
     db = load_database(database)  # Before running Seal, to report a bad database right away
 
@@ -261,20 +281,29 @@ def spoligotype(r1, r2=None, sample=None, min_count=None, threads=1, memory='1g'
     refs = [spacers, species.MARKERS_FASTA] if species_check else [spacers]
     stats = seal.run_seal(inputs, refs, threads=threads, memory=memory)
     result.reads, result.bases = stats.reads, stats.bases
+    many_sequences = (stats.reads or 0) > FASTA_READS_MIN_SEQUENCES and (stats.bases or 0) > FASTA_READS_MIN_BASES
+    if kind == 'fasta' and many_sequences:
+        result.data = 'reads'
+        if min_count is None:
+            result.min_count = MIN_COUNT['reads']
+        result.warn('%d sequences, %.0f Mb: typed as reads in fasta format (minimum count %d), not as an assembly. '
+                    'For an assembly, use --min-count 1.', stats.reads, stats.bases / 1e6, result.min_count)
     result.counts = [stats.counts.get(name, 0) for name in spacer_names]
     result.binary = to_binary(stats.counts, spacer_names, result.min_count)
     result.octal, result.hexadecimal = binary_to_octal(result.binary), binary_to_hex(result.binary)
     result.spoligotype = lookup(result.binary, db)
     result.closest = closest(result.binary, db) if any(result.counts) else []
     if species_check:
-        result.species = species.check_species(stats.counts, kind, result.depth, result.read_length, result.paired)
+        data_type = 'fastq' if result.is_reads else 'fasta'  # Thresholds for reads or for contigs
+        result.species = species.check_species(stats.counts, data_type, result.depth, result.read_length,
+                                                result.paired)
         result.lineage = lineage.LineageCall()
         if result.species.mtbc:  # Some lineage SNPs are conserved in other mycobacteria: no lineage without MTBC
             # Lineage SNPs need exact matches: a second pass with 31-mers and no mismatch
             snps = seal.run_seal(inputs, lineage.LINEAGE_SNPS_FASTA, threads=threads, memory=memory,
                                  k=lineage.KMER_SIZE, hdist=0)
             fraction = result.species.mtbc_fraction
-            result.lineage = lineage.call_lineage(snps.counts, kind, contaminated=fraction is not None and
+            result.lineage = lineage.call_lineage(snps.counts, data_type, contaminated=fraction is not None and
                                                   fraction < lineage.CONTAMINATED_FRACTION)
             species.name_species(result.species, result.lineage.called,
                                  mixed=bool(result.lineage.mixed or result.lineage.conflict))
@@ -288,17 +317,21 @@ def spoligotype(r1, r2=None, sample=None, min_count=None, threads=1, memory='1g'
 
 def check_result(result):
     """Add warnings for results that deserve a second look."""
-    if result.file_type == 'fasta' and result.min_count > 1:
-        result.warn('fasta file typed with minimum count %d: spacers are probably missed. '
-                    'Leave --min-count unset (1 for fasta files).', result.min_count)
+    if not result.is_reads and result.min_count > 1:
+        result.warn('assembly typed with minimum count %d: spacers are probably missed. '
+                    'Leave --min-count unset (1 for assemblies).', result.min_count)
     check_species(result)
     if not any(result.counts):
         result.warn('no spacer found. Is it a Mycobacterium tuberculosis complex sample?')
         return
-    if result.file_type != 'fastq':
+    if not result.is_reads:
         return
-    if result.depth is not None and result.depth < LOW_DEPTH:
-        result.warn('estimated depth %.0fx: present spacers may be missed.', result.depth)
+    if result.mtbc_depth is not None and result.mtbc_depth < LOW_DEPTH:
+        if result.mtbc_depth < result.depth * 0.95:
+            result.warn('estimated MTBC depth %.1fx (%.1fx in total): present spacers may be missed.',
+                        result.mtbc_depth, result.depth)
+        else:
+            result.warn('estimated depth %.1fx: present spacers may be missed.', result.depth)
     borderline = [i + 1 for i, c in enumerate(result.counts) if 0 < c < result.min_count]
     if borderline:
         result.warn('%d spacer(s) called absent were seen in fewer than %d reads: %s. Low depth or contamination? '
@@ -313,13 +346,13 @@ def check_result(result):
 
 
 def check_species(result):
-    check, call = result.species, result.lineage
+    check, call = result.species, result.lineage or lineage.LineageCall()
     if check is None:
         return
     if not check.mtbc:
         if any(result.counts):
-            result.warn('too little MTBC DNA to check the species (median %g reads on the MTBC control regions).',
-                        check.control_depth)
+            result.warn('too little MTBC DNA to check the species (median %g %s on the MTBC control regions).',
+                        check.control_depth, result.unit)
         return
     if check.mtbc_fraction is not None and check.mtbc_fraction < LOW_MTBC_FRACTION:
         result.warn('only about %d%% of the reads appear to be from the M. tuberculosis complex: contamination?',
@@ -335,7 +368,7 @@ def check_species(result):
     if call.mixed:
         result.warn('both alleles of %d lineage SNP(s) seen (%s): mixed sample?', len(call.mixed),
                     ', '.join('{} {:.0f}%'.format(s.lineage, s.fraction * 100) for s in call.mixed))
-    if result.found and check.state('RD9') == species.PRESENT:
+    if result.found and any(result.counts) and check.state('RD9') == species.PRESENT:
         result.warn('%s is an SB number, but RD9 is present: SB numbers are for RD9-deleted (animal) lineages.',
                     result.spoligotype)
 
@@ -358,10 +391,13 @@ def spoligotype_samples(samples, jobs=1, **kwargs):
         log.info('Sample %d of %d: %s', i, len(samples), sample.name)
         try:
             return spoligotype(*sample.files, sample=sample.name, **kwargs)
-        except (seal.SealError, SpoligoError, OSError) as e:
-            log.error('%s: %s', sample.name, e)
+        except Exception as e:  # Report the sample as failed, whatever the error, and type the others
+            expected = isinstance(e, (seal.SealError, SpoligoError, OSError))
+            log.error('%s: %s', sample.name, e, exc_info=not expected)  # Traceback for unexpected errors (bugs)
             files = [InputFile.describe(f, md5=False) for f in sample.files if Path(f).is_file()]
-            return Result(sample.name, files, sample.file_type, error=str(e))
+            error = str(e) if expected else '{}: {}'.format(type(e).__name__, e)
+            return Result(sample.name, files, sample.file_type, error=error,
+                          data='reads' if sample.file_type == 'fastq' else 'assembly')
 
     with ThreadPoolExecutor(max_workers=jobs) as pool:  # Threads are enough: the work is done by Seal
         return list(pool.map(run, enumerate(samples, 1)))

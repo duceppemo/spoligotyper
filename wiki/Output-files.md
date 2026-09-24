@@ -11,7 +11,7 @@ A tab-separated table with a header and one line per sample. The same table is p
 | `Octal` | `664073777777600` | 15-digit octal code |
 | `Hexadecimal` | `6D-03-5F-7F-FF-60` | Hexadecimal code, 6 blocks |
 | `Spoligotype` | `SB0140` | SB number of the pattern in the [Mbovis.org](https://www.mbovis.org/) database, or `Spoligo not found` |
-| `FileType` | `fastq` | `fastq` (reads) or `fasta` (assembly) |
+| `FileType` | `fastq` | File format: `fastq` (reads) or `fasta` (an assembly, or reads in fasta format: see `Warnings`) |
 | `Reads` | `1212727` | Number of reads (or contigs) in the input |
 | `Depth` | `65` | Reads only: estimated sequencing depth, all bases divided by 4.4 Mb |
 | `MinCount` | `5` | Minimum count used to call a spacer present |
@@ -80,4 +80,5 @@ Every page has the spoligotyper version, the date, user and computer, and "Page 
 
 ![Sample section of the PDF report](https://raw.githubusercontent.com/duceppemo/spoligotyper/main/assets/report_sample.png)
 
-MD5 checksums take one to two seconds per GB of input. Use `--no-md5` to skip them, and `--no-pdf` to skip the PDF.
+MD5 checksums take one to two seconds per GB of input. Use `--no-md5` to skip them (in the PDF and the JSON), and
+`--no-pdf` to skip the PDF.

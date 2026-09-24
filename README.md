@@ -31,7 +31,8 @@ the species and the lineage, and flags contaminated or mixed samples.
 </p>
 
 ## Features
-* **Reads or assemblies**: single-end or paired-end fastq, or fasta, gzipped or not. Illumina and nanopore reads.
+* **Reads or assemblies**: single-end or paired-end fastq, or fasta, gzipped or not. For nanopore data, type the
+  assembly ([why](https://github.com/duceppemo/spoligotyper/wiki/FAQ#can-i-type-nanopore-reads)).
 * **Batch mode**: point it at a folder; fastq and fasta files are detected and R1/R2 files paired automatically.
 * **All the standard codes**: binary, octal, hexadecimal, and SB number for *M. bovis* and other animal-adapted lineages.
 * **Species and lineage**: *M. tuberculosis*, *M. africanum*, *M. bovis*, BCG, ... from regions of difference, and
@@ -56,8 +57,8 @@ See [Installation](https://github.com/duceppemo/spoligotyper/wiki/Installation) 
 ## Quick start
 ```
 spoligotyper -r1 sample_R1.fastq.gz -r2 sample_R2.fastq.gz -o results/   # Paired-end reads
-spoligotyper -r1 sample.fastq.gz -o results/                             # Single-end or nanopore reads
-spoligotyper -r1 assembly.fasta -o results/                              # Assembly
+spoligotyper -r1 sample.fastq.gz -o results/                             # Single-end reads
+spoligotyper -r1 assembly.fasta -o results/                              # Assembly (also for nanopore data)
 spoligotyper -i folder/ -o results/                                      # All the samples in a folder
 ```
 The results are printed and saved in `results/` as a table and a PDF report. New to the tool? The

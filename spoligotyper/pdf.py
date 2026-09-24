@@ -220,9 +220,9 @@ def sample_section(result):
         story.append(key_values([(file_label, files or '-'), ('Error', text(result.error, MONO))]))
         return story
 
-    kind = {'fastq': 'reads (fastq, {})'.format('paired-end' if len(result.files) == 2 else 'single-end'),
-            'fasta': 'assembly (fasta)'}[result.file_type]
-    unit = 'reads' if result.file_type == 'fastq' else 'contigs'
+    kind = ('reads ({}, {})'.format(result.file_type, 'paired-end' if result.paired else 'single-end')
+            if result.is_reads else 'assembly ({})'.format(result.file_type))
+    unit = result.unit
     rows = [('Spoligotype', Paragraph('<b>{}</b>'.format(escape(result.spoligotype)), BODY)),
             ('Octal', text(result.octal, MONO)),
             ('Hexadecimal', text(result.hexadecimal, MONO)),
@@ -262,7 +262,7 @@ def species_block(result):
                                               if call.spoligotypes else '')))
     elif check.mtbc:
         rows.append(('Lineage', 'no lineage SNP found (lineages 1 to 7 and animal lineages are not detected)'))
-    unit = 'reads' if result.file_type == 'fastq' else 'contigs'
+    unit = result.unit
     fraction = check.mtbc_fraction
     rows.append(('MTBC DNA', 'median {:g} {} per control region, {:.0f}% of the control regions found{}'.format(
         check.control_depth, unit, check.control_found * 100,

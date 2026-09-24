@@ -1,11 +1,12 @@
 import gzip
 import hashlib
+from pathlib import Path
 
 import pytest
 
-from spoligotyper import seal
-from spoligotyper.pipeline import InputFile, Result, check_inputs, file_md5, file_type, write_tsv
-from spoligotyper.samples import sample_name
+from spoligotyper import pipeline, seal, species
+from spoligotyper.pipeline import InputFile, Result, check_inputs, check_result, file_md5, file_type, write_tsv
+from spoligotyper.samples import Sample, sample_name
 from spoligotyper.spoligotype import SpoligoError
 
 
@@ -91,7 +92,7 @@ def test_seal_missing(monkeypatch):
 
 def test_write_tsv(tmp_path):
     ok = Result('S1', counts=[3, 0] + [1] * 41, binary='10' + '1' * 41, octal='x', hexadecimal='y',
-                spoligotype='SB0000', file_type='fastq', min_count=1, reads=1000, bases=88_000_000)
+                spoligotype='SB0000', file_type='fastq', data='reads', min_count=1, reads=1000, bases=88_000_000)
     ok.warnings.append('a warning')
     failed = Result('S2', file_type='fasta', error='Seal failed: boom\nmore details')
     write_tsv([ok, failed], tmp_path / 'report.tsv')
@@ -106,10 +107,12 @@ def test_write_tsv(tmp_path):
 
 
 def test_result_properties():
-    r = Result('S', counts=[10, 0, 30] + [0] * 40, binary='101' + '0' * 40, file_type='fasta', bases=5)
+    r = Result('S', counts=[10, 0, 30] + [0] * 40, binary='101' + '0' * 40, file_type='fasta', data='assembly',
+               bases=5)
     assert r.depth is None and r.median_present_count == 20 and r.status == 'ok' and not r.found
-    r.file_type = 'fastq'
-    assert r.depth == 5 / 4.4e6
+    assert r.unit == 'contigs'
+    r.data = 'reads'
+    assert r.depth == r.mtbc_depth == 5 / 4.4e6 and r.unit == 'reads'
 
 
 def test_input_file(tmp_path):
@@ -127,3 +130,72 @@ def test_input_file(tmp_path):
 def test_seal_versions(monkeypatch):
     monkeypatch.setattr(seal, 'executable', lambda: None)
     assert seal.versions() == {'BBTools': 'unknown', 'Java': 'unknown'}
+
+
+@pytest.mark.parametrize('lines, expected', [
+    (['Input is being processed as unpaired', "Error: truncated or corrupt input for 'x.fq.gz'; data may be "
+      'incomplete.', 'java.lang.Exception: ', 'Mismatch between length', '\tat jgi.Seal.main(Seal.java:74)',
+      'Exception in thread "main" java.lang.RuntimeException: Seal terminated in an error state; the output may be '
+      'corrupt.'], "Error: truncated or corrupt input for 'x.fq.gz'; data may be incomplete."),
+    (['Input is being processed as paired', 'java.lang.AssertionError: ',
+      'There appear to be different numbers of reads in the paired input files.', '\tat stream.X'],
+     'java.lang.AssertionError: There appear to be different numbers of reads in the paired input files.'),
+    (['Exception in thread "main" java.lang.RuntimeException: Seal terminated in an error state'],
+     'Exception in thread "main" java.lang.RuntimeException: Seal terminated in an error state'),
+    (['some output', 'last line'], 'last line'),
+])
+def test_failure_reason(lines, expected):
+    assert seal.failure_reason(lines) == expected
+
+
+def test_safe_paths(tmp_path):
+    odd = tmp_path / 'my sample,1=x.fastq.gz'
+    odd.write_text('x')
+    plain = tmp_path / 'plain.fasta'
+    plain.write_text('>a')
+    links = tmp_path / 'links'
+    links.mkdir()
+    safe = seal.safe_paths([odd, plain], links, 'in')
+    assert safe[1] == str(plain)
+    assert not seal.UNSAFE.search(safe[0]) and safe[0].endswith('.fastq.gz')
+    assert Path(safe[0]).resolve() == odd.resolve()
+
+
+def test_single_input_not_interleaved(monkeypatch):
+    monkeypatch.setattr(seal, 'check_seal', lambda: 'seal.sh')
+    assert 'int=f' in seal.seal_command(['r.fq'], 'ref.fa', 'stats.tsv', 1, '1g')
+    assert 'int=f' not in seal.seal_command(['r1.fq', 'r2.fq'], 'ref.fa', 'stats.tsv', 1, '1g')
+
+
+def test_low_mtbc_depth_warning():
+    """38x in total but 40% MTBC reads: 15x of MTBC, below the 20x threshold."""
+    r = Result('S', counts=[20] * 43, binary='1' * 43, file_type='fastq', data='reads', min_count=5,
+               reads=1_000_000, bases=int(38 * 4.4e6), species=species.SpeciesCheck(mtbc=True, mtbc_fraction=0.4))
+    check_result(r)
+    assert any('estimated MTBC depth 15.2x (38.0x in total)' in w for w in r.warnings)
+    r = Result('S', counts=[20] * 43, binary='1' * 43, file_type='fastq', data='reads', min_count=5,
+               reads=1_000_000, bases=int(19.6 * 4.4e6))
+    check_result(r)
+    assert any('estimated depth 19.6x' in w for w in r.warnings)
+
+
+def test_no_sb_warning_without_spacers():
+    check = species.SpeciesCheck(mtbc=True, regions={'RD9': ('present', 1.0)}, species='x')
+    r = Result('S', counts=[0] * 43, binary='0' * 43, spoligotype='SB2277', file_type='fasta', data='assembly',
+               min_count=1, species=check, lineage=pipeline.lineage.LineageCall())
+    check_result(r)
+    assert not any('SB number' in w for w in r.warnings) and any('no spacer found' in w for w in r.warnings)
+
+
+def test_batch_unexpected_error(monkeypatch, tmp_path):
+    """A bug in one sample must not stop the batch."""
+    def fake(*files, sample=None, **kwargs):
+        if sample == 'bad':
+            raise KeyError('boom')
+        return Result(sample, file_type='fasta', data='assembly')
+    monkeypatch.setattr(pipeline, 'spoligotype', fake)
+    samples = [Sample('good', 'fasta', [str(tmp_path / 'good.fasta')]),
+               Sample('bad', 'fasta', [str(tmp_path / 'bad.fasta')])]
+    results = pipeline.spoligotype_samples(samples, jobs=2)
+    assert [r.sample for r in results] == ['good', 'bad']
+    assert results[0].status == 'ok' and results[1].status == 'failed' and 'KeyError' in results[1].error
