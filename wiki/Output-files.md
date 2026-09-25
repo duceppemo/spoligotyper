@@ -20,12 +20,13 @@ A tab-separated table with a header and one line per sample. The same table is p
 | `Species` | `M. bovis` | From the regions of difference and the lineage SNPs, see [Species and lineage](Species-and-lineage) |
 | `Lineage` | `BOV` | Most specific lineage of the SNP barcode (e.g. `4.3.4.2`, `2.2.1`, `BOV`), or `mixed: ...` |
 | `LineageName` | `M. bovis` | e.g. "Euro-American (LAM)", "East-Asian" (Beijing) |
-| `RD9`, `RD4`, `RD1` | `deleted` | `present`, `deleted` or `partial` |
+| `RD9`, `RD4`, `RD1` | `deleted` | `present`, `deleted` or `partial` (also `RD7` and `RD12`, the last two columns) |
 | `MTBCFraction` | `1.00` | Reads only: estimated fraction of the reads from the *M. tuberculosis* complex |
 | `Closest` | `SB0140 (spacer 7 differs)` | For a pattern not in the database: the closest SB numbers, up to 3 spacers away |
+| `RD7`, `RD12` | `deleted` | `present`, `deleted` or `partial` |
 
-Columns are only ever added at the end: the first 6 are those of version 0.2, the next 6 were added in 0.3 and the
-last 8 in 0.4. The species columns are empty with `--no-species`.
+Columns are only ever added at the end: the first 6 are those of version 0.2, the next 6 were added in 0.3, the next
+8 in 0.4 and the last 2 in 0.5. The species columns are empty with `--no-species`.
 
 ### Octal code
 The binary pattern is cut into 14 groups of 3 spacers, and each group is written as one octal digit (000 = 0,

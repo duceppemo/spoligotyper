@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Validate spoligotyper on public reference genomes (genomes.tsv), public reads, and simulated reads:
 # pure, mixed (two strains) and contaminated (MTBC + M. marinum). Writes results/validation.md.
-# Requires spoligotyper, BBTools (seal.sh, randomreads.sh) and curl. About 600 MB of downloads, kept in data/.
+# Requires spoligotyper, BBTools (seal.sh, randomreads.sh), curl and unzip. About 600 MB of downloads, kept in data/.
 # Usage: bash run_validation.sh [threads]
 set -euo pipefail
 
@@ -16,9 +16,24 @@ download() {  # url output
     curl -sSfL --retry 3 -o "$2.part" "$1" && mv "$2.part" "$2"
 }
 
+assembly() {  # accession output: all the sequences of an NCBI assembly (GCF_/GCA_)
+    [ -s "$2" ] && return
+    echo "Downloading $2" >&2
+    local tmp
+    tmp=$(mktemp -d)
+    curl -sSfL --retry 3 -o "$tmp/genome.zip" \
+        "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/$1/download?include_annotation_type=GENOME_FASTA"
+    unzip -q "$tmp/genome.zip" -d "$tmp"
+    cat "$tmp"/ncbi_dataset/data/"$1"/*.fna > "$2.part" && mv "$2.part" "$2"
+    rm -rf "$tmp"
+}
+
 # Reference genomes, named after the sample column
 grep -v '^#' genomes.tsv | tail -n +2 | while IFS=$'\t' read -r sample accession _; do
-    download "${efetch}${accession}" "data/genomes/${sample}.fasta"
+    case "$accession" in
+        GC[AF]_*) assembly "$accession" "data/genomes/${sample}.fasta" ;;
+        *) download "${efetch}${accession}" "data/genomes/${sample}.fasta" ;;
+    esac
     sleep 0.4  # NCBI: at most 3 requests per second
 done
 

@@ -6,7 +6,7 @@ abstract: >-
   spoligotyper finds the 43 spacers of the direct repeat (DR) locus of Mycobacterium tuberculosis complex genomes in
   sequencing reads (fastq) or genome assemblies (fasta), using Seal from BBTools. It reports the spoligotype as
   binary, octal and hexadecimal codes, and as an SB number from the Mbovis.org database of spoligotype patterns.
-  It also identifies the species from regions of difference (RD9, RD4, RD1) and the lineage from a SNP barcode,
+  It also identifies the species from regions of difference (RD1, RD4, RD7, RD9, RD12) and the lineage from a SNP barcode,
   estimates the fraction of MTBC reads, and flags mixed or contaminated samples.
 authors:
   - family-names: Duceppe

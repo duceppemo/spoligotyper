@@ -2,6 +2,10 @@
 # Lineages: predictions of Coll et al. 2014 (Nat Commun 5:4812, Supplementary Table 4) for the same genomes.
 # expected_octal: documented spoligotypes (H37Rv SIT451; AF2122/97 SB0140; BCG SB0120), or "Beijing" for the Beijing
 # signature (spacers 1-34 absent, 35-43 present). Empty: not documented, compared with SpoTyping in the wiki instead.
+# A value ending with * is a prefix; * alone is not checked. Accessions: NCBI nucleotide (NC_...) or assembly (GCF_...).
+# Species of the other members of the complex: NCBI taxonomy of the genome; the RD profiles are those of the RD PCR
+# scheme (RD1, RD4, RD7, RD9, RD12), and the lineage clades are those of Coll et al. 2014 (BOV: M. bovis clade,
+# BOV_AFRI: animal lineages and lineage 6).
 sample	accession	organism	expected_species	expected_lineage	expected_octal
 H37Rv	NC_000962.3	M. tuberculosis H37Rv	M. tuberculosis	4.9	777777477760771
 CDC1551	NC_002755.2	M. tuberculosis CDC1551	M. tuberculosis	4.1.1.3	
@@ -12,10 +16,25 @@ CCDC5079	NC_017523.1	M. tuberculosis CCDC5079 (Beijing)	M. tuberculosis	2.2.1	Be
 CAS_NITR204	NC_021193.1	M. tuberculosis CAS/NITR204	M. tuberculosis	3	
 EAI5_NITR206	NC_021194.1	M. tuberculosis EAI5/NITR206	M. tuberculosis	1.1	
 RGTB423	NC_017528.1	M. tuberculosis RGTB423	M. tuberculosis	1.2.2	
-GM041182	NC_015758.1	M. africanum GM041182 (lineage 6)	M. africanum	6	
+GM041182	NC_015758.1	M. africanum GM041182 (lineage 6)	M. africanum (lineage 6)	6	
 AF2122_97	NC_002945.4	M. bovis AF2122/97	M. bovis	BOV	664073777777600
 BCG_Pasteur	NC_008769.1	M. bovis BCG Pasteur 1173P2	M. bovis BCG	BOV	676773777777600
-M_canettii	NC_015848.1	M. canettii CIPT 140010059	MTBC, RD9 intact, no lineage (e.g. M. canettii)		
+M_canettii	NC_015848.1	M. canettii CIPT 140010059	M. canettii		
 M_marinum	NC_010612.1	M. marinum M	MTBC not detected		
 M_kansasii	NC_022663.1	M. kansasii ATCC 12478	MTBC not detected		
 M_avium	NC_008595.1	M. avium 104	MTBC not detected		
+M_africanum_RB30001	GCF_905183025.1	M. africanum RB30001 (same spoligotype as GM041182, AFRI_1)	M. africanum (lineage 6)	6	770777777777671
+M_africanum_RB30065	GCF_905183075.1	M. africanum RB30065 (lineage not documented)	M. africanum*	*	
+M_caprae_Allgaeu	GCF_001941665.1	M. caprae Allgaeu	M. orygis or M. caprae	BOV	
+M_caprae_SY-1	GCF_050259585.1	M. caprae SY-1	M. orygis or M. caprae	BOV	
+M_orygis_51145	GCF_015265495.1	M. orygis 51145	M. orygis or M. caprae	BOV	
+M_orygis_NIAB	GCF_033782915.1	M. orygis NIAB_BDWBCSHFL_1	M. orygis or M. caprae	BOV	
+M_microti_OV254	GCF_904810325.1	M. microti OV254	M. microti, M. pinnipedii or M. mungi	BOV_AFRI	
+M_microti_MausIV	GCF_904810355.1	M. microti Maus IV	M. microti, M. pinnipedii or M. mungi	BOV_AFRI	
+M_microti_94-2272	GCF_904810365.1	M. microti 94-2272	M. microti, M. pinnipedii or M. mungi	BOV_AFRI	
+M_pinnipedii_MP1	GCF_003027895.2	M. pinnipedii MP1 (draft)	M. microti, M. pinnipedii or M. mungi	BOV_AFRI	
+M_pinnipedii_BAA-688	GCF_002982275.1	M. pinnipedii ATCC BAA-688 (draft)	M. microti, M. pinnipedii or M. mungi	BOV_AFRI	
+M_mungi_BM22813	GCF_001652545.1	M. mungi BM22813 (draft)	M. microti, M. pinnipedii or M. mungi	BOV_AFRI	
+M_canettii_ET1291	GCF_035581225.1	M. canettii ET1291	M. canettii		
+M_canettii_CIPT140070010	GCF_000328785.1	M. canettii CIPT 140070010	M. canettii		
+M_canettii_CIPT140070017	GCF_000328825.1	M. canettii CIPT 140070017	M. canettii	*	

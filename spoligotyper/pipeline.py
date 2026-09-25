@@ -49,7 +49,7 @@ WEAK_SPACER_MIN_MEDIAN = 30  # ... when the median is high enough for this not t
 
 REPORT_HEADER = ['Sample', 'SpacerCount', 'Binary', 'Octal', 'Hexadecimal', 'Spoligotype',
                  'FileType', 'Reads', 'Depth', 'MinCount', 'Status', 'Warnings',
-                 'Species', 'Lineage', 'LineageName', 'RD9', 'RD4', 'RD1', 'MTBCFraction', 'Closest']
+                 'Species', 'Lineage', 'LineageName', 'RD9', 'RD4', 'RD1', 'MTBCFraction', 'Closest', 'RD7', 'RD12']
 
 
 @dataclass
@@ -144,13 +144,14 @@ class Result:
         depth = '' if self.depth is None else '{:.0f}'.format(self.depth)
         notes = self.error.splitlines()[0] if self.error else ' | '.join(self.warnings)
         check, call = self.species, self.lineage
-        regions = [check.state(r) if check else '' for r in species.REGIONS]
+        state = {r: check.state(r) if check else '' for r in species.REGIONS}
         fraction = '' if check is None or check.mtbc_fraction is None else '{:.2f}'.format(check.mtbc_fraction)
         return [self.sample, ':'.join(str(c) for c in self.counts), self.binary, self.octal, self.hexadecimal,
                 self.spoligotype, self.file_type, '' if self.reads is None else str(self.reads), depth,
                 str(self.min_count or ''), self.status, ' '.join(notes.split()),
                 check.species if check else '', call.lineage if call else '', call.name if call else '',
-                *regions, fraction, describe_closest(self.closest)]
+                state['RD9'], state['RD4'], state['RD1'], fraction, describe_closest(self.closest),
+                state['RD7'], state['RD12']]  # RD7 and RD12 were added in version 0.5: at the end
 
     def to_dict(self):
         """Everything about the result, for the JSON report."""
@@ -306,7 +307,8 @@ def spoligotype(r1, r2=None, sample=None, min_count=None, threads=1, memory='1g'
             result.lineage = lineage.call_lineage(snps.counts, data_type, contaminated=fraction is not None and
                                                   fraction < lineage.CONTAMINATED_FRACTION)
             species.name_species(result.species, result.lineage.called,
-                                 mixed=bool(result.lineage.mixed or result.lineage.conflict))
+                                 mixed=bool(result.lineage.mixed or result.lineage.conflict),
+                                 spacers=any(result.counts))
     check_result(result)
     result.seconds = time.monotonic() - start
     log.info('%s: %s (octal %s)%s', result.sample, result.spoligotype, result.octal,
@@ -322,7 +324,10 @@ def check_result(result):
                     'Leave --min-count unset (1 for assemblies).', result.min_count)
     check_species(result)
     if not any(result.counts):
-        result.warn('no spacer found. Is it a Mycobacterium tuberculosis complex sample?')
+        if result.species and result.species.species == 'M. canettii':
+            result.warn('no standard spacer found, as usual for M. canettii.')
+        else:
+            result.warn('no spacer found. Is it a Mycobacterium tuberculosis complex sample?')
         return
     if not result.is_reads:
         return

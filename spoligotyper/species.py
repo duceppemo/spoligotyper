@@ -3,9 +3,11 @@ Species check from regions of difference (RD), and amount of MTBC DNA in the sam
 
 markers.fasta holds 100 bp chunks of the H37Rv genome (see scripts/make_reference_data.py):
   MTBC  control chunks, found in all MTBC genomes and in no non-tuberculous mycobacteria
-  RD9   deleted in M. africanum and the animal-adapted lineages, including M. bovis
-  RD4   deleted in M. bovis and BCG only
-  RD1   deleted in BCG (and, with a different deletion, in M. microti)
+  RD1   deleted in BCG and the Dassie bacillus
+  RD4   deleted in M. bovis and BCG (and some M. canettii)
+  RD7   deleted in lineage 6 (M. africanum) and the animal-adapted lineages
+  RD9   deleted in M. africanum (lineages 5 and 6) and the animal-adapted lineages, including M. bovis
+  RD12  deleted in M. bovis, BCG, M. caprae and M. orygis (and some M. canettii)
 
 Each region's read depth is compared with the control depth: about the same when the region is present, 0 when it
 is deleted, and in between for a mix of strains with and without it.
@@ -18,7 +20,7 @@ from .spoligotype import data_file
 
 MARKERS_FASTA = data_file('markers.fasta')
 CONTROL = 'MTBC'
-REGIONS = ('RD9', 'RD4', 'RD1')
+REGIONS = ('RD1', 'RD4', 'RD7', 'RD9', 'RD12')
 PRESENT, DELETED, PARTIAL = 'present', 'deleted', 'partial'
 PRESENT_RATIO, DELETED_RATIO = 0.5, 0.1  # Region depth / control depth
 MIN_CONTROL_READS = 3  # Median reads per control chunk to call the species from reads
@@ -88,45 +90,86 @@ def check_species(counts, file_type, depth=None, read_length=None, paired=False,
     return check
 
 
-def name_species(check, lineages=(), mixed=False):
+def name_species(check, lineages=(), mixed=False, spacers=True):
     """Name the species once the lineage is known (check_species runs before the lineage call)."""
     if check.mtbc:
-        check.species = 'MTBC, mixed sample?' if mixed else call_species(check, lineages)
+        check.species = 'MTBC, mixed sample?' if mixed else call_species(check, lineages, spacers)
 
 
-def call_species(check, lineages=()):
+# Species from the RD profile (RD1, RD4, RD7, RD9, RD12; + present, - deleted), after the classical RD PCR scheme.
+# Lineage 5 (M. africanum West African 1) keeps RD7; lineage 6 (West African 2) lost it, like the animal lineages.
+RD_PROFILES = {
+    '+++++': 'M. tuberculosis',
+    '+++-+': 'M. africanum (lineage 5)',
+    '++--+': 'M. africanum (lineage 6), M. microti, M. pinnipedii or M. mungi',
+    '++---': 'M. orygis or M. caprae',
+    '+----': 'M. bovis',
+    '-----': 'M. bovis BCG',
+    '-+--+': 'Dassie bacillus',
+}
+
+
+def rd_profile(check):
+    """e.g. "+----" for RD1 present, RD4, RD7, RD9 and RD12 deleted; "?" for a region not measured."""
+    return ''.join({PRESENT: '+', DELETED: '-'}.get(check.state(r), '?') for r in REGIONS)
+
+
+def call_species(check, lineages=(), spacers=True):
+    """
+    :param lineages: lineages called by the SNP barcode
+    :param spacers: whether any of the 43 standard spacers was found (M. canettii usually has none)
+    """
     main = {lineage.split('.')[0] for lineage in lineages}
-    rd9, rd4, rd1 = (check.state(r) for r in REGIONS)
-    if PARTIAL in (rd9, rd4, rd1):
+    if any(check.state(r) == PARTIAL for r in REGIONS):
         return 'MTBC (mixed or unclear RD profile)'
-    if rd9 == PRESENT:
-        if main & {'1', '2', '3', '4', '7'}:
+    profile = rd_profile(check)
+    rd1, rd4, rd7, rd9, rd12 = profile
+    if rd7 == '+' and (rd4 == '-' or rd12 == '-'):  # RD4 or RD12 lost independently of the M. bovis lineage
+        return 'M. canettii'
+    species = RD_PROFILES.get(profile)
+    if species is None:
+        return 'MTBC (unusual RD profile: {})'.format(', '.join(
+            '{}{}'.format(r, s) for r, s in zip(REGIONS, profile, strict=True)))
+    if profile == '+++++':
+        # Lineage 4 is the only lineage defined by the H37Rv allele, which some M. canettii strains carry: only a
+        # sublineage of lineage 4, or lineages 1, 2, 3 or 7, are specific to M. tuberculosis
+        specific = [lin for lin in lineages if lin[0] in '1237' or lin.startswith('4.')]
+        if specific:
+            return 'M. tuberculosis'
+        if not spacers:
+            return 'M. canettii'
+        if main == {'4'}:
             return 'M. tuberculosis'
         if not main:  # Outside lineages 1 to 7 and the animal lineages
             return 'MTBC, RD9 intact, no lineage (e.g. M. canettii)'
         return 'MTBC (RD9 intact, unexpected for lineage {})'.format('/'.join(sorted(main)))
-    if rd4 == DELETED:
-        return 'M. bovis BCG' if rd1 == DELETED else 'M. bovis'
-    if main & {'5', '6'}:
-        return 'M. africanum'
-    if rd1 == DELETED:
-        return 'Animal-adapted MTBC, not M. bovis (RD1 deleted, e.g. M. microti)'
-    if 'BOV_AFRI' in main:  # The clade of M. bovis and lineage 6, without the SNPs of either
-        return 'Animal-adapted MTBC, not M. bovis (e.g. M. caprae, M. pinnipedii)'
-    return 'M. africanum or animal-adapted MTBC, not M. bovis (RD9 deleted, RD4 present)'
+    if profile == '++--+':
+        if '6' in main:
+            return 'M. africanum (lineage 6)'
+        if 'BOV_AFRI' in main:  # The clade of the animal lineages and lineage 6, without the lineage 6 SNP
+            return 'M. microti, M. pinnipedii or M. mungi'
+    return species
 
 
 def consistency_warnings(check, lineages):
     """Contradictions between the RD profile and the lineage SNPs."""
     warnings = []
     main = {lineage.split('.')[0] for lineage in lineages}
-    rd9, rd4 = check.state('RD9'), check.state('RD4')
+    lineage_text = '/'.join(sorted(main))
+    if check.species == 'M. canettii' and main:
+        warnings.append('lineage SNPs ({}) found in a sample identified as M. canettii: the SNP barcode is not '
+                        'designed for M. canettii'.format(lineage_text))
+        return warnings
+    profile = rd_profile(check)
+    rd4, rd7, rd9 = check.state('RD4'), check.state('RD7'), check.state('RD9')
     expected_rd9 = DELETED if main & {'5', '6', 'BOV', 'BOV_AFRI'} else PRESENT if main else ''
     if expected_rd9 and rd9 in (PRESENT, DELETED) and rd9 != expected_rd9:
-        warnings.append('RD9 is {} but the lineage SNPs indicate lineage {}'.format(rd9, '/'.join(sorted(main))))
-    if 'BOV' in main and rd4 == PRESENT:
+        warnings.append('RD9 is {} but the lineage SNPs indicate lineage {}'.format(rd9, lineage_text))
+    if 'BOV' in main and rd4 == PRESENT and profile != '++---':  # M. caprae and M. orygis carry the BOV SNP
         warnings.append('the lineage SNPs indicate M. bovis but RD4 is present')
     if rd4 == DELETED and main - {'BOV', 'BOV_AFRI'}:
-        warnings.append('RD4 is deleted (M. bovis) but the lineage SNPs indicate lineage {}'.format(
-            '/'.join(sorted(main))))
+        warnings.append('RD4 is deleted (M. bovis) but the lineage SNPs indicate lineage {}'.format(lineage_text))
+    expected_rd7 = PRESENT if '5' in main else DELETED if main & {'6', 'BOV', 'BOV_AFRI'} else ''
+    if expected_rd7 and rd7 in (PRESENT, DELETED) and rd7 != expected_rd7:
+        warnings.append('RD7 is {} but the lineage SNPs indicate lineage {}'.format(rd7, lineage_text))
     return warnings

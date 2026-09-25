@@ -292,8 +292,10 @@ def species_block(result):
     story = [Paragraph('Species and lineage', H3), key_values(rows)]
     if check.regions:
         table = [[text(h, SMALL) for h in ('Region', 'Deleted in', 'Depth relative to MTBC control', 'Call')]]
-        deleted_in = {'RD9': 'M. africanum and animal lineages (incl. M. bovis)', 'RD4': 'M. bovis and BCG',
-                      'RD1': 'BCG (and M. microti)'}
+        deleted_in = {'RD1': 'BCG, Dassie bacillus', 'RD4': 'M. bovis, BCG (some M. canettii)',
+                      'RD7': 'M. africanum lineage 6, animal lineages',
+                      'RD9': 'M. africanum (lineages 5, 6), animal lineages',
+                      'RD12': 'M. bovis, BCG, M. caprae, M. orygis (some M. canettii)'}
         for region, (state, ratio) in check.regions.items():
             table.append([text(region, SMALL), text(deleted_in[region], SMALL), text('{:.2f}'.format(ratio), SMALL),
                           text(state, SMALL)])
@@ -321,10 +323,12 @@ def run_section(run):
               'spacer is present when it is found in at least the minimum count of reads (contigs for assemblies). '
               'The binary pattern is converted to the octal code (Dale et al. 2001) and the hexadecimal code, and '
               'looked up in the spoligotype database for its SB number. '
-              'Species: the read depth of regions of difference RD9, RD4 and RD1 (100 bp segments, same Seal '
-              'parameters) is compared with the depth of MTBC-specific control regions; a region is deleted when its '
-              'relative depth is at most 0.1, present when it is at least 0.5. The fraction of MTBC reads is the '
-              'control depth divided by the depth expected from the number of bases. Lineage: reads carrying each '
+              'Species: the read depth of regions of difference RD1, RD4, RD7, RD9 and RD12 (100 bp segments, same '
+              'Seal parameters) is compared with the depth of MTBC-specific control regions; a region is deleted when '
+              'its relative depth is at most 0.1, present when it is at least 0.5, and the species is read from the '
+              'RD profile as in the RD PCR scheme, refined with the lineage SNPs and the spacers. The fraction of '
+              'MTBC reads is the control depth divided by the depth expected from the number of bases. Lineage: '
+              'reads carrying each '
               'allele of the 62 SNPs of the Coll et al. (2014) barcode are counted with exact 31-mers (k=31, '
               'hdist=0); a lineage is called when at least 80% of the reads (and at least 3, or 1 contig) carry its '
               'allele.').format(n=N_SPACERS, k=KMER_SIZE)

@@ -50,14 +50,14 @@ The main columns of the table:
 | Spoligotype | SB0140 |
 | Depth | 65 |
 | Species | M. bovis |
-| RD9, RD4, RD1 | deleted, deleted, present |
+| RD1, RD4, RD7, RD9, RD12 | present, deleted, deleted, deleted, deleted |
 | Lineage | BOV |
 | MTBCFraction | 1.00 |
 
 The sample is named after the file, and the results are saved as a table and a PDF report. Each spacer is either
 found in about 30 to 80 reads (present), or in none (absent): a clear-cut result. The depth, 65x, is estimated from
 the number of bases, and all the reads appear to be MTBC (`MTBCFraction` 1.00). The species, *M. bovis*, comes from
-the regions of difference RD9 and RD4, both deleted, and the lineage from the SNP barcode: see
+the regions of difference (RD4, RD7, RD9 and RD12 deleted, RD1 present), and the lineage from the SNP barcode: see
 [Species and lineage](Species-and-lineage). Spacer 25 has about twice as many reads as the others because it is
 present twice in the DR locus of AF2122/97. With paired-end reads, add `-r2 R2.fastq.gz`.
 
@@ -74,8 +74,8 @@ assembly gives the same spoligotype as its reads, SB0140.
 
 H37Rv gives `Spoligo not found`: SB numbers only exist for the animal-adapted lineages. Its octal code,
 777777477760771, is the one to use for *M. tuberculosis*, for example to look up its shared international type
-(SIT) in SITVIT (see the [FAQ](FAQ#my-sample-is-spoligo-not-found)). The species is *M. tuberculosis* (RD9, RD4 and
-RD1 present) and the lineage 4.9, "Euro-American (H37Rv-like)".
+(SIT) in SITVIT (see the [FAQ](FAQ#my-sample-is-spoligo-not-found)). The species is *M. tuberculosis* (all five
+regions of difference present) and the lineage 4.9, "Euro-American (H37Rv-like)".
 
 ## 4. All at once, with a PDF report
 Type every sample of the `data/` folder in one run:

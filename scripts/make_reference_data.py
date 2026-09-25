@@ -9,8 +9,11 @@ markers.fasta
     RD9_nn   region of difference 9: deleted in M. africanum and the animal-adapted lineages (incl. M. bovis).
     RD4_nn   RD4: deleted in M. bovis and BCG only.
     RD1_nn   RD1: deleted in all BCG strains.
-    The RD regions are the H37Rv segments missing from AF2122/97 (RD9, RD4) and BCG Pasteur (RD1). A chunk is kept
-    only if it is found in every genome that has the region, and in none of the genomes lacking it or of the NTM.
+    RD7_nn   RD7 (mce3 operon): deleted in lineage 6 (M. africanum) and the animal-adapted lineages.
+    RD12_nn  RD12: deleted in M. bovis, BCG, M. caprae, M. orygis, and some M. canettii.
+    The RD regions are the H37Rv segments missing from AF2122/97 (RD9, RD4, RD7, RD12) and BCG Pasteur (RD1). A chunk
+    is kept only if it is found in every genome that has the region, and in none of the genomes lacking it or of the
+    NTM.
 
 lineage_snps.fasta
     For each SNP of lineage_barcode.tsv (Coll et al. 2014), the 61 bp of H37Rv centred on the SNP, with the
@@ -45,10 +48,12 @@ NTM_NAMES = {'NC_010612.1': 'M. marinum',  # Strain M
              'NC_008611.1': 'M. ulcerans',  # Agy99
              'NC_008596.1': 'M. smegmatis'}  # MC2 155
 NTM = list(NTM_NAMES)
-# Region: (genomes lacking it, H37Rv search window, tiling step)
+# Region: (genomes lacking it, H37Rv search window, tiling step). The first genome defines the region's extent.
 REGIONS = {'RD9': ([AF2122, BCG, AFRICANUM], (2326000, 2336000), 50),
            'RD4': ([AF2122, BCG], (1693000, 1712000), 100),
-           'RD1': ([BCG], (4345000, 4362000), 100)}
+           'RD1': ([BCG], (4345000, 4362000), 100),
+           'RD7': ([AF2122, BCG, AFRICANUM], (2206000, 2224000), 100),
+           'RD12': ([AF2122, BCG, CANETTII], (3483000, 3490000), 50)}
 CHUNK = 100
 N_CONTROL, N_REGION = 40, 20
 

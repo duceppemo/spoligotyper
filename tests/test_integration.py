@@ -35,7 +35,8 @@ def test_assembly(data, tmp_path, capsys):
     assert list(row.values())[:12] == ['AF2122', row['SpacerCount'], SB0140, '664073777777600', '6D-03-5F-7F-FF-60',
                                        'SB0140', 'fasta', '1', '', '1', 'ok', '']  # The columns of version 0.3
     assert row['SpacerCount'].split(':')[:4] == ['1', '1', '0', '1']
-    assert (row['Species'], row['Lineage'], row['LineageName']) == ('M. bovis', 'BOV', 'M. bovis')
+    assert (row['Species'], row['Lineage'], row['LineageName']) == ('M. bovis', 'BOV', 'M. bovis, M. caprae, M. orygis')
+    assert (row['RD7'], row['RD12']) == ('deleted', 'deleted')
     assert (row['RD9'], row['RD4'], row['RD1'], row['MTBCFraction'], row['Closest']) == \
         ('deleted', 'deleted', 'present', '', '')
     report = table((tmp_path / 'AF2122_spoligotyping.txt').read_text())[0]

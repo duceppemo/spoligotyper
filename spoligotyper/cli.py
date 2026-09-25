@@ -94,7 +94,7 @@ def build_parser():
                         help='Minimum number of reads matching a spacer to call it present. '
                              'Default: 5 for fastq files, 1 for fasta files.')
     typing.add_argument('--no-species', action='store_true',
-                        help='Skip the species check (regions of difference RD9, RD4, RD1) and the lineage '
+                        help='Skip the species check (regions of difference RD1, RD4, RD7, RD9, RD12) and the lineage '
                              '(SNP barcode). Faster: one pass over the reads instead of two.')
     typing.add_argument('--db', metavar='FILE', default=SPOLIGOTYPE_DB,
                         help='Spoligotype database: "octal SB-number binary" on each line. '

@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+* Species check with five regions of difference, as in the classical RD PCR scheme: RD7 and RD12 are added to RD1,
+  RD4 and RD9. New species calls: *M. africanum* lineage 5 or 6, *M. orygis* or *M. caprae*, *M. microti*,
+  *M. pinnipedii* or *M. mungi*, *M. canettii* (also from the absence of standard spacers), and the Dassie bacillus.
+  See [Species and lineage](Species-and-lineage).
+* Fixed: an RD1 deletion with RD4 present was reported as "e.g. *M. microti*": *M. microti* is RD1 present, the
+  Dassie bacillus is RD1 deleted.
+* Fixed: *M. canettii* strains with the lineage 4 allele were called *M. tuberculosis*, and those without RD4 could
+  have been called *M. bovis*.
+* No "RD4 present" warning for *M. caprae* and *M. orygis*, which carry the *M. bovis* clade SNP; the lineage name of
+  BOV is now "*M. bovis*, *M. caprae*, *M. orygis*".
+* Consistency warnings for RD7 against lineages 5 and 6, and for lineage SNPs in *M. canettii*.
+* Table: 2 new columns at the end, `RD7` and `RD12`. PDF report: RD7 and RD12 in the regions of difference table.
+* [Validation](Validation) extended to 31 genomes: *M. caprae*, *M. orygis*, *M. microti*, *M. pinnipedii*,
+  *M. mungi*, and more *M. africanum* and *M. canettii*.
+
 ## 0.4.2 (2026-09-24)
 * PDF report: samples with the same spoligotype are grouped in the summary (largest groups first, alternate groups
   shaded, failed samples last), and each sample has its own page, in the same order, so that its tables are never

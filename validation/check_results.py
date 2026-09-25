@@ -26,6 +26,13 @@ def read_table(path):
         return {row['Sample']: row for row in csv.DictReader(f, delimiter='\t')}
 
 
+def matches(value, expected):
+    """Expected values ending with * are prefixes; * alone is not checked."""
+    if expected.endswith('*'):
+        return value.startswith(expected[:-1])
+    return value == expected
+
+
 def octal_ok(row, expected):
     if not expected:
         return True
@@ -37,7 +44,8 @@ def octal_ok(row, expected):
 def main():
     failures = 0
     lines = ['# Validation', '', '## Reference genomes', '',
-             '| Sample | Organism | Spoligotype | Octal | Species | Lineage | Expected lineage | Result |',
+             '| Sample | Organism | Spoligotype | Octal | Species (RD1 RD4 RD7 RD9 RD12) | Lineage '
+             '| Expected lineage | Result |',
              '|---|---|---|---|---|---|---|---|']
     genomes = read_table(HERE / 'results' / 'genomes' / 'spoligotyping.tsv')
     with open(HERE / 'genomes.tsv') as f:
@@ -45,13 +53,17 @@ def main():
     for exp in expected:
         row = genomes[exp['sample']]
         # The lineage can be more specific than expected (a sublineage), but not different
-        lineage_ok = row['Lineage'] == exp['expected_lineage'] or (
-            exp['expected_lineage'] != '' and row['Lineage'].startswith(exp['expected_lineage'] + '.'))
-        ok = row['Species'] == exp['expected_species'] and lineage_ok and octal_ok(row, exp['expected_octal'])
+        lineage_ok = matches(row['Lineage'], exp['expected_lineage']) or (
+            exp['expected_lineage'] not in ('', '*') and row['Lineage'].startswith(exp['expected_lineage'] + '.'))
+        ok = matches(row['Species'], exp['expected_species']) and lineage_ok and octal_ok(row, exp['expected_octal'])
         failures += not ok
         lines.append('| {} | {} | {} | {} | {} | {} | {} | {} |'.format(
-            exp['sample'], exp['organism'], row['Spoligotype'], row['Octal'], row['Species'], row['Lineage'] or '-',
-            exp['expected_lineage'] or '-', 'OK' if ok else '**FAIL**'))
+            exp['sample'], exp['organism'], row['Spoligotype'], row['Octal'],
+            '{} ({})'.format(row['Species'], ' '.join({'present': '+', 'deleted': '-'}.get(row[r], row[r] or '?')
+                                                       for r in ('RD1', 'RD4', 'RD7', 'RD9', 'RD12'))),
+            row['Lineage'] or '-',
+            {'': '-', '*': 'not documented'}.get(exp['expected_lineage'], exp['expected_lineage']),
+            'OK' if ok else '**FAIL**'))
     lines += ['', '## Reads', '', '| Sample | Spoligotype | Octal | Species | Lineage | MTBC fraction | Warnings | '
               'Result |', '|---|---|---|---|---|---|---|---|']
     reads = read_table(HERE / 'results' / 'reads' / 'spoligotyping.tsv')

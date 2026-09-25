@@ -95,7 +95,7 @@ mv results/*_spoligotyping.pdf '$pdf'
 spoligotyper finds the 43 spacers of the direct repeat (DR) locus of *Mycobacterium tuberculosis* complex (MTBC)
 samples in sequencing reads (fastq) or assemblies (fasta), and reports the spoligotype as binary, octal and
 hexadecimal codes, and as an SB number from the Mbovis.org database. It also checks the species from regions of
-difference (RD9, RD4, RD1), calls the lineage with the SNP barcode of Coll et al. (2014), estimates the fraction of
+difference (RD1, RD4, RD7, RD9, RD12), calls the lineage with the SNP barcode of Coll et al. (2014), estimates the fraction of
 MTBC reads, and flags mixed or contaminated samples.
 
 **Outputs**

@@ -16,7 +16,7 @@ H37RV = '1111111111111111111001111111111100001111111'  # M. tuberculosis H37Rv, 
 
 # Species profiles: regions of difference present, and lineage SNPs carrying the alternative allele.
 # Lineages 4 and 4.9 are defined by the H37Rv (reference) allele, so other lineages carry the alternative one.
-H37RV_PROFILE = (('RD9', 'RD4', 'RD1'), ())
+H37RV_PROFILE = (('RD1', 'RD4', 'RD7', 'RD9', 'RD12'), ())
 BOVIS_PROFILE = (('RD1',), ('BOV', 'BOV_AFRI', '4', '4.9'))
 BCG_PROFILE = ((), ('BOV', 'BOV_AFRI', '4', '4.9'))
 

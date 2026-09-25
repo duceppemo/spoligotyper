@@ -9,28 +9,51 @@ from spoligotyper.spoligotype import closest, describe_closest, load_database
 from .conftest import SB0140
 
 
-def marker_counts(control=30, rd9=30, rd4=30, rd1=30):
+def marker_counts(control=30, rd9=30, rd4=30, rd1=30, rd7=30, rd12=30):
     counts = {'MTBC_{:02d}'.format(i): control for i in range(1, 41)}
-    for region, value in (('RD9', rd9), ('RD4', rd4), ('RD1', rd1)):
+    for region, value in (('RD9', rd9), ('RD4', rd4), ('RD1', rd1), ('RD7', rd7), ('RD12', rd12)):
         counts.update({'{}_{:02d}'.format(region, i): value for i in range(1, 9)})
     return counts
 
 
-@pytest.mark.parametrize('rd9, rd4, rd1, lineages, expected', [
-    (30, 30, 30, ['4', '4.9'], 'M. tuberculosis'),
-    (30, 30, 30, [], 'MTBC, RD9 intact, no lineage (e.g. M. canettii)'),
-    (0, 0, 30, ['BOV', 'BOV_AFRI'], 'M. bovis'),
-    (0, 0, 0, ['BOV', 'BOV_AFRI'], 'M. bovis BCG'),
-    (0, 30, 30, ['6', 'BOV_AFRI'], 'M. africanum'),
-    (0, 30, 30, ['BOV_AFRI'], 'Animal-adapted MTBC, not M. bovis (e.g. M. caprae, M. pinnipedii)'),
-    (0, 30, 30, [], 'M. africanum or animal-adapted MTBC, not M. bovis (RD9 deleted, RD4 present)'),
-    (0, 0, 30, ['BOV_AFRI'], 'M. bovis'),  # The BOV SNP not covered
-    (0, 30, 0, ['BOV_AFRI'], 'Animal-adapted MTBC, not M. bovis (RD1 deleted, e.g. M. microti)'),
-    (9, 30, 30, ['4'], 'MTBC (mixed or unclear RD profile)'),
+def profile_counts(profile):
+    """Counts for an RD profile written as in the RD PCR table: RD1, RD4, RD7, RD9, RD12, "+" present, "-" deleted."""
+    values = [30 if c == '+' else 0 for c in profile]
+    return marker_counts(30, rd1=values[0], rd4=values[1], rd7=values[2], rd9=values[3], rd12=values[4])
+
+
+@pytest.mark.parametrize('profile, lineages, spacers, expected', [
+    ('+++++', ['4', '4.9'], True, 'M. tuberculosis'),
+    ('+++++', ['2', '2.2', '2.2.1'], False, 'M. tuberculosis'),  # DR locus deleted: still M. tuberculosis
+    ('+++++', [], True, 'MTBC, RD9 intact, no lineage (e.g. M. canettii)'),
+    ('+++++', [], False, 'M. canettii'),  # No standard spacer
+    ('+++++', ['4'], False, 'M. canettii'),  # Some M. canettii carry the H37Rv (lineage 4) allele
+    ('+++++', ['4'], True, 'M. tuberculosis'),
+    ('+++-+', ['5'], True, 'M. africanum (lineage 5)'),
+    ('++--+', ['6', 'BOV_AFRI'], True, 'M. africanum (lineage 6)'),
+    ('++--+', ['BOV_AFRI'], True, 'M. microti, M. pinnipedii or M. mungi'),
+    ('++--+', [], True, 'M. africanum (lineage 6), M. microti, M. pinnipedii or M. mungi'),
+    ('++++-', [], False, 'M. canettii'),  # RD12 deleted, RD7 present
+    ('+-+++', [], False, 'M. canettii'),  # RD4 deleted, RD7 present
+    ('+-+-+', [], False, 'M. canettii'),
+    ('++---', ['BOV', 'BOV_AFRI'], True, 'M. orygis or M. caprae'),
+    ('+----', ['BOV', 'BOV_AFRI'], True, 'M. bovis'),
+    ('-----', ['BOV', 'BOV_AFRI'], True, 'M. bovis BCG'),
+    ('-+--+', [], True, 'Dassie bacillus'),
+    ('+-++-', [], True, 'M. canettii'),
+    ('-++++', [], True, 'MTBC (unusual RD profile: RD1-, RD4+, RD7+, RD9+, RD12+)'),
 ])
-def test_species(rd9, rd4, rd1, lineages, expected):
-    check = species.check_species(marker_counts(30, rd9, rd4, rd1), 'fastq', lineages=lineages)
-    assert check.mtbc and check.species == expected
+def test_species(profile, lineages, spacers, expected):
+    """The RD PCR table (RD1, RD4, RD7, RD9, RD12), refined with the lineage SNPs and the spacers."""
+    check = species.check_species(profile_counts(profile), 'fastq')
+    assert check.mtbc and species.rd_profile(check) == profile
+    species.name_species(check, lineages, spacers=spacers)
+    assert check.species == expected
+
+
+def test_species_partial():
+    check = species.check_species(marker_counts(30, rd9=9), 'fastq')
+    assert check.species == 'MTBC (mixed or unclear RD profile)'
 
 
 def test_species_not_mtbc():
@@ -58,13 +81,21 @@ def test_expected_control_reads():
 
 
 def test_consistency_warnings():
-    check = species.check_species(marker_counts(30, 30, 30, 30), 'fastq', lineages=['BOV', 'BOV_AFRI'])
+    check = species.check_species(profile_counts('+++++'), 'fastq', lineages=['BOV', 'BOV_AFRI'])
     warnings = species.consistency_warnings(check, ['BOV', 'BOV_AFRI'])
     assert any('RD9 is present' in w for w in warnings) and any('RD4 is present' in w for w in warnings)
-    check = species.check_species(marker_counts(30, 0, 0, 30), 'fastq', lineages=['4'])
+    assert any('RD7 is present' in w for w in warnings)
+    check = species.check_species(profile_counts('+----'), 'fastq', lineages=['4'])
     assert len(species.consistency_warnings(check, ['4'])) == 2
     assert species.consistency_warnings(check, ['BOV_AFRI']) == []  # Consistent with M. bovis
     assert species.consistency_warnings(check, ['BOV', 'BOV_AFRI']) == []
+    check = species.check_species(profile_counts('++---'), 'fastq', lineages=['BOV', 'BOV_AFRI'])
+    assert species.consistency_warnings(check, ['BOV', 'BOV_AFRI']) == []  # M. caprae, M. orygis carry the BOV SNP
+    check = species.check_species(profile_counts('+++-+'), 'fastq', lineages=['6'])
+    assert any('RD7 is present' in w for w in species.consistency_warnings(check, ['6']))
+    check = species.check_species(profile_counts('+++++'), 'fastq')
+    species.name_species(check, ['4'], spacers=False)
+    assert any('not designed for M. canettii' in w for w in species.consistency_warnings(check, ['4']))
 
 
 def snp_counts(alt_lineages=(), reads=20, mixed=None):
@@ -82,7 +113,7 @@ def snp_counts(alt_lineages=(), reads=20, mixed=None):
     ((), '4.9', 'Euro-American (H37Rv-like)'),  # H37Rv: the reference alleles
     (('4', '4.9', '2', '2.2', '2.2.1'), '2.2.1', 'East-Asian'),
     (('4', '4.9', '1', '1.1', '1.1.2'), '1.1.2', 'Indo-Oceanic'),
-    (('4', '4.9', 'BOV', 'BOV_AFRI'), 'BOV', 'M. bovis'),
+    (('4', '4.9', 'BOV', 'BOV_AFRI'), 'BOV', 'M. bovis, M. caprae, M. orygis'),
     (('4', '4.9', '6', 'BOV_AFRI'), '6', 'West-Africa 2'),
     (('4.9', '4.3', '4.3.4', '4.3.4.2'), '4.3.4.2', 'Euro-American (LAM)'),
 ])

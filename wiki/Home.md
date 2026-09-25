@@ -7,7 +7,7 @@ sequencing reads (fastq) or genome assemblies (fasta). It finds the 43 spacers o
 [Seal](https://sourceforge.net/projects/bbmap/) from BBTools, and reports the spoligotype as binary, octal and
 hexadecimal codes, and as an SB number from the [Mbovis.org](https://www.mbovis.org/) database.
 
-It also identifies the species (regions of difference RD9, RD4, RD1) and the lineage (SNP barcode), estimates how
+It also identifies the species (regions of difference RD1, RD4, RD7, RD9, RD12) and the lineage (SNP barcode), estimates how
 much of the sample is MTBC, and flags mixed or contaminated samples.
 
 It types one sample or a whole folder of samples (fastq and fasta files are detected and R1/R2 files paired

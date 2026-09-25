@@ -3,6 +3,7 @@
 # From Supplementary Table 3 (SNPs) and Supplementary Data 1 (lineage names and main spoligotype families).
 # Positions and alleles on the H37Rv reference genome NC_000962.3. lineage_allele: the allele that defines the
 # lineage, "alt" except for lineages 4 and 4.9, whose allele is the H37Rv (reference) allele.
+# Name of BOV changed from "M. bovis": M. caprae and M. orygis genomes also carry this SNP (spoligotyper validation).
 lineage	position	ref	alt	lineage_allele	locus	gene	name	spoligotypes
 1	615938	G	A	alt	Rv0524	hemL	Indo-Oceanic	EAI
 1.1	4404247	G	A	alt	Rv3915		Indo-Oceanic	EAI4;EAI5;EAI6;EAI3
@@ -64,5 +65,5 @@ lineage	position	ref	alt	lineage_allele	locus	gene	name	spoligotypes
 5	1799921	C	A	alt	Rv1599	hisD	West-Africa 1	AFRI_2;AFRI_3
 6	1816587	C	G	alt	Rv1617	pykA	West-Africa 2	AFRI_1
 7	1137518	G	A	alt	Rv1018c	glmU	Lineage 7	
-BOV	2831482	A	G	alt	Rv2515c		M. bovis	BOV_2;BOV_1
+BOV	2831482	A	G	alt	Rv2515c		M. bovis, M. caprae, M. orygis	BOV_2;BOV_1
 BOV_AFRI	1882180	C	T	alt	Rv1662	pks8	M. bovis and West-Africa 2	BOV_2, BOV_1 and AFRI_1
