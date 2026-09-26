@@ -4,8 +4,8 @@ process SPOLIGOTYPER {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/spoligotyper:0.4.2--pyhdfd78af_0' :
-        'quay.io/biocontainers/spoligotyper:0.4.2--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/spoligotyper:0.5.0--pyhdfd78af_0' :
+        'quay.io/biocontainers/spoligotyper:0.5.0--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(reads)
