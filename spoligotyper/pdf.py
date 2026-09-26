@@ -164,7 +164,7 @@ def summary_section(results, run):
         Spacer(1, 6),
         Paragraph('Spoligotyping report', H1),
         text('{} · {} sample{} · {} ok, {} with warnings, {} failed · operator: {}'.format(
-            run.started.strftime('%Y-%m-%d %H:%M'), len(results), 's' * (len(results) != 1), counts['ok'],
+            run.started.strftime('%Y-%m-%d %H:%M %Z').strip(), len(results), 's' * (len(results) != 1), counts['ok'],
             counts['warning'], counts['failed'], run.operator), SUBTITLE),
         Paragraph('Summary', H2),
     ]
@@ -400,7 +400,8 @@ def write_pdf(results, run, path):
 
     class Canvas(NumberedCanvas):
         footer = 'spoligotyper {} · Spoligotyping report · generated {} by {} on {}'.format(
-            __version__, (run.finished or datetime.now()).strftime('%Y-%m-%d %H:%M %Z'), run.user, run.host)
+            __version__, (run.finished or datetime.now().astimezone()).strftime('%Y-%m-%d %H:%M %Z').strip(), run.user,
+            run.host)
 
     doc.build(story, canvasmaker=Canvas)
 

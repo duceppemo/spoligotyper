@@ -87,5 +87,12 @@ responsibility; the [tutorial](Tutorial) data, with known spoligotypes, can be p
 Reads, when you have them: the DR locus is repetitive and can be broken or collapsed in short-read assemblies.
 See [How it works](How-it-works#limitations).
 
+### Why are the times in the PDF report in UTC?
+spoligotyper writes every date and time of the report (start, end, file dates, footer) in the time zone of the
+computer that runs it, and shows that time zone (e.g. `EDT`, `UTC`). Containers usually run in UTC: with Docker, give
+the container the time zone of the host with `-v /etc/localtime:/etc/localtime:ro` (or `-e TZ=America/Toronto` if the
+image has time zone data); in Nextflow, add it to `docker.runOptions`. Apptainer/Singularity containers normally use
+the time zone of the host already.
+
 ### How do I cite spoligotyper?
 See [Home](Home#citing).

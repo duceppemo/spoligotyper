@@ -4,8 +4,10 @@ import gzip
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
+from datetime import datetime
 
 import pytest
 
@@ -164,6 +166,10 @@ def test_pdf_single_sample(data, tmp_path, capsys):
     assert (tmp_path / 'bovis_spoligotyping.txt').exists()
     pages, content = pdf_text(pdf)
     assert pages >= 2
+    # Every date of the report has its time zone, e.g. "2026-09-25 21:08 EDT" (the time zone of the computer)
+    zone = datetime.now().astimezone().strftime('%Z')
+    assert re.search(r'\d{{4}}-\d\d-\d\d \d\d:\d\d {} · 1 sample'.format(re.escape(zone)), content)
+    assert re.search(r'generated \d{{4}}-\d\d-\d\d \d\d:\d\d {} by'.format(re.escape(zone)), content)
     for expected in ('Spoligotyping report', 'bovis', 'SB0140', '664073777777600', 'paired-end', 'Jane Doe',
                      'Run information', 'Reads per spacer', 'BBTools', __version__, 'MD5', 'Species and lineage',
                      'M. bovis', 'RD4', 'Coll F et al.', 'Lineage SNP'):

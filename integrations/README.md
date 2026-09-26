@@ -17,6 +17,9 @@ nf-core modules test spoligotyper   # Creates the snapshot file tests/main.nf.te
 ```
 and open a pull request. Update the version in `main.nf` (container) and `environment.yml` for each release.
 
+Docker containers run in UTC, so the PDF report would show UTC times: to use the local time zone, add
+`docker.runOptions = '-v /etc/localtime:/etc/localtime:ro'` to the Nextflow configuration.
+
 The SIT database is not included: to fill the SIT columns, download it with `spoligotyper-download-sit` and give it
 with `--sit-db` in `task.ext.args` (the module would need an extra input for the file).
 
