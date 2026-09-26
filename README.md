@@ -34,7 +34,8 @@ the species and the lineage, and flags contaminated or mixed samples.
 * **Reads or assemblies**: single-end or paired-end fastq, or fasta, gzipped or not. For nanopore data, type the
   assembly ([why](https://github.com/duceppemo/spoligotyper/wiki/FAQ#can-i-type-nanopore-reads)).
 * **Batch mode**: point it at a folder; fastq and fasta files are detected and R1/R2 files paired automatically.
-* **All the standard codes**: binary, octal, hexadecimal, and SB number for *M. bovis* and other animal-adapted lineages.
+* **All the standard codes**: binary, octal, hexadecimal, SB number (*M. bovis* and other animal-adapted lineages), and
+  SIT and SITVIT2 family with the optional [SIT database](https://github.com/duceppemo/spoligotyper/wiki/Installation#sit-database).
 * **Species and lineage**: *M. tuberculosis*, *M. africanum*, *M. bovis*, BCG, ... from regions of difference, and
   the lineage (1 to 7 and sublineages) from a 62-SNP barcode.
 * **Quality checks**: fraction of MTBC reads (contamination), mixed samples, consistency between the spoligotype,
@@ -52,7 +53,8 @@ the species and the lineage, and flags contaminated or mixed samples.
 conda install -c conda-forge -c bioconda spoligotyper
 ```
 Or with pip, if BBTools is already installed (`conda install -c bioconda bbmap`): `pip install spoligotyper`.
-See [Installation](https://github.com/duceppemo/spoligotyper/wiki/Installation) for other options.
+See [Installation](https://github.com/duceppemo/spoligotyper/wiki/Installation) for other options. For SIT numbers,
+run `spoligotyper-download-sit` once.
 
 ## Quick start
 ```

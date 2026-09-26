@@ -23,6 +23,28 @@ BBTools is not available from PyPI and must be installed separately, for example
 `conda install -c bioconda bbmap`, or from the [BBTools downloads](https://sourceforge.net/projects/bbmap/).
 `spoligotyper` finds `seal.sh` in your `PATH`, or next to the Python interpreter it runs with.
 
+## SIT database
+SB numbers (Mbovis.org) are included with spoligotyper. Shared international types (SIT) and SITVIT2 families come
+from the SITVIT2 database, which is not openly licensed and cannot be included. Instead, spoligotyper uses the 9,656
+SITVIT2 patterns (3,850 with a SIT) published under GPL-3.0 with [SpolLineages](https://github.com/dcouvin/SpolLineages)
+(Couvin *et al.* 2020). Download them once:
+```
+spoligotyper-download-sit
+```
+The list is downloaded from the SpolLineages repository (a fixed version, checked with its SHA-256 checksum), or from
+its Zenodo mirror if GitHub cannot be reached, and saved in `~/.cache/spoligotyper/` (or in the folder of the
+`SPOLIGOTYPER_DATA` environment variable). spoligotyper then fills the `SIT`, `SITVIT2family` and `ClosestSIT`
+columns automatically.
+
+* **Computers without internet access** (e.g. cluster nodes): run `spoligotyper-download-sit -o /shared/folder` on a
+  computer with access, then `spoligotyper --sit-db /shared/folder/sit_database.tsv ...`, or set
+  `SPOLIGOTYPER_DATA=/shared/folder`. Alternatively, copy `Spoligo_list.csv` and run
+  `spoligotyper-download-sit --source Spoligo_list.csv`.
+* The list dates from 2022: SITs created in SITVIT2 since then are missing (the `ClosestSIT` column lists the closest
+  known ones).
+* Please cite Couvin *et al.* 2020 (https://doi.org/10.1093/database/baaa108) and Couvin *et al.* 2019
+  (https://doi.org/10.1016/j.meegid.2018.12.030) when you report SITs.
+
 ## From source
 ```
 git clone https://github.com/duceppemo/spoligotyper

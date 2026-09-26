@@ -24,9 +24,12 @@ A tab-separated table with a header and one line per sample. The same table is p
 | `MTBCFraction` | `1.00` | Reads only: estimated fraction of the reads from the *M. tuberculosis* complex |
 | `Closest` | `SB0140 (spacer 7 differs)` | For a pattern not in the database: the closest SB numbers, up to 3 spacers away |
 | `RD7`, `RD12` | `deleted` | `present`, `deleted` or `partial` |
+| `SIT` | `SIT451` | Shared international type of the SITVIT2 database: a SIT, `Orphan` (a SITVIT2 pattern without SIT), or `Spoligo not found`. Empty without SIT database: see [Installation](Installation#sit-database) |
+| `SITVIT2family` | `T-H37Rv` | SITVIT2 spoligotype family of the pattern (also for orphan patterns), e.g. Beijing, LAM3, EAI5, BOV_1 |
+| `ClosestSIT` | `SIT451 (spacer 12 differs)` | For a pattern without SIT: the closest SITs, up to 3 spacers away |
 
 Columns are only ever added at the end: the first 6 are those of version 0.2, the next 6 were added in 0.3, the next
-8 in 0.4 and the last 2 in 0.5. The species columns are empty with `--no-species`.
+8 in 0.4 and the last 5 in 0.5. The species columns are empty with `--no-species`.
 
 ### Octal code
 The binary pattern is cut into 14 groups of 3 spacers, and each group is written as one octal digit (000 = 0,

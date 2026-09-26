@@ -49,7 +49,8 @@ WEAK_SPACER_MIN_MEDIAN = 30  # ... when the median is high enough for this not t
 
 REPORT_HEADER = ['Sample', 'SpacerCount', 'Binary', 'Octal', 'Hexadecimal', 'Spoligotype',
                  'FileType', 'Reads', 'Depth', 'MinCount', 'Status', 'Warnings',
-                 'Species', 'Lineage', 'LineageName', 'RD9', 'RD4', 'RD1', 'MTBCFraction', 'Closest', 'RD7', 'RD12']
+                 'Species', 'Lineage', 'LineageName', 'RD9', 'RD4', 'RD1', 'MTBCFraction', 'Closest', 'RD7', 'RD12',
+                 'SIT', 'SITVIT2family', 'ClosestSIT']
 
 
 @dataclass
@@ -87,6 +88,9 @@ class Result:
     error: str = ''
     seconds: float = 0.0
     closest: list = field(default_factory=list)  # Closest database patterns when not found: [(SB, [spacers])]
+    sit: str = ''  # e.g. "SIT451", "Orphan" (SITVIT2 pattern without SIT), "Spoligo not found"; "" without SIT database
+    sit_family: str = ''  # SITVIT2 family, e.g. "T-H37Rv"
+    closest_sit: list = field(default_factory=list)  # Closest SITs when the pattern has none: [(SIT, [spacers])]
     species: SpeciesCheck | None = None
     lineage: LineageCall | None = None
 
@@ -151,7 +155,8 @@ class Result:
                 str(self.min_count or ''), self.status, ' '.join(notes.split()),
                 check.species if check else '', call.lineage if call else '', call.name if call else '',
                 state['RD9'], state['RD4'], state['RD1'], fraction, describe_closest(self.closest),
-                state['RD7'], state['RD12']]  # RD7 and RD12 were added in version 0.5: at the end
+                state['RD7'], state['RD12'],  # RD7 and RD12 were added in version 0.5: at the end
+                self.sit, self.sit_family, describe_closest(self.closest_sit)]
 
     def to_dict(self):
         """Everything about the result, for the JSON report."""
@@ -159,6 +164,7 @@ class Result:
         data.update(status=self.status, depth=self.depth, spacers_present=self.binary.count('1'),
                     median_present_count=self.median_present_count)
         data['closest'] = [{'spoligotype': name, 'differing_spacers': diff} for name, diff in self.closest]
+        data['closest_sit'] = [{'sit': name, 'differing_spacers': diff} for name, diff in self.closest_sit]
         if self.species:
             data['species']['regions'] = {r: {'state': state, 'depth_ratio': round(ratio, 3)}
                                           for r, (state, ratio) in self.species.regions.items()}
@@ -181,9 +187,11 @@ class RunInfo:
     database: dict = field(default_factory=dict)
     spacers: dict = field(default_factory=dict)
     species_data: dict = field(default_factory=dict)
+    sit_database: dict = field(default_factory=dict)  # Empty without SIT database
 
     @classmethod
-    def collect(cls, command, database=SPOLIGOTYPE_DB, spacers=SPACERS_FASTA, operator=None, parameters=None):
+    def collect(cls, command, database=SPOLIGOTYPE_DB, spacers=SPACERS_FASTA, operator=None, parameters=None,
+                sit_db=None):
         try:
             user = getpass.getuser()
         except (KeyError, OSError):  # No user name, e.g. in some containers
@@ -201,6 +209,9 @@ class RunInfo:
                              for name, path in (('Species markers', species.MARKERS_FASTA),
                                                 ('Lineage SNP barcode', lineage.BARCODE),
                                                 ('Lineage SNP sequences', lineage.LINEAGE_SNPS_FASTA))}
+        if sit_db:
+            info.sit_database = {'path': sit_db.path, 'sha256': sit_db.sha256, 'patterns': len(sit_db.patterns),
+                                 'sits': len(sit_db.sits), 'source': sit_db.source}
         return info
 
     def to_dict(self):
@@ -258,7 +269,7 @@ def check_inputs(r1, r2=None):
 
 
 def spoligotype(r1, r2=None, sample=None, min_count=None, threads=1, memory='1g', database=SPOLIGOTYPE_DB,
-                spacers=SPACERS_FASTA, md5=False, species_check=True):
+                spacers=SPACERS_FASTA, md5=False, species_check=True, sit_db=None):
     """
     Spoligotype a sample from single-end or paired-end reads, or from an assembly.
 
@@ -266,6 +277,7 @@ def spoligotype(r1, r2=None, sample=None, min_count=None, threads=1, memory='1g'
                       Default: 5 for reads, 1 for assemblies.
     :param md5: compute the MD5 checksum of the input files, for the report
     :param species_check: also check the species (regions of difference) and the lineage (SNP barcode)
+    :param sit_db: SitDatabase, for the SIT and SITVIT2 family (see spoligotyper-download-sit)
     :return: Result. Errors are raised, not stored in the result.
     """
     start = time.monotonic()
@@ -294,6 +306,10 @@ def spoligotype(r1, r2=None, sample=None, min_count=None, threads=1, memory='1g'
     result.octal, result.hexadecimal = binary_to_octal(result.binary), binary_to_hex(result.binary)
     result.spoligotype = lookup(result.binary, db)
     result.closest = closest(result.binary, db) if any(result.counts) else []
+    if sit_db is not None:
+        result.sit, result.sit_family = sit_db.lookup(result.binary)
+        if result.sit in (NOT_FOUND, 'Orphan') and any(result.counts):
+            result.closest_sit = closest(result.binary, sit_db.sits)
     if species_check:
         data_type = 'fastq' if result.is_reads else 'fasta'  # Thresholds for reads or for contigs
         result.species = species.check_species(stats.counts, data_type, result.depth, result.read_length,
@@ -432,10 +448,10 @@ def write_multiqc(results, path):
     such as 000000000003771 stay text instead of being read as numbers.
     """
     import json
-    columns = ('Spoligotype', 'Octal', 'Species', 'Lineage', 'Status')
+    columns = ('Spoligotype', 'SIT', 'Octal', 'Species', 'Lineage', 'Status')
     data = {}
     for r in results:
-        values = (r.spoligotype, r.octal, r.species.species if r.species else '',
+        values = (r.spoligotype, r.sit, r.octal, r.species.species if r.species else '',
                   r.lineage.lineage if r.lineage else '', r.status)
         data[r.sample] = {column: value or '-' for column, value in zip(columns, values, strict=True)}
     link = '<a href="https://github.com/duceppemo/spoligotyper">spoligotyper</a> {}'.format(__version__)

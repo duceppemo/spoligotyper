@@ -47,8 +47,8 @@ def test_assembly(data, tmp_path, capsys):
     assert sample['species']['regions']['RD4']['state'] == 'deleted' and sample['lineage']['lineage'] == 'BOV'
     assert data_json['run']['software']['spoligotyper'] == __version__
     mqc = json.loads((tmp_path / 'AF2122_spoligotyping_mqc.json').read_text())
-    assert mqc['data']['AF2122'] == {'Spoligotype': 'SB0140', 'Octal': '664073777777600', 'Species': 'M. bovis',
-                                     'Lineage': 'BOV', 'Status': 'ok'}
+    assert mqc['data']['AF2122'] == {'Spoligotype': 'SB0140', 'SIT': '-', 'Octal': '664073777777600',
+                                     'Species': 'M. bovis', 'Lineage': 'BOV', 'Status': 'ok'}
 
 
 def test_not_in_database(data, tmp_path, capsys):
@@ -271,3 +271,21 @@ def test_package_path_with_space(tmp_path, data):
                           capture_output=True, text=True, env=env, cwd=tmp_path)
     assert proc.returncode == 0, proc.stderr
     assert 'SB0140' in proc.stdout and str(target) in (tmp_path / 'out' / 'AF2122_spoligotyping.json').read_text()
+
+
+def test_sit_database(data, tmp_path, capsys, caplog):
+    """SIT and SITVIT2 family, with a SIT database; empty columns and a hint without."""
+    with caplog.at_level(logging.INFO, logger='spoligotyper'):
+        row = run(capsys, '-r1', data / 'H37Rv.fna', '-o', tmp_path)
+    assert (row['SIT'], row['SITVIT2family'], row['ClosestSIT']) == ('', '', '')
+    assert 'spoligotyper-download-sit' in caplog.text
+    db = tmp_path / 'sit.tsv'
+    db.write_text('octal\tbinary\tsit\tfamily\n777777477760771\t{}\t451\tT-H37Rv\n'.format(H37RV))
+    row = run(capsys, '-r1', data / 'H37Rv.fna', '-o', tmp_path, '--sit-db', db)
+    assert (row['SIT'], row['SITVIT2family']) == ('SIT451', 'T-H37Rv')
+    row = run(capsys, '-r1', data / 'AF2122.fasta', '-o', tmp_path, '--sit-db', db)
+    assert row['SIT'] == 'Spoligo not found' and row['SITVIT2family'] == ''
+    main(['-r1', str(data / 'H37Rv.fna'), '-o', str(tmp_path / 'pdf'), '-t', '2', '--memory', '500m', '--sit-db', str(db)])
+    capsys.readouterr()
+    pages, content = pdf_text(tmp_path / 'pdf' / 'H37Rv_spoligotyping.pdf')
+    assert 'SIT451' in content and 'SITVIT2 family T-H37Rv' in content and 'SIT database' in content

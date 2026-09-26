@@ -13,6 +13,10 @@
   BOV is now "*M. bovis*, *M. caprae*, *M. orygis*".
 * Consistency warnings for RD7 against lineages 5 and 6, and for lineage SNPs in *M. canettii*.
 * Table: 2 new columns at the end, `RD7` and `RD12`. PDF report: RD7 and RD12 in the regions of difference table.
+* SIT and SITVIT2 family: new `spoligotyper-download-sit` command, which downloads the 9,656 SITVIT2 patterns
+  (3,850 SITs) published under GPL-3.0 with SpolLineages, from GitHub or its Zenodo mirror, checked with their
+  checksum. New `SIT`, `SITVIT2family` and `ClosestSIT` columns, `--sit-db` option, and SIT in the PDF report (with
+  the checksum of the database), the JSON and MultiQC. See [Installation](Installation#sit-database).
 * [Validation](Validation) extended to 31 genomes: *M. caprae*, *M. orygis*, *M. microti*, *M. pinnipedii*,
   *M. mungi*, and more *M. africanum* and *M. canettii*.
 

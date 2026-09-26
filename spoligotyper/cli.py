@@ -9,7 +9,7 @@ from argparse import ArgumentParser, ArgumentTypeError, RawDescriptionHelpFormat
 from datetime import datetime
 from pathlib import Path
 
-from . import __version__
+from . import __version__, sitdb
 from .pipeline import REPORT_HEADER, RunInfo, spoligotype, spoligotype_samples, write_json, write_multiqc, write_tsv
 from .samples import find_samples
 from .seal import SealError, check_seal
@@ -96,6 +96,9 @@ def build_parser():
     typing.add_argument('--no-species', action='store_true',
                         help='Skip the species check (regions of difference RD1, RD4, RD7, RD9, RD12) and the lineage '
                              '(SNP barcode). Faster: one pass over the reads instead of two.')
+    typing.add_argument('--sit-db', metavar='FILE',
+                        help='SIT database for the SIT and SITVIT2family columns. Default: the one saved by '
+                             'spoligotyper-download-sit, if any.')
     typing.add_argument('--db', metavar='FILE', default=SPOLIGOTYPE_DB,
                         help='Spoligotype database: "octal SB-number binary" on each line. '
                              'Default: the Mbovis.org database included with spoligotyper.')
@@ -131,12 +134,15 @@ def main(argv=None):
     log.debug('spoligotyper %s: %s', __version__, command)
     start = time.monotonic()
     output = Path(args.output).expanduser()
-    options = dict(min_count=args.min_count, threads=args.threads, memory=args.memory, database=args.db,
-                   md5=not args.no_md5, species_check=not args.no_species)
-
     try:
         check_seal()
-        run = RunInfo.collect(command, database=args.db, operator=args.operator, parameters={
+        sit_path = args.sit_db or sitdb.default_database()
+        sit_db = sitdb.load(sit_path) if sit_path else None
+        if sit_db is None:
+            log.info('No SIT database: run spoligotyper-download-sit once for the SIT and SITVIT2 family columns.')
+        options = dict(min_count=args.min_count, threads=args.threads, memory=args.memory, database=args.db,
+                       md5=not args.no_md5, species_check=not args.no_species, sit_db=sit_db)
+        run = RunInfo.collect(command, database=args.db, operator=args.operator, sit_db=sit_db, parameters={
             'Input': ' '.join(os.path.abspath(f) for f in (args.input, args.r1, args.r2) if f),
             'Output folder': str(output.resolve()),
             'Minimum count': args.min_count or 'default (5 for fastq, 1 for fasta)',

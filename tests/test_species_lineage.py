@@ -164,5 +164,5 @@ def test_multiqc(tmp_path):
     write_multiqc([Result('S1', spoligotype='Spoligo not found', octal='000000000003771')], tmp_path / 'x_mqc.json')
     content = json.loads((tmp_path / 'x_mqc.json').read_text())
     assert content['id'] == 'spoligotyper' and content['plot_type'] == 'table'
-    assert content['data'] == {'S1': {'Spoligotype': 'Spoligo not found', 'Octal': '000000000003771',
+    assert content['data'] == {'S1': {'Spoligotype': 'Spoligo not found', 'SIT': '-', 'Octal': '000000000003771',
                                       'Species': '-', 'Lineage': '-', 'Status': 'ok'}}

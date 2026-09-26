@@ -17,6 +17,9 @@ nf-core modules test spoligotyper   # Creates the snapshot file tests/main.nf.te
 ```
 and open a pull request. Update the version in `main.nf` (container) and `environment.yml` for each release.
 
+The SIT database is not included: to fill the SIT columns, download it with `spoligotyper-download-sit` and give it
+with `--sit-db` in `task.ext.args` (the module would need an extra input for the file).
+
 Outputs (`<prefix>` is the sample id, or `task.ext.prefix`): `<prefix>_spoligotyping.txt` (table),
 `<prefix>_spoligotyping.json`, `<prefix>_spoligotyping.pdf` (optional: not written with `--no-pdf` in
 `task.ext.args`) and `<prefix>_spoligotyping_mqc.json` for MultiQC. Reads can be single-end, paired-end or an assembly.

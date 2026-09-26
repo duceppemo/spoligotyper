@@ -56,6 +56,7 @@ typed; spoligotyper then exits with code 1 so that pipelines notice.
 | `--no-species` | | Skip the [species check and the lineage](Species-and-lineage): one pass over the reads instead of two |
 | `-m`, `--min-count` | 5 for fastq, 1 for fasta | Minimum number of reads containing a spacer to call it present. See [How it works](How-it-works#minimum-count) |
 | `--db` | Mbovis.org database | Spoligotype database, see [FAQ](FAQ#can-i-use-another-database) |
+| `--sit-db` | downloaded SIT database | SIT database for the `SIT` and `SITVIT2family` columns, see [Installation](Installation#sit-database) |
 | `-t`, `--threads` | all available | Number of threads |
 | `-j`, `--jobs` | 1 | With `-i`: number of samples typed at the same time, sharing the threads. Each job uses `--memory` |
 | `--memory` | `1g` | Java memory for Seal. 1 GB is plenty; see [Troubleshooting](Troubleshooting#java-memory-errors) |

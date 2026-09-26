@@ -22,7 +22,7 @@ from reportlab.platypus import (
 
 from . import DOI, __version__
 from .seal import KMER_SIZE
-from .spoligotype import N_SPACERS, data_file, describe_closest
+from .spoligotype import N_SPACERS, NOT_FOUND, data_file, describe_closest
 
 # Colours of the logo
 NAVY = colors.HexColor('#1C2541')
@@ -174,7 +174,8 @@ def summary_section(results, run):
     for row, (group, r) in enumerate(by_spoligotype(results), 1):
         if group % 2:
             shading.append(('BACKGROUND', (0, row), (-1, row), GROUP_SHADE))
-        rows.append([text(r.sample, WRAP), text(r.spoligotype or '-', SMALL), text(r.octal or '-', MONO),
+        spoligotype = '\n'.join(x for x in (r.spoligotype, r.sit if r.sit.startswith('SIT') else '') if x)
+        rows.append([text(r.sample, WRAP), text(spoligotype or '-', SMALL), text(r.octal or '-', MONO),
                      text(r.species.species if r.species else '-', SMALL),
                      text((r.lineage.lineage if r.lineage else '') or '-', WRAP),
                      pattern(r.binary, square=2.4) if not r.error else text('-', SMALL), status_label(r.status)])
@@ -264,6 +265,12 @@ def sample_section(result, number=1, total=1):
              ('Run time', '{:.1f} s'.format(result.seconds))]
     if result.closest:
         rows.insert(1, ('Closest patterns', describe_closest(result.closest)))
+    if result.sit:
+        sit = {'Orphan': 'no SIT (SITVIT2 pattern seen once: orphan)',
+               NOT_FOUND: 'not in the SITVIT2 list'}.get(result.sit, result.sit)
+        family = ' · SITVIT2 family {}'.format(result.sit_family) if result.sit_family else ''
+        closest_sit = ' · closest: {}'.format(describe_closest(result.closest_sit)) if result.closest_sit else ''
+        rows.insert(1 + bool(result.closest), ('SIT', sit + family + closest_sit))
     story += [key_values(rows)]
     if result.species:
         story.append(KeepTogether(species_block(result)))
@@ -287,7 +294,7 @@ def species_block(result):
     unit = result.unit
     fraction = check.mtbc_fraction
     rows.append(('MTBC DNA', 'median {:g} {} per control region, {:.0f}% of the control regions found{}'.format(
-        check.control_depth, unit, check.control_found * 100,
+        check.control_depth, plural(unit, check.control_depth), check.control_found * 100,
         '' if fraction is None else '; about {:.0f}% of the reads are MTBC'.format(fraction * 100))))
     story = [Paragraph('Species and lineage', H3), key_values(rows)]
     if check.regions:
@@ -350,7 +357,10 @@ def run_section(run):
                                                   WRAP)),
                     ('Spacer sequences', text('{path}\n{spacers} spacers · MD5 {md5}'.format(**run.spacers), WRAP))]
                    + [(name, text('{path}\nMD5 {md5}'.format(**info), WRAP))
-                      for name, info in run.species_data.items()]),
+                      for name, info in run.species_data.items()]
+                   + [('SIT database', text('{path}\n{patterns:,} patterns, {sits:,} SITs · SHA-256 {sha256}\n'
+                                            '{source}'.format(**run.sit_database), WRAP)
+                       if run.sit_database else 'not installed (spoligotyper-download-sit)')]),
         Paragraph('Method', H3),
         text(method, SMALL),
         Paragraph('References', H3),
@@ -364,6 +374,9 @@ def run_section(run):
              'doi:10.1016/j.meegid.2011.08.002', SMALL),
         text('Brosch R et al. A new evolutionary scenario for the Mycobacterium tuberculosis complex. Proc Natl Acad '
              'Sci USA 99:3684-3689 (2002). doi:10.1073/pnas.052548299', SMALL),
+        text('Couvin D, Segretier W, Stattner E, Rastogi N. Novel methods included in SpolLineages tool for fast and '
+             'precise prediction of Mycobacterium tuberculosis complex spoligotype families. Database (Oxford) '
+             '2020:baaa108. doi:10.1093/database/baaa108 (SIT database, from SITVIT2)', SMALL),
         text('Coll F et al. A robust SNP barcode for typing Mycobacterium tuberculosis complex strains. Nat Commun '
              '5:4812 (2014). doi:10.1038/ncomms5812', SMALL),
         text('Bushnell B. BBTools. https://sourceforge.net/projects/bbmap/', SMALL),

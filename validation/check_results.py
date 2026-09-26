@@ -7,6 +7,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 BEIJING = '0' * 34 + '1' * 9
+# Documented SITs: H37Rv SIT451, BCG SIT482, and SIT1 for the Beijing strain
+DOCUMENTED_SIT = {'H37Rv': 'SIT451', 'BCG_Pasteur': 'SIT482', 'CCDC5079': 'SIT1'}
 
 # Simulated and public reads: expected species, lineage (prefix), octal and warning
 READS = {
@@ -44,9 +46,9 @@ def octal_ok(row, expected):
 def main():
     failures = 0
     lines = ['# Validation', '', '## Reference genomes', '',
-             '| Sample | Organism | Spoligotype | Octal | Species (RD1 RD4 RD7 RD9 RD12) | Lineage '
+             '| Sample | Organism | Spoligotype | SIT (family) | Octal | Species (RD1 RD4 RD7 RD9 RD12) | Lineage '
              '| Expected lineage | Result |',
-             '|---|---|---|---|---|---|---|---|']
+             '|---|---|---|---|---|---|---|---|---|']
     genomes = read_table(HERE / 'results' / 'genomes' / 'spoligotyping.tsv')
     with open(HERE / 'genomes.tsv') as f:
         expected = list(csv.DictReader((line for line in f if not line.startswith('#')), delimiter='\t'))
@@ -55,10 +57,14 @@ def main():
         # The lineage can be more specific than expected (a sublineage), but not different
         lineage_ok = matches(row['Lineage'], exp['expected_lineage']) or (
             exp['expected_lineage'] not in ('', '*') and row['Lineage'].startswith(exp['expected_lineage'] + '.'))
-        ok = matches(row['Species'], exp['expected_species']) and lineage_ok and octal_ok(row, exp['expected_octal'])
+        sit_ok = row['SIT'] == DOCUMENTED_SIT.get(exp['sample'], row['SIT'])
+        ok = (matches(row['Species'], exp['expected_species']) and lineage_ok and octal_ok(row, exp['expected_octal'])
+              and sit_ok)
         failures += not ok
-        lines.append('| {} | {} | {} | {} | {} | {} | {} | {} |'.format(
-            exp['sample'], exp['organism'], row['Spoligotype'], row['Octal'],
+        lines.append('| {} | {} | {} | {} | {} | {} | {} | {} | {} |'.format(
+            exp['sample'], exp['organism'], row['Spoligotype'],
+            '{} ({})'.format(row['SIT'], row['SITVIT2family']) if row['SITVIT2family'] else row['SIT'] or '-',
+            row['Octal'],
             '{} ({})'.format(row['Species'], ' '.join({'present': '+', 'deleted': '-'}.get(row[r], row[r] or '?')
                                                        for r in ('RD1', 'RD4', 'RD7', 'RD9', 'RD12'))),
             row['Lineage'] or '-',

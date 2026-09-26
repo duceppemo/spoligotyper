@@ -5,8 +5,8 @@ The pattern is not in the [Mbovis.org](https://www.mbovis.org/) database. The `C
 numbers (up to 3 spacers different). Either:
 * **It is a human-adapted lineage** (*M. tuberculosis*): SB numbers only exist for the RD9-deleted lineages
   (*M. bovis*, *M. caprae*, *M. pinnipedii*, *M. microti*, *M. africanum*, ...). The `Lineage` column gives the
-  lineage and its typical spoligotype families; use the octal code to find the shared international type (SIT) in the
-  SITVIT database (H37Rv, 777777477760771, is SIT451).
+  lineage and its typical spoligotype families, and the `SIT` and `SITVIT2family` columns its shared international
+  type (SIT), once the [SIT database](Installation#sit-database) is downloaded (H37Rv, 777777477760771, is SIT451).
 * **It is a new pattern**: new *M. bovis* patterns can be submitted to Mbovis.org to get an SB number.
 * **A spacer is miscalled**: look at the `SpacerCount` column for counts close to `--min-count`, and see
   [How it works](How-it-works#minimum-count).
@@ -26,6 +26,13 @@ For drug resistance and a finer lineage, use a dedicated tool such as [TB-Profil
 The MTBC-specific control regions have fewer reads than the sequencing depth predicts: part of the reads come from
 something else (contamination, host DNA, another organism). The spoligotype and species are still called from the
 MTBC reads. See [Species and lineage](Species-and-lineage#contamination-fraction-of-mtbc-reads).
+
+### Where do the SIT numbers come from?
+From the SITVIT2 database of the Institut Pasteur de Guadeloupe, through the 9,656 SITVIT2 patterns published under
+GPL-3.0 with SpolLineages (3,850 SITs, up to SIT3862, as of 2022). `spoligotyper-download-sit` downloads them: see
+[Installation](Installation#sit-database). SITs created since 2022 are missing: a pattern without SIT is reported as
+`Orphan` (known to SITVIT2, seen once) or `Spoligo not found`, with the closest SITs. SITVIT2 families are given for
+orphan patterns too.
 
 ### Can I use another database?
 Yes, with `--db my_database.txt`. The file has one pattern per line, with 3 columns separated by spaces or tabs:

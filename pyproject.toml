@@ -41,6 +41,7 @@ DOI = "https://doi.org/10.5281/zenodo.22926160"
 
 [project.scripts]
 spoligotyper = "spoligotyper.cli:main"
+spoligotyper-download-sit = "spoligotyper.sitdb:main"
 
 [tool.setuptools]
 packages = ["spoligotyper", "spoligotyper.data"]

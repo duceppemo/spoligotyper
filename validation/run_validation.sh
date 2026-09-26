@@ -69,7 +69,10 @@ simulate M_marinum 15 9 data/sim/M_marinum_15x.fastq.gz
     cat data/sim/H37Rv_15x.fastq.gz data/sim/M_marinum_15x.fastq.gz \
         > data/reads/sim_contaminated_H37Rv15x_marinum15x.fastq.gz
 
-spoligotyper -i data/genomes -o results/genomes -t "$threads" -j 4 --operator validation || true
-spoligotyper -i data/reads -o results/reads -t "$threads" -j 2 --operator validation || true
+# SIT database (SITVIT2 patterns of SpolLineages), kept in data/
+[ -s data/sit/sit_database.tsv ] || spoligotyper-download-sit -o data/sit
+
+spoligotyper -i data/genomes -o results/genomes -t "$threads" -j 4 --operator validation --sit-db data/sit/sit_database.tsv || true
+spoligotyper -i data/reads -o results/reads -t "$threads" -j 2 --operator validation --sit-db data/sit/sit_database.tsv || true
 python3 check_results.py > results/validation.md
 cat results/validation.md

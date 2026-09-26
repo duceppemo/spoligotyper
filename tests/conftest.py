@@ -81,6 +81,12 @@ def write_reads(path, seq, rng, depth=20, length=100, mate=None, extra=None):
             f.write('@r{}/{}\n{}\n+\n{}\n'.format(i, mate or 1, read, 'I' * length))
 
 
+@pytest.fixture(autouse=True)
+def no_user_data(tmp_path, monkeypatch):
+    """Never use the SIT database of the user's cache folder: tests only see the databases they create."""
+    monkeypatch.setenv('SPOLIGOTYPER_DATA', str(tmp_path / 'spoligotyper_data'))
+
+
 @pytest.fixture(scope='session')
 def data(tmp_path_factory):
     rng = random.Random(1)
