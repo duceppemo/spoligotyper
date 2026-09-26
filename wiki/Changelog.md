@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.1 (2026-09-25)
 * PDF report: the date under the title now shows its time zone, like the other dates of the report. In containers,
   which usually run in UTC, see the [FAQ](FAQ#why-are-the-times-in-the-pdf-report-in-utc) to use the local time zone.
 
