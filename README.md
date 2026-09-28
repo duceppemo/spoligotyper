@@ -42,7 +42,7 @@ the species and the lineage, and flags contaminated or mixed samples.
   species and lineage, and the closest known patterns for new spoligotypes.
 * **PDF report for QA**: results, reads supporting each spacer, input files with checksums, software versions,
   parameters, operator, date, and a review box. Plus a table, JSON and a MultiQC section for pipelines.
-* **Validated** on 16 reference genomes and 8 read sets of known species, lineage and spoligotype
+* **Validated** on 31 reference genomes and 8 read sets of known species, lineage and spoligotype
   ([Validation](https://github.com/duceppemo/spoligotyper/wiki/Validation)).
 * **Workflow ready**: nf-core module and Galaxy tool in [`integrations/`](integrations/).
 * **Transparent**: borderline calls, low depth and failed samples are flagged, never hidden.

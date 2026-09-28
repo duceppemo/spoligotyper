@@ -57,6 +57,25 @@ def test_species_reduced_depth():
     assert check.species == 'MTBC (mixed or unclear RD profile)'
 
 
+def test_short_region_tolerance():
+    """RD9 has 8 segments: one missing at low depth is still present, one stray segment is still deleted."""
+    rd9 = sorted(n for n in species.segments() if n.startswith('RD9_'))
+    counts = marker_counts(30)
+    counts[rd9[0]] = 0
+    assert species.check_species(counts, 'fastq').regions['RD9'].state == species.PRESENT
+    assert species.check_species(counts, 'fasta').regions['RD9'].state == species.PARTIAL
+    counts = marker_counts(30, rd9=0)
+    counts[rd9[0]] = 2
+    assert species.check_species(counts, 'fastq').regions['RD9'].state == species.DELETED
+
+
+def test_no_reduced_depth_in_assemblies():
+    """Contig counts do not measure depth: a region found once with controls found 3 times is present."""
+    check = species.check_species(marker_counts(3, rd9=1), 'fasta')
+    assert check.regions['RD9'].state == species.PRESENT
+    assert species.call_region(marker_counts(0), 'RD9', 0).ratio == 0.0
+
+
 def rd1_segments():
     return sorted((n for n in species.segments() if n.startswith('RD1_')), key=lambda n: species.segments()[n])
 
@@ -226,8 +245,8 @@ def test_closest():
 
 
 def test_multiqc(tmp_path):
-    write_multiqc([Result('S1', spoligotype='Not in Mbovis.org', octal='000000000003771')], tmp_path / 'x_mqc.json')
+    write_multiqc([Result('S1', sb='Not in Mbovis.org', octal='000000000003771')], tmp_path / 'x_mqc.json')
     content = json.loads((tmp_path / 'x_mqc.json').read_text())
     assert content['id'] == 'spoligotyper' and content['plot_type'] == 'table'
-    assert content['data'] == {'S1': {'Spoligotype': 'Not in Mbovis.org', 'SIT': '-', 'Octal': '000000000003771',
+    assert content['data'] == {'S1': {'SB': 'Not in Mbovis.org', 'SIT': '-', 'Octal': '000000000003771',
                                       'Species': '-', 'Lineage': '-', 'Status': 'ok'}}

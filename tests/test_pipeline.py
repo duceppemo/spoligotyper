@@ -92,14 +92,14 @@ def test_seal_missing(monkeypatch):
 
 def test_write_tsv(tmp_path):
     ok = Result('S1', counts=[3, 0] + [1] * 41, binary='10' + '1' * 41, octal='x', hexadecimal='y',
-                spoligotype='SB0000', file_type='fastq', data='reads', min_count=1, reads=1000, bases=88_000_000)
+                sb='SB0000', file_type='fastq', data='reads', min_count=1, reads=1000, bases=88_000_000)
     ok.warnings.append('a warning')
     failed = Result('S2', file_type='fasta', error='Seal failed: boom\nmore details')
     write_tsv([ok, failed], tmp_path / 'report.tsv')
     lines = [line.split('\t') for line in (tmp_path / 'report.tsv').read_text().splitlines()]
-    assert lines[0] == ['Sample', 'SpacerCount', 'Binary', 'Octal', 'Hexadecimal', 'Spoligotype',
+    assert lines[0] == ['Sample', 'SpacerCount', 'Binary', 'Octal', 'Hexadecimal', 'SB',
                         'FileType', 'Reads', 'Depth', 'MinCount', 'Status', 'Warnings',
-                        'Species', 'Lineage', 'LineageName', 'RD9', 'RD4', 'RD1', 'MTBCFraction', 'Closest',
+                        'Species', 'Lineage', 'LineageName', 'RD9', 'RD4', 'RD1', 'MTBCFraction', 'ClosestSB',
                         'RD7', 'RD12', 'SIT', 'SITVIT2family', 'ClosestSIT']
     assert lines[1][:2] == ['S1', '3:0:' + ':'.join(['1'] * 41)]
     assert lines[1][6:12] == ['fastq', '1000', '20', '1', 'warning', 'a warning']
@@ -215,7 +215,7 @@ def test_low_mtbc_depth_warning():
 
 def test_no_sb_warning_without_spacers():
     check = species.SpeciesCheck(mtbc=True, regions={'RD9': species.RegionCall('present', 8, 8, 1.0)}, species='x')
-    r = Result('S', counts=[0] * 43, binary='0' * 43, spoligotype='SB2277', file_type='fasta', data='assembly',
+    r = Result('S', counts=[0] * 43, binary='0' * 43, sb='SB2277', file_type='fasta', data='assembly',
                min_count=1, species=check, lineage=pipeline.lineage.LineageCall())
     check_result(r)
     assert not any('SB number' in w for w in r.warnings) and any('no spacer found' in w for w in r.warnings)
@@ -238,11 +238,11 @@ def test_batch_unexpected_error(monkeypatch, tmp_path):
 def test_pdf_order_by_spoligotype():
     from spoligotyper.pdf import by_spoligotype
     a, b = '1' * 43, '0' * 43
-    results = [Result('S3', binary=b, spoligotype='Not in Mbovis.org', octal='000'),
-               Result('S2', binary=a, spoligotype='SB0001', octal='777'),
+    results = [Result('S3', binary=b, sb='Not in Mbovis.org', octal='000'),
+               Result('S2', binary=a, sb='SB0001', octal='777'),
                Result('bad', error='boom'),
-               Result('S1', binary=a, spoligotype='SB0001', octal='777'),
-               Result('S0', binary='01' * 21 + '0', spoligotype='SB0002', octal='252')]
+               Result('S1', binary=a, sb='SB0001', octal='777'),
+               Result('S0', binary='01' * 21 + '0', sb='SB0002', octal='252')]
     order = [(group, r.sample) for group, r in by_spoligotype(results)]
     # Largest group first, then SB numbers before unnamed patterns, samples sorted within a group, failed last
     assert order == [(0, 'S1'), (0, 'S2'), (1, 'S0'), (2, 'S3'), (3, 'bad')]

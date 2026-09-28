@@ -51,4 +51,4 @@ more than a few reads. spoligotyper warns when spacers called absent were seen i
   [Species and lineage](Species-and-lineage#mixed-samples).
 * **Other mycobacteria**: non-tuberculous mycobacteria have no DR locus, and give a pattern with no spacer.
   spoligotyper reports them as "MTBC not detected".
-* **SB numbers** are only defined for the animal-adapted lineages. See the [FAQ](FAQ#my-sample-is-spoligo-not-found).
+* **SB numbers** are only defined for the animal-adapted lineages. See the [FAQ](FAQ#my-sample-is-not-in-mbovisorg).

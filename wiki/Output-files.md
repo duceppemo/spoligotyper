@@ -10,7 +10,7 @@ A tab-separated table with a header and one line per sample. The same table is p
 | `Binary` | `1101101000001...` | 43 digits: 1 = spacer present (count ≥ `MinCount`), 0 = absent |
 | `Octal` | `664073777777600` | 15-digit octal code |
 | `Hexadecimal` | `6D-03-5F-7F-FF-60` | Hexadecimal code, 6 blocks |
-| `Spoligotype` | `SB0140` | SB number: the name of the pattern in the [Mbovis.org](https://www.mbovis.org/) database, or `Not in Mbovis.org` when this database has no name for it (e.g. all *M. tuberculosis* patterns). The spoligotype itself is the `Binary`, `Octal` and `Hexadecimal` codes. With `--db`: the name in that database, or `Not in database` |
+| `SB` | `SB0140` | SB number: the name of the pattern in the [Mbovis.org](https://www.mbovis.org/) database, or `Not in Mbovis.org` when this database has no name for it (e.g. all *M. tuberculosis* patterns). The spoligotype itself is the `Binary`, `Octal` and `Hexadecimal` codes. With `--db`: the name in that database, or `Not in database` |
 | `FileType` | `fastq` | File format: `fastq` (reads) or `fasta` (an assembly, or reads in fasta format: see `Warnings`) |
 | `Reads` | `1212727` | Number of reads (or contigs) in the input |
 | `Depth` | `65` | Reads only: estimated sequencing depth, all bases divided by 4.4 Mb |
@@ -22,14 +22,16 @@ A tab-separated table with a header and one line per sample. The same table is p
 | `LineageName` | `M. bovis` | e.g. "Euro-American (LAM)", "East-Asian" (Beijing) |
 | `RD9`, `RD4`, `RD1` | `deleted` | `present`, `deleted`, `partial` (some segments of the region missing) or `reduced` (present at a low depth: mixed sample?); also `RD7` and `RD12`, the last columns. See [Species and lineage](Species-and-lineage#species-regions-of-difference) |
 | `MTBCFraction` | `1.00` | Reads only: estimated fraction of the reads from the *M. tuberculosis* complex |
-| `Closest` | `SB0140 (spacer 7 differs)` | For a pattern not in the database: the closest SB numbers, up to 3 spacers away |
+| `ClosestSB` | `SB0140 (spacer 7 differs)` | For a pattern not in the database: the closest SB numbers, up to 3 spacers away |
 | `RD7`, `RD12` | `deleted` | As `RD9`, `RD4` and `RD1` |
 | `SIT` | `SIT451` | Shared international type of the SITVIT2 database: a SIT, `Orphan` (a SITVIT2 pattern without SIT), or `Not in SITVIT2 list` (not among the SITVIT2 patterns of the list, which does not include the SITs created since 2022). Empty without SIT database: see [Installation](Installation#sit-database) |
 | `SITVIT2family` | `T-H37Rv` | SITVIT2 spoligotype family of the pattern (also for orphan patterns), e.g. Beijing, LAM3, EAI5, BOV_1 |
 | `ClosestSIT` | `SIT451 (spacer 12 differs)` | For a pattern without SIT: the closest SITs, up to 3 spacers away |
 
 Columns are only ever added at the end: the first 6 are those of version 0.2, the next 6 were added in 0.3, the next
-8 in 0.4 and the last 5 in 0.5. The species columns are empty with `--no-species`.
+8 in 0.4 and the last 5 in 0.5. The species columns are empty with `--no-species`. Version 0.6 renamed `Spoligotype`
+to `SB` and `Closest` to `ClosestSB` (same positions): they hold names in the Mbovis.org database, not the
+spoligotype itself.
 
 ### Octal code
 The binary pattern is cut into 14 groups of 3 spacers, and each group is written as one octal digit (000 = 0,
@@ -56,7 +58,7 @@ allele) and warnings, and the run information (software versions, parameters, ch
 
 ## MultiQC: `spoligotyping_mqc.json` or `<sample>_spoligotyping_mqc.json`
 A [MultiQC custom content](https://docs.seqera.io/multiqc/custom_content) file (JSON, so that octal codes keep their
-leading zeros) with the spoligotype, octal code,
+leading zeros) with the SB number, SIT, octal code,
 species, lineage and status of each sample. Run `multiqc` on the output folder to get a "Spoligotyping" section.
 
 ## PDF report: `spoligotyping_report.pdf` or `<sample>_spoligotyping.pdf`
@@ -65,23 +67,27 @@ Made for quality assurance: everything needed to check a result, and to trace ho
 
 ![Summary page of the PDF report](https://raw.githubusercontent.com/duceppemo/spoligotyper/main/assets/report_summary.png)
 
-1. **Summary**: date, operator, and for each sample the spoligotype, octal code, species, lineage, pattern and
+1. **Summary**: date, operator, and for each sample the octal code, SB number and SIT, species, lineage, pattern and
    status. Samples with the same spoligotype are grouped (the largest groups first; alternate groups shaded), and
    failed samples come last. Warnings and errors are listed below, followed by a box for the reviewer's name, date
    and signature.
 2. **Samples**: one page per sample, in the order of the summary, so its tables are never split, with
-   * the spoligotype, octal, hexadecimal and binary codes, and the pattern;
+   * the spoligotype: octal, hexadecimal and binary codes, and the pattern, then its SB number and SIT;
    * the input files: full path (and the real file when it is a symbolic link), size, modification date and MD5
      checksum;
    * the number of reads and bases, estimated depth, minimum count, number of present spacers and their median count;
    * the closest known patterns, when the pattern is not in the database;
-   * the species and lineage: regions of difference with their relative depth, lineage with its name and typical
+   * the species and lineage: regions of difference with their H37Rv coordinates, segments found, relative depth
+     and result, lineage with its name and typical
      spoligotype families, amount of MTBC DNA, and the reads supporting each lineage SNP;
    * the reads (or contigs) per spacer: present spacers in blue, absent spacers seen in some reads in orange;
    * the warnings, or the error of a failed sample.
-3. **Run information**: operator, user, computer, operating system, start and end time (with time zone), working
+3. **Definitions and methods**: what the codes, SB number, SIT, spoligotype families and lineage mean, how the
+   regions of difference were determined (H37Rv coordinates, segments and thresholds) and how they compare with PCR
+   assays, and how the spacers were counted.
+4. **Run information**: operator, user, computer, operating system, start and end time (with time zone), working
    directory, the exact command, parameters, versions of spoligotyper, Python, BBTools and Java, path and MD5
-   checksum of the spoligotype database and of the spacer sequences, the method, and references.
+   checksum of the spoligotype database and of the spacer sequences, and references.
 
 Every page has the spoligotyper version, the date, user and computer, and "Page x of y" in the footer.
 

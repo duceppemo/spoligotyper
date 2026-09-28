@@ -14,6 +14,9 @@ Clearer terminology and RD reporting, after feedback from a tuberculosis expert.
   deletions, such as the part of RD1 lost by *M. microti* (RD1<sup>mic</sup>), now reported, and used to identify
   *M. microti*. In assemblies, a region is present only if all its segments are found.
 * JSON: segments found, missing coordinates and H37Rv region of each RD.
+* **Renamed columns**: `Spoligotype` is now `SB` and `Closest` is now `ClosestSB` in the TSV (same positions), `SB` in
+  the MultiQC table, and `sb` in the JSON (`closest` entries too): they hold the name of the pattern in the Mbovis.org
+  database, not the spoligotype. Scripts that read these columns need the new names.
 
 ## 0.5.1 (2026-09-25)
 * PDF report: the date under the title now shows its time zone, like the other dates of the report. In containers,

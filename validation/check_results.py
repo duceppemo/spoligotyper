@@ -46,7 +46,7 @@ def octal_ok(row, expected):
 def main():
     failures = 0
     lines = ['# Validation', '', '## Reference genomes', '',
-             '| Sample | Organism | Spoligotype | SIT (family) | Octal | Species (RD1 RD4 RD7 RD9 RD12) | Lineage '
+             '| Sample | Organism | SB | SIT (family) | Octal | Species (RD1 RD4 RD7 RD9 RD12) | Lineage '
              '| Expected lineage | Result |',
              '|---|---|---|---|---|---|---|---|---|']
     genomes = read_table(HERE / 'results' / 'genomes' / 'spoligotyping.tsv')
@@ -62,7 +62,7 @@ def main():
               and sit_ok)
         failures += not ok
         lines.append('| {} | {} | {} | {} | {} | {} | {} | {} | {} |'.format(
-            exp['sample'], exp['organism'], row['Spoligotype'],
+            exp['sample'], exp['organism'], row['SB'],
             '{} ({})'.format(row['SIT'], row['SITVIT2family']) if row['SITVIT2family'] else row['SIT'] or '-',
             row['Octal'],
             '{} ({})'.format(row['Species'], ' '.join({'present': '+', 'deleted': '-', 'partial': 'p',
@@ -71,7 +71,7 @@ def main():
             row['Lineage'] or '-',
             {'': '-', '*': 'not documented'}.get(exp['expected_lineage'], exp['expected_lineage']),
             'OK' if ok else '**FAIL**'))
-    lines += ['', '## Reads', '', '| Sample | Spoligotype | Octal | Species | Lineage | MTBC fraction | Warnings | '
+    lines += ['', '## Reads', '', '| Sample | SB | Octal | Species | Lineage | MTBC fraction | Warnings | '
               'Result |', '|---|---|---|---|---|---|---|---|']
     reads = read_table(HERE / 'results' / 'reads' / 'spoligotyping.tsv')
     for sample, (species, lineage, octal, warning) in READS.items():
@@ -80,7 +80,7 @@ def main():
               and (warning in row['Warnings'] if warning else row['Status'] == 'ok'))
         failures += not ok
         lines.append('| {} | {} | {} | {} | {} | {} | {} | {} |'.format(
-            sample, row['Spoligotype'], row['Octal'], row['Species'], row['Lineage'] or '-', row['MTBCFraction'],
+            sample, row['SB'], row['Octal'], row['Species'], row['Lineage'] or '-', row['MTBCFraction'],
             row['Warnings'].replace('|', '/') or '-', 'OK' if ok else '**FAIL**'))
     total = len(expected) + len(READS)
     lines += ['', '**{} of {} checks passed.**'.format(total - failures, total)]

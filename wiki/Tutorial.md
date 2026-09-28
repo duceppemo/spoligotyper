@@ -34,8 +34,8 @@ spoligotyper -r1 data/AF2122_97.fastq.gz -o results/
 ```
 12:00:00 INFO    Spoligotyping AF2122_97 (fastq, minimum count 5)
 12:00:07 INFO    AF2122_97: SB0140 (octal 664073777777600), M. bovis, lineage BOV
-Sample     SpacerCount           Binary                                       Octal            ...  Spoligotype  ...  Species   Lineage  ...
-AF2122_97  56:47:0:58:63:0:...   1101101000001110111111111111111111111100000  664073777777600  ...  SB0140       ...  M. bovis  BOV      ...
+Sample     SpacerCount           Binary                                       Octal            ...  SB      ...  Species   Lineage  ...
+AF2122_97  56:47:0:58:63:0:...   1101101000001110111111111111111111111100000  664073777777600  ...  SB0140  ...  M. bovis  BOV      ...
 12:00:07 INFO    Report saved in results/AF2122_97_spoligotyping.txt
 12:00:07 INFO    Report saved in results/AF2122_97_spoligotyping.json
 12:00:07 INFO    Report saved in results/AF2122_97_spoligotyping.pdf
@@ -47,7 +47,7 @@ The main columns of the table:
 |---|---|
 | SpacerCount | 56:47:0:58:63:0:76:0:0:0:0:0:50:43:38:0:36:29:45:50:47:51:50:54:140:74:73:78:57:56:50:46:39:41:45:45:54:53:0:0:0:0:0 |
 | Octal | 664073777777600 |
-| Spoligotype | SB0140 |
+| SB | SB0140 |
 | Depth | 65 |
 | Species | M. bovis |
 | RD1, RD4, RD7, RD9, RD12 | present, deleted, deleted, deleted, deleted |
@@ -75,7 +75,7 @@ assembly gives the same spoligotype as its reads, SB0140.
 H37Rv gives `Not in Mbovis.org`: SB numbers only exist for the animal-adapted lineages, so the Mbovis.org database
 has no name for this pattern. The spoligotype itself is the pattern and its octal code,
 777777477760771, is the one to use for *M. tuberculosis*, for example to look up its shared international type
-(SIT) in SITVIT (see the [FAQ](FAQ#my-sample-is-spoligo-not-found)). The species is *M. tuberculosis* (all five
+(SIT) in SITVIT (see the [FAQ](FAQ#my-sample-is-not-in-mbovisorg)). The species is *M. tuberculosis* (all five
 regions of difference present) and the lineage 4.9, "Euro-American (H37Rv-like)".
 
 ## 4. All at once, with a PDF report

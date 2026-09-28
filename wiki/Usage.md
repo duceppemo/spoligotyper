@@ -78,7 +78,7 @@ spoligotyper can also be used from Python:
 from spoligotyper.pipeline import spoligotype
 
 result = spoligotype('S1_R1.fastq.gz', 'S1_R2.fastq.gz', threads=4)
-print(result.sample, result.octal, result.spoligotype, result.counts, result.warnings)
+print(result.sample, result.octal, result.sb, result.counts, result.warnings)
 print(result.species.species, result.lineage.lineage, result.species.mtbc_fraction)
 ```
 

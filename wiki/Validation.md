@@ -24,7 +24,7 @@ the data, simulates the read sets (BBTools `randomreads.sh`, fixed seeds) and ch
 * SIT and SITVIT2 family: from the SITVIT2 patterns published with SpolLineages (`spoligotyper-download-sit`).
   The documented SITs are checked: H37Rv SIT451, BCG SIT482, and SIT1 for the Beijing strain CCDC5079.
 
-| Sample | Organism | Spoligotype | SIT (family) | Octal | Species (RD1 RD4 RD7 RD9 RD12) | Lineage | Expected lineage | Result |
+| Sample | Organism | SB | SIT (family) | Octal | Species (RD1 RD4 RD7 RD9 RD12) | Lineage | Expected lineage | Result |
 |---|---|---|---|---|---|---|---|---|
 | H37Rv | M. tuberculosis H37Rv | Not in Mbovis.org | SIT451 (T-H37Rv) | 777777477760771 | M. tuberculosis (+ + + + +) | 4.9 | 4.9 | OK |
 | CDC1551 | M. tuberculosis CDC1551 | Not in Mbovis.org | SIT549 (X3) | 700076757760771 | M. tuberculosis (+ + + + +) | 4.1.1.3 | 4.1.1.3 | OK |
@@ -70,7 +70,7 @@ missing spacers, with a warning that the lineage SNPs are not reliable for *M. c
 * **sim_contaminated_H37Rv15x_marinum15x**: H37Rv and *M. marinum* reads at the same depth. The *M. marinum* genome
   is larger (6.6 Mb), so 40% of the reads are MTBC: the estimated MTBC fraction, 0.40, is right.
 
-| Sample | Spoligotype | Octal | Species | Lineage | MTBC fraction | Warnings | Result |
+| Sample | SB | Octal | Species | Lineage | MTBC fraction | Warnings | Result |
 |---|---|---|---|---|---|---|---|
 | ERR1744454 | SB0140 | 664073777777600 | M. bovis | BOV | 1.00 | - | OK |
 | sim_H37Rv_30x | Not in Mbovis.org | 777777477760771 | M. tuberculosis | 4.9 | 1.00 | - | OK |

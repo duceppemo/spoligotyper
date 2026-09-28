@@ -3,7 +3,7 @@
 ### My sample is `Not in Mbovis.org`
 Its spoligotype is fine: the spoligotype is the binary pattern and its octal and hexadecimal codes, which are
 universal and are the codes to use to exchange spoligotypes. `Not in Mbovis.org` only means that the
-[Mbovis.org](https://www.mbovis.org/) database has no SB number (name) for this pattern. The `Closest` column lists
+[Mbovis.org](https://www.mbovis.org/) database has no SB number (name) for this pattern. The `ClosestSB` column lists
 the closest SB numbers (up to 3 spacers different). Either:
 * **It is a human-adapted lineage** (*M. tuberculosis*): SB numbers only exist for the RD9-deleted lineages
   (*M. bovis*, *M. caprae*, *M. pinnipedii*, *M. microti*, *M. africanum*, ...). The `Lineage` column gives the
@@ -20,7 +20,7 @@ warning, and the `Species` column says "MTBC not detected" when there is no MTBC
 spacer either: it is reported with RD9 intact and no lineage.
 
 ### How reliable are the species and the lineage?
-They were checked on 16 reference genomes and 8 read sets of known species and lineage: see [Validation](Validation).
+They were checked on 31 reference genomes and 8 read sets of known species and lineage: see [Validation](Validation).
 The lineage comes from the SNP barcode of Coll *et al.* (2014), the reference method for SNP-based lineage typing.
 For drug resistance and a finer lineage, use a dedicated tool such as [TB-Profiler](https://github.com/jodyphelan/TBProfiler).
 

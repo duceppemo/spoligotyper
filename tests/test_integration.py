@@ -14,6 +14,7 @@ import pytest
 from spoligotyper import __version__, seal
 from spoligotyper.cli import main
 from spoligotyper.pipeline import spoligotype
+from spoligotyper.spoligotype import SPOLIGOTYPE_DB
 
 from .conftest import H37RV, SB0120, SB0140
 
@@ -39,37 +40,37 @@ def test_assembly(data, tmp_path, capsys):
     assert row['SpacerCount'].split(':')[:4] == ['1', '1', '0', '1']
     assert (row['Species'], row['Lineage'], row['LineageName']) == ('M. bovis', 'BOV', 'M. bovis, M. caprae, M. orygis')
     assert (row['RD7'], row['RD12']) == ('deleted', 'deleted')
-    assert (row['RD9'], row['RD4'], row['RD1'], row['MTBCFraction'], row['Closest']) == \
+    assert (row['RD9'], row['RD4'], row['RD1'], row['MTBCFraction'], row['ClosestSB']) == \
         ('deleted', 'deleted', 'present', '', '')
     report = table((tmp_path / 'AF2122_spoligotyping.txt').read_text())[0]
     assert report == row
     data_json = json.loads((tmp_path / 'AF2122_spoligotyping.json').read_text())
     sample = data_json['samples'][0]
-    assert sample['spoligotype'] == 'SB0140' and sample['species']['species'] == 'M. bovis'
+    assert sample['sb'] == 'SB0140' and sample['species']['species'] == 'M. bovis'
     assert sample['species']['regions']['RD4']['state'] == 'deleted' and sample['lineage']['lineage'] == 'BOV'
     assert data_json['run']['software']['spoligotyper'] == __version__
     mqc = json.loads((tmp_path / 'AF2122_spoligotyping_mqc.json').read_text())
-    assert mqc['data']['AF2122'] == {'Spoligotype': 'SB0140', 'SIT': '-', 'Octal': '664073777777600',
+    assert mqc['data']['AF2122'] == {'SB': 'SB0140', 'SIT': '-', 'Octal': '664073777777600',
                                      'Species': 'M. bovis', 'Lineage': 'BOV', 'Status': 'ok'}
 
 
 def test_not_in_database(data, tmp_path, capsys):
     row = run(capsys, '-r1', data / 'H37Rv.fna', '-o', tmp_path)
-    assert [row[c] for c in ('Binary', 'Octal', 'Hexadecimal', 'Spoligotype')] == \
+    assert [row[c] for c in ('Binary', 'Octal', 'Hexadecimal', 'SB')] == \
         [H37RV, '777777477760771', '7F-7F-7C-7F-F0-7F', 'Not in Mbovis.org']
     assert (row['Species'], row['Lineage'], row['RD9']) == ('M. tuberculosis', '4.9', 'present')
-    assert row['Status'] == 'ok' and row['Closest'] == ''  # Nothing within 3 spacers
+    assert row['Status'] == 'ok' and row['ClosestSB'] == ''  # Nothing within 3 spacers
 
 
 def test_bcg(data, tmp_path, capsys):
     row = run(capsys, '-r1', data / 'BCG.fasta', '-o', tmp_path)
-    assert (row['Binary'], row['Spoligotype'], row['Species'], row['RD1']) == \
+    assert (row['Binary'], row['SB'], row['Species'], row['RD1']) == \
         (SB0120, 'SB0120', 'M. bovis BCG', 'deleted')
 
 
 def test_no_species(data, tmp_path, capsys):
     row = run(capsys, '-r1', data / 'AF2122.fasta', '-o', tmp_path, '--no-species')
-    assert row['Spoligotype'] == 'SB0140' and row['Species'] == row['Lineage'] == row['RD9'] == ''
+    assert row['SB'] == 'SB0140' and row['Species'] == row['Lineage'] == row['RD9'] == ''
 
 
 def test_mixed_sample(data, tmp_path, capsys, caplog):
@@ -84,7 +85,7 @@ def test_mixed_sample(data, tmp_path, capsys, caplog):
 def test_paired_end(data, tmp_path, capsys):
     row = run(capsys, '-r1', data / 'bovis_R1.fastq.gz', '-r2', data / 'bovis_R2.fastq.gz', '-o', tmp_path)
     assert row['Sample'] == 'bovis'
-    assert row['Binary'] == SB0140 and row['Spoligotype'] == 'SB0140'
+    assert row['Binary'] == SB0140 and row['SB'] == 'SB0140'
     assert (row['Species'], row['Lineage']) == ('M. bovis', 'BOV')
     counts = [int(c) for c in row['SpacerCount'].split(':')]
     assert min(c for c, bit in zip(counts, SB0140, strict=True) if bit == '1') >= 5
@@ -93,7 +94,7 @@ def test_paired_end(data, tmp_path, capsys):
 
 def test_single_end_and_sample_name(data, tmp_path, capsys):
     row = run(capsys, '-r1', data / 'bovis_single.fq.gz', '-o', tmp_path, '-s', 'my_sample')
-    assert row['Sample'] == 'my_sample' and row['Spoligotype'] == 'SB0140'
+    assert row['Sample'] == 'my_sample' and row['SB'] == 'SB0140'
     assert (tmp_path / 'my_sample_spoligotyping.txt').exists()
 
 
@@ -104,7 +105,7 @@ def test_min_count(data, tmp_path, capsys, caplog):
     assert row['Binary'] != SB0140
     assert 'fewer than 5 reads' in caplog.text
     row = run(capsys, '-r1', data / 'low_coverage.fastq.gz', '-o', tmp_path, '-m', '1')
-    assert row['Spoligotype'] == 'SB0140'
+    assert row['SB'] == 'SB0140'
 
 
 def test_not_mtbc(data, tmp_path, capsys, caplog):
@@ -112,7 +113,7 @@ def test_not_mtbc(data, tmp_path, capsys, caplog):
         row = run(capsys, '-r1', data / 'not_mtbc.fasta', '-o', tmp_path)
     assert row['Binary'] == '0' * 43
     assert 'no spacer found' in caplog.text
-    assert row['Spoligotype'] == 'SB2277' and row['Status'] == 'warning'  # SB2277 is the pattern with no spacer
+    assert row['SB'] == 'SB2277' and row['Status'] == 'warning'  # SB2277 is the pattern with no spacer
     assert row['Species'] == 'MTBC not detected' and row['Lineage'] == ''
 
 
@@ -192,7 +193,7 @@ def test_batch(data, tmp_path, capsys):
     rows = {row['Sample']: row for row in table(capsys.readouterr().out)}
     assert list(rows) == ['AF2122', 'BCG', 'H37Rv', 'bovis', 'bovis_single', 'broken', 'low_coverage', 'mixed',
                           'not_mtbc']  # In order, although typed in parallel
-    assert rows['bovis']['Spoligotype'] == rows['bovis_single']['Spoligotype'] == rows['AF2122']['Spoligotype'] \
+    assert rows['bovis']['SB'] == rows['bovis_single']['SB'] == rows['AF2122']['SB'] \
         == 'SB0140'
     assert rows['H37Rv']['Octal'] == '777777477760771'
     assert rows['broken']['Status'] == 'failed' and 'not a fasta or fastq' in rows['broken']['Warnings']
@@ -223,7 +224,7 @@ def test_odd_file_names(data, tmp_path, capsys):
     odd = folder / 'my sample,1.fasta'
     odd.write_text((data / 'AF2122.fasta').read_text())
     row = run(capsys, '-r1', odd, '-o', tmp_path / 'out put')
-    assert row['Sample'] == 'my sample,1' and row['Spoligotype'] == 'SB0140' and row['Species'] == 'M. bovis'
+    assert row['Sample'] == 'my sample,1' and row['SB'] == 'SB0140' and row['Species'] == 'M. bovis'
     assert (tmp_path / 'out put' / 'my sample,1_spoligotyping.txt').exists()
 
 
@@ -238,7 +239,7 @@ def test_reads_in_fasta_format(data, tmp_path, capsys):
     import unittest.mock
     with unittest.mock.patch(monkey_threshold, 100_000):
         row = run(capsys, '-r1', fasta, '-o', tmp_path)
-    assert row['FileType'] == 'fasta' and row['MinCount'] == '5' and row['Spoligotype'] == 'SB0140'
+    assert row['FileType'] == 'fasta' and row['MinCount'] == '5' and row['SB'] == 'SB0140'
     assert 'typed as reads in fasta format' in row['Warnings']
 
 
@@ -303,6 +304,14 @@ def test_custom_database_wording(data, tmp_path, capsys):
     db = tmp_path / 'db.txt'
     db.write_text('777777477760771 SIT451 {}\n'.format(H37RV))
     row = run(capsys, '-r1', data / 'AF2122.fasta', '-o', tmp_path, '--db', db)
-    assert row['Spoligotype'] == 'Not in database'
+    assert row['SB'] == 'Not in database'
     row = run(capsys, '-r1', data / 'H37Rv.fna', '-o', tmp_path, '--db', db)
-    assert row['Spoligotype'] == 'SIT451'
+    assert row['SB'] == 'SIT451'
+    assert 'is an SB number' not in row['Warnings']  # A name of another database, not an SB number
+
+
+def test_default_database_by_relative_path(data, tmp_path, capsys, monkeypatch):
+    """The bundled database given by a relative path is still the Mbovis.org database."""
+    monkeypatch.chdir(SPOLIGOTYPE_DB.parent)
+    row = run(capsys, '-r1', data / 'H37Rv.fna', '-o', tmp_path, '--db', SPOLIGOTYPE_DB.name)
+    assert row['SB'] == 'Not in Mbovis.org'

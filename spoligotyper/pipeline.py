@@ -48,10 +48,15 @@ LOW_MTBC_FRACTION = 0.6  # Below this estimated fraction of MTBC reads, the samp
 WEAK_SPACER = 0.4  # Present spacers with fewer reads than this fraction of the median: mixed sample?
 WEAK_SPACER_MIN_MEDIAN = 30  # ... when the median is high enough for this not to happen by chance
 
-REPORT_HEADER = ['Sample', 'SpacerCount', 'Binary', 'Octal', 'Hexadecimal', 'Spoligotype',
+REPORT_HEADER = ['Sample', 'SpacerCount', 'Binary', 'Octal', 'Hexadecimal', 'SB',
                  'FileType', 'Reads', 'Depth', 'MinCount', 'Status', 'Warnings',
-                 'Species', 'Lineage', 'LineageName', 'RD9', 'RD4', 'RD1', 'MTBCFraction', 'Closest', 'RD7', 'RD12',
+                 'Species', 'Lineage', 'LineageName', 'RD9', 'RD4', 'RD1', 'MTBCFraction', 'ClosestSB', 'RD7', 'RD12',
                  'SIT', 'SITVIT2family', 'ClosestSIT']
+
+
+def is_default_database(database):
+    """True for the Mbovis.org database included with spoligotyper, whatever the path given."""
+    return Path(str(database)).resolve() == Path(str(SPOLIGOTYPE_DB)).resolve()
 
 
 @dataclass
@@ -82,7 +87,7 @@ class Result:
     binary: str = ''
     octal: str = ''
     hexadecimal: str = ''
-    spoligotype: str = ''
+    sb: str = ''  # Name of the pattern in the spoligotype database: SB number, or NOT_FOUND
     reads: int | None = None  # Reads (or contigs) in the input, from Seal
     bases: int | None = None
     warnings: list = field(default_factory=list)
@@ -104,7 +109,7 @@ class Result:
     @property
     def found(self):
         """The pattern has a name (SB number) in the spoligotype database."""
-        return self.spoligotype not in ('', NOT_FOUND, NOT_FOUND_CUSTOM)
+        return self.sb not in ('', NOT_FOUND, NOT_FOUND_CUSTOM)
 
     @property
     def is_reads(self):
@@ -153,7 +158,7 @@ class Result:
         state = {r: check.state(r) if check else '' for r in species.REGIONS}
         fraction = '' if check is None or check.mtbc_fraction is None else '{:.2f}'.format(check.mtbc_fraction)
         return [self.sample, ':'.join(str(c) for c in self.counts), self.binary, self.octal, self.hexadecimal,
-                self.spoligotype, self.file_type, '' if self.reads is None else str(self.reads), depth,
+                self.sb, self.file_type, '' if self.reads is None else str(self.reads), depth,
                 str(self.min_count or ''), self.status, ' '.join(notes.split()),
                 check.species if check else '', call.lineage if call else '', call.name if call else '',
                 state['RD9'], state['RD4'], state['RD1'], fraction, describe_closest(self.closest),
@@ -165,7 +170,7 @@ class Result:
         data = asdict(self)
         data.update(status=self.status, depth=self.depth, spacers_present=self.binary.count('1'),
                     median_present_count=self.median_present_count)
-        data['closest'] = [{'spoligotype': name, 'differing_spacers': diff} for name, diff in self.closest]
+        data['closest'] = [{'sb': name, 'differing_spacers': diff} for name, diff in self.closest]
         data['closest_sit'] = [{'sit': name, 'differing_spacers': diff} for name, diff in self.closest_sit]
         if self.species:
             data['species']['regions'] = {
@@ -208,7 +213,7 @@ class RunInfo:
                          'Seal': seal.executable() or 'not found', **seal.versions()}
         info.database = {'path': str(Path(str(database)).resolve()), 'md5': file_md5(database),
                          'patterns': len(load_database(database)),
-                         'default': Path(str(database)).resolve() == Path(str(SPOLIGOTYPE_DB)).resolve()}
+                         'default': is_default_database(database)}
         info.spacers = {'path': str(Path(str(spacers)).resolve()), 'md5': file_md5(spacers),
                         'spacers': len(read_spacer_names(spacers))}
         info.species_data = {name: {'path': str(Path(str(path)).resolve()), 'md5': file_md5(path)}
@@ -310,8 +315,7 @@ def spoligotype(r1, r2=None, sample=None, min_count=None, threads=1, memory='1g'
     result.counts = [stats.counts.get(name, 0) for name in spacer_names]
     result.binary = to_binary(stats.counts, spacer_names, result.min_count)
     result.octal, result.hexadecimal = binary_to_octal(result.binary), binary_to_hex(result.binary)
-    result.spoligotype = lookup(result.binary, db,
-                                NOT_FOUND if Path(str(database)) == Path(str(SPOLIGOTYPE_DB)) else NOT_FOUND_CUSTOM)
+    result.sb = lookup(result.binary, db, NOT_FOUND if is_default_database(database) else NOT_FOUND_CUSTOM)
     result.closest = closest(result.binary, db) if any(result.counts) else []
     if sit_db is not None:
         result.sit, result.sit_family = sit_db.lookup(result.binary)
@@ -334,7 +338,7 @@ def spoligotype(r1, r2=None, sample=None, min_count=None, threads=1, memory='1g'
                                  spacers=any(result.counts))
     check_result(result)
     result.seconds = time.monotonic() - start
-    log.info('%s: %s (octal %s)%s', result.sample, result.spoligotype, result.octal,
+    log.info('%s: %s (octal %s)%s', result.sample, result.sb, result.octal,
              ', {}, lineage {}'.format(result.species.species, result.lineage.lineage or '-')
              if result.species else '')
     return result
@@ -398,9 +402,9 @@ def check_species(result):
     if call.mixed:
         result.warn('both alleles of %d lineage SNP(s) seen (%s): mixed sample?', len(call.mixed),
                     ', '.join('{} {:.0f}%'.format(s.lineage, s.fraction * 100) for s in call.mixed))
-    if result.found and any(result.counts) and check.state('RD9') == species.PRESENT:
+    if result.found and result.sb.startswith('SB') and any(result.counts) and check.state('RD9') == species.PRESENT:
         result.warn('%s is an SB number, but RD9 is present: SB numbers are for RD9-deleted (animal) lineages.',
-                    result.spoligotype)
+                    result.sb)
 
 
 def spoligotype_samples(samples, jobs=1, **kwargs):
@@ -457,10 +461,10 @@ def write_multiqc(results, path):
     such as 000000000003771 stay text instead of being read as numbers.
     """
     import json
-    columns = ('Spoligotype', 'SIT', 'Octal', 'Species', 'Lineage', 'Status')
+    columns = ('SB', 'SIT', 'Octal', 'Species', 'Lineage', 'Status')
     data = {}
     for r in results:
-        values = (r.spoligotype, r.sit, r.octal, r.species.species if r.species else '',
+        values = (r.sb, r.sit, r.octal, r.species.species if r.species else '',
                   r.lineage.lineage if r.lineage else '', r.status)
         data[r.sample] = {column: value or '-' for column, value in zip(columns, values, strict=True)}
     link = '<a href="https://github.com/duceppemo/spoligotyper">spoligotyper</a> {}'.format(__version__)

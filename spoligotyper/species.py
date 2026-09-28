@@ -26,7 +26,8 @@ PRESENT, DELETED, PARTIAL, REDUCED = 'present', 'deleted', 'partial', 'reduced'
 SEGMENT_FOUND = 0.05  # A segment is found when its depth is at least this fraction of the control depth. Deleted
 # segments have no read at all, while GC-rich segments (ESX region of RD1) can drop to 10% of the control depth in
 # real Illumina reads.
-PRESENT_FOUND, DELETED_FOUND = 0.9, 0.1  # Fraction of the segments found: present (at least), deleted (at most)
+MISSING_TOLERANCE = 0.1  # In reads, a present region may miss this fraction of its segments (low depth), at least 1;
+# a deleted region may have as many segments found (stray reads)
 REDUCED_RATIO = 0.5  # Depth of a present region below this fraction of the control depth: mixed sample?
 # The regions of difference on the H37Rv genome (NC_000962.3), as found by scripts/make_reference_data.py: the
 # H37Rv segments missing from M. bovis AF2122/97 (RD4, RD7, RD9, RD12) and from BCG Pasteur (RD1).
@@ -131,15 +132,15 @@ def call_region(counts, region, control_depth, file_type='fastq'):
         return None
     threshold = max(1.0, SEGMENT_FOUND * control_depth)
     found = [name for name in names if counts.get(name, 0) >= threshold]
-    fraction = len(found) / len(names)
-    ratio = statistics.median(counts[name] for name in found) / control_depth if found else 0.0
+    tolerance = max(1, round(MISSING_TOLERANCE * len(names)))
+    ratio = statistics.median(counts[name] for name in found) / control_depth if found and control_depth else 0.0
     missing = missing_stretches(names, set(found))
-    if fraction <= DELETED_FOUND:
+    if len(found) <= tolerance:
         state = DELETED
-    elif fraction < (1.0 if file_type == 'fasta' else PRESENT_FOUND):
+    elif len(found) < len(names) - (0 if file_type == 'fasta' else tolerance):
         state = PARTIAL
-    else:
-        state = REDUCED if ratio < REDUCED_RATIO else PRESENT
+    else:  # Contig counts in an assembly say nothing about a mixed sample
+        state = REDUCED if ratio < REDUCED_RATIO and file_type != 'fasta' else PRESENT
     return RegionCall(state, len(found), len(names), ratio, missing if state == PARTIAL else [])
 
 

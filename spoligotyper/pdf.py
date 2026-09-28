@@ -151,7 +151,7 @@ def by_spoligotype(results):
 
     def order(members):
         first = members[0]
-        return (bool(first.error), -len(members), not first.found, first.spoligotype if first.found else first.octal)
+        return (bool(first.error), -len(members), not first.found, first.sb if first.found else first.octal)
 
     return [(i, r) for i, members in enumerate(sorted(groups.values(), key=order))
             for r in sorted(members, key=lambda r: r.sample)]
@@ -168,13 +168,15 @@ def summary_section(results, run):
             counts['warning'], counts['failed'], run.operator), SUBTITLE),
         Paragraph('Summary', H2),
     ]
-    header = [text(h, SMALL) for h in ('Sample', 'Spoligotype (octal)', 'SB / SIT', 'Species', 'Lineage',
+    default_db = run.database.get('default', True)
+    names_label = 'SB / SIT' if default_db else 'Name / SIT'
+    header = [text(h, SMALL) for h in ('Sample', 'Spoligotype (octal)', names_label, 'Species', 'Lineage',
                                        'Pattern (spacers 1 to 43)', 'Status')]
     rows, shading = [header], []
     for row, (group, r) in enumerate(by_spoligotype(results), 1):
         if group % 2:
             shading.append(('BACKGROUND', (0, row), (-1, row), GROUP_SHADE))
-        names = '\n'.join(x for x in (r.spoligotype if r.found else '', r.sit if r.sit.startswith('SIT') else '')
+        names = '\n'.join(x for x in (r.sb if r.found else '', r.sit if r.sit.startswith('SIT') else '')
                            if x)
         rows.append([text(r.sample, WRAP), text(r.octal or '-', MONO), text(names or '-', SMALL),
                      text(r.species.species if r.species else '-', SMALL),
@@ -184,8 +186,9 @@ def summary_section(results, run):
     table = Table(rows, colWidths=widths, repeatRows=1)
     table.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)] + shading))
     story += [table, text('Samples with the same spoligotype are grouped; the sample pages follow the same order. '
-                          'SB / SIT: names of the pattern in the Mbovis.org and SITVIT2 databases, "-" if the pattern '
-                          'has none. See "Definitions and methods".', SMALL)]
+                          '{}: names of the pattern in the {} and SITVIT2 databases, "-" if the pattern has none. '
+                          'See "Definitions and methods".'.format(names_label, 'Mbovis.org' if default_db else
+                                                                  'spoligotype (--db)'), SMALL)]
 
     notes = [(r.sample, r.error.splitlines()[0] if r.error else w) for _, r in by_spoligotype(results)
              for w in ([r.error] if r.error else r.warnings)]
@@ -252,8 +255,8 @@ def sample_section(result, number=1, total=1, db_label='SB number (Mbovis.org)')
             ('Hexadecimal', text(result.hexadecimal, MONO)),
             ('Binary', text(result.binary, MONO)),
             ('Pattern', pattern(result.binary, square=7, numbers=True)),
-            (db_label, result.spoligotype if result.found else
-             '{}: the pattern has no name in this database'.format(result.spoligotype)),
+            (db_label, result.sb if result.found else
+             '{}: the pattern has no name in this database'.format(result.sb)),
             ('Data', kind),
             (file_label, files)]
     if result.reads is not None:
@@ -390,10 +393,10 @@ def definitions_section(run):
         'genomes that have the region and in none of those lacking it or of six non-tuberculous mycobacteria. A '
         'segment is found when Seal (25-mers, 1 mismatch) finds it in the reads at a depth of at least 5% of the '
         'depth of MTBC-specific control regions, or in the assembly. A region is present when all its segments are '
-        'found (assemblies; at least 90% for reads) at a depth of at least 50% of the control depth; deleted when at '
-        'most 10% of its segments are found; partially deleted in between, with the H37Rv coordinates of the missing '
-        'segments; present at reduced depth when its segments are found at less than 50% of the control depth '
-        '(mixed sample?).')
+        'found (in reads, up to 10% of them, at least 1, may be missing: low depth); deleted when at most 10% of its '
+        'segments (at least 1: stray reads) are found; partially deleted in between, with the H37Rv coordinates of '
+        'the missing segments; present at reduced depth when, in reads, its segments are found at less than 50% of '
+        'the control depth (mixed sample?).')
     rd_pcr = (
         'The + and \u2212 of the RD profile therefore mean that the DNA of the region is present or absent, like a '
         'PCR with primers inside the region (amplification = present). spoligotyper does not measure amplicon sizes '

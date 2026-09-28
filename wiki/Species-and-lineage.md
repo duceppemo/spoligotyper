@@ -23,12 +23,11 @@ BCG Pasteur (RD1), and is represented by 100 bp segments inside it:
 
 A segment is **found** when Seal finds it in the reads at a depth of at least 5% of the depth of the MTBC control
 regions, or in the assembly. A region is:
-* **present** when all its segments are found (assemblies; at least 90% for reads, which tolerates low depth) at a
-  depth of at least 50% of the control depth;
-* **deleted** when at most 10% of its segments are found;
+* **present** when all its segments are found (in reads, up to 10% of them, at least 1, may be missing: low depth);
+* **deleted** when at most 10% of its segments (at least 1: stray reads) are found;
 * **partial** (partially deleted) in between: the report gives the H37Rv coordinates of the missing segments;
-* **reduced** when its segments are found, but at less than 50% of the control depth: a mix of strains with and
-  without the region?
+* **reduced** (reads only) when its segments are found, but at less than 50% of the control depth: a mix of strains
+  with and without the region?
 
 The + and − of the RD profile below mean that the DNA of the region is present or absent, like a PCR with primers
 inside the region (amplification = present). spoligotyper does not measure amplicon sizes or deletion junctions:
