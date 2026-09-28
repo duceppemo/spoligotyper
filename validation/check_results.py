@@ -13,6 +13,16 @@ DOCUMENTED_SIT = {'H37Rv': 'SIT451', 'BCG_Pasteur': 'SIT482', 'CCDC5079': 'SIT1'
 # Simulated and public reads: expected species, lineage (prefix), octal and warning
 READS = {
     'ERR1744454': ('M. bovis', 'BOV', '664073777777600', ''),
+    # H37Rv lab stock: spacer 40 lost by most cells, spacers 41-43 kept by a minority (recombination between direct
+    # repeats during passage; SIT1647, T-H37Rv family). The reference genome has spacers 40-43 (SIT451)
+    'SRR12006063': ('M. tuberculosis', '4.9', '777777477760731', 'mixed sample'),
+    'ERR027297': ('M. microti', 'BOV_AFRI', '000000000000600', ''),  # M. microti Maus IV, 2010 GAII reads
+    # M. orygis 51145: 8 reads with a 1-SNP variant of spacer 3, not in the PacBio assembly (minority population or
+    # cross-contamination): spacer 3 is called present, and flagged. Octal not checked
+    'SRR16643349': ('M. orygis or M. caprae', 'BOV', '', 'mixed sample'),
+    'ERR2383628': ('M. africanum (lineage 6)', '6', '770777777777671', ''),  # M. africanum RB30001
+    'SRR18636082': ('M. canettii', '', '000000000000000', 'as usual for M. canettii'),  # M. canettii ET1291
+    'SRR23035463': ('M. canettii', '', '000000000000000', 'long reads'),  # ET1291, nanopore
     'sim_H37Rv_30x': ('M. tuberculosis', '4.9', '777777477760771', ''),
     'sim_H37Rv_30x_PE': ('M. tuberculosis', '4.9', '777777477760771', ''),
     'sim_H37Rv_10x': ('M. tuberculosis', '4.9', '', 'depth'),  # Low depth: warning expected

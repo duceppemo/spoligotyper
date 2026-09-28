@@ -299,6 +299,19 @@ def test_sit_database(data, tmp_path, capsys, caplog):
     assert 'SIT451' in content and 'SITVIT2 family T-H37Rv' in content and 'SIT database' in content
 
 
+def test_no_closest_sit_for_sb_patterns(data, tmp_path, capsys):
+    """SITVIT2 lacks many animal patterns: a pattern with an SB number gets no closest SIT, and the SB number."""
+    near = SB0140[:2] + '1' + SB0140[3:]  # SB0140 with spacer 3 present
+    db = tmp_path / 'sit.tsv'
+    db.write_text('octal\tbinary\tsit\tfamily\n0\t{}\t999\tBOV_X\n'.format(near))
+    main(['-r1', str(data / 'AF2122.fasta'), '-o', str(tmp_path), '-t', '2', '--memory', '500m', '--sit-db', str(db)])
+    row = table(capsys.readouterr().out)[0]
+    assert (row['SB'], row['SIT'], row['ClosestSIT']) == ('SB0140', 'Not in SITVIT2 list', '')
+    pages, content = pdf_text(tmp_path / 'AF2122_spoligotyping.pdf')
+    content = ' '.join(content.split())
+    assert 'use the SB number' in content and 'of the 1,976 Mbovis.org patterns have a SIT' in content
+
+
 def test_custom_database_wording(data, tmp_path, capsys):
     """With --db, a pattern without name is "Not in database", not "Not in Mbovis.org"."""
     db = tmp_path / 'db.txt'

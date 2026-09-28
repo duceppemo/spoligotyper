@@ -213,6 +213,20 @@ def test_low_mtbc_depth_warning():
     assert any('estimated depth 19.6x' in w for w in r.warnings)
 
 
+def test_long_reads_warning():
+    """Nanopore reads: warn and advise to type the assembly. Short reads and assemblies: no warning."""
+    r = Result('S', counts=[20] * 43, binary='1' * 43, file_type='fastq', data='reads', min_count=5,
+               reads=30_000, bases=30_000 * 4200)
+    check_result(r)
+    assert any('long reads (mean length 4200 bp)' in w for w in r.warnings)
+    for data, bases in (('reads', 1_000_000 * 150), ('assembly', 4_400_000)):
+        r = Result('S', counts=[20] * 43, binary='1' * 43, file_type='fastq' if data == 'reads' else 'fasta',
+                   data=data, min_count=5 if data == 'reads' else 1, reads=1_000_000 if data == 'reads' else 1,
+                   bases=bases)
+        check_result(r)
+        assert not any('long reads' in w for w in r.warnings)
+
+
 def test_no_sb_warning_without_spacers():
     check = species.SpeciesCheck(mtbc=True, regions={'RD9': species.RegionCall('present', 8, 8, 1.0)}, species='x')
     r = Result('S', counts=[0] * 43, binary='0' * 43, sb='SB2277', file_type='fasta', data='assembly',

@@ -20,7 +20,8 @@ warning, and the `Species` column says "MTBC not detected" when there is no MTBC
 spacer either: it is reported with RD9 intact and no lineage.
 
 ### How reliable are the species and the lineage?
-They were checked on 31 reference genomes and 8 read sets of known species and lineage: see [Validation](Validation).
+They were checked on 31 reference genomes, 7 public read sets (Illumina and nanopore) and 7 simulated read sets of known species and
+lineage: see [Validation](Validation).
 The lineage comes from the SNP barcode of Coll *et al.* (2014), the reference method for SNP-based lineage typing.
 For drug resistance and a finer lineage, use a dedicated tool such as [TB-Profiler](https://github.com/jodyphelan/TBProfiler).
 
@@ -35,6 +36,13 @@ GPL-3.0 with SpolLineages (3,850 SITs, up to SIT3862, as of 2022). `spoligotyper
 [Installation](Installation#sit-database). SITs created since 2022 are missing: a pattern without SIT is reported as
 `Orphan` (known to SITVIT2, seen once) or `Not in SITVIT2 list`, with the closest SITs. SITVIT2 families are given for
 orphan patterns too.
+
+### Why does my *M. bovis* sample have no SIT?
+SITVIT2 lacks many patterns of the animal-adapted lineages: only 603 of the 1,976 Mbovis.org patterns have a SIT in
+the SITVIT2 list. For *M. bovis*, *M. caprae*, *M. microti* and the other animal-adapted lineages, the SB number of
+[Mbovis.org](https://www.mbovis.org/) is the reference name. So, for a pattern with an SB number, spoligotyper
+reports `Not in SITVIT2 list` without closest SITs, which would suggest a relationship that is only an artefact of
+the gaps of the list, and the PDF report points to the SB number.
 
 ### Can I use another database?
 Yes, with `--db my_database.txt`. The file has one pattern per line, with 3 columns separated by spaces or tabs:
@@ -62,8 +70,9 @@ and present spacers can fall below `--min-count`. The consensus sequence of an a
 2. type the assembly: `spoligotyper -r1 assembly.fasta -o results/`.
 
 The direct repeat locus is repetitive, but long reads usually span it entirely, so it assembles well.
-If you type nanopore reads anyway, treat the result as provisional: check the `SpacerCount` column for present
-spacers with low counts, and confirm with the assembly.
+spoligotyper warns when the reads are long (mean length above 1,000 bp). If you type nanopore reads anyway, treat
+the result as provisional: check the `SpacerCount` column for present spacers with low counts, and confirm with the
+assembly.
 
 ### Does spoligotyper work on *M. tuberculosis*?
 Yes: spacer detection and the binary, octal and hexadecimal codes work for the whole complex. Only the SB number

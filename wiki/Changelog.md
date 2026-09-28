@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+* Patterns with an SB number get no closest SITs: SITVIT2 lacks many patterns of the animal-adapted lineages (only 603
+  of the 1,976 Mbovis.org patterns have a SIT), for which the SB number is the reference name. The PDF report says so.
+* Warning for long reads (mean length above 1,000 bp): spoligotypes from nanopore reads are often wrong; type an
+  assembly of the reads.
+* *M. microti* is recognised from real reads: its RD1<sup>mic</sup> deletion tolerates one error on each side (a few
+  stray reads on one RD1<sup>mic</sup> segment, no read on one GC-rich RD1 segment), as in old Illumina GAII reads.
+* Validation on real reads (45 of 45 checks): *M. tuberculosis* H37Rv, *M. microti*, *M. orygis*, *M. africanum*
+  (lineage 6) and *M. canettii* (Illumina and nanopore), besides *M. bovis* AF2122/97. It shows what simulated reads
+  cannot: an H37Rv lab stock that lost spacer 40 (SIT1647), flagged as a mixed sample for the minority that kept
+  spacers 41 to 43, and a minority population of *M. orygis* with a spacer 3 variant, also flagged.
+
 ## 0.6.0 (2026-09-28)
 Clearer terminology and RD reporting, after feedback from a tuberculosis expert.
 * **Renamed columns**: `Spoligotype` is now `SB` and `Closest` is now `ClosestSB` in the TSV (same positions), `SB` in

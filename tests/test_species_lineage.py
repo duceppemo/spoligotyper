@@ -95,6 +95,20 @@ def test_partial_deletion_and_rd1mic():
     assert 'H37Rv 4,350,651-' in rd1.describe()
 
 
+def test_rd1mic_in_real_reads():
+    """M. microti reads (ERR027297): stray reads on one RD1mic segment, a GC-rich segment outside it with none."""
+    counts = marker_counts(150, rd1=150, rd4=150, rd12=150, rd7=0, rd9=0)
+    names = rd1_segments()
+    inside = [n for n in names if species.segments()[n][1] <= species.RD1MIC[1]]
+    counts.update({n: 0 for n in inside})
+    counts[inside[4]] = 8  # Above 5% of the control depth: found
+    counts[names[17]] = 0  # Outside RD1mic
+    check = species.check_species(counts, 'fastq')
+    assert species.rd1mic(check) and check.species == 'M. microti'
+    counts[inside[5]] = 8  # Two segments of RD1mic found: not RD1mic
+    assert not species.rd1mic(species.check_species(counts, 'fastq'))
+
+
 def test_partial_deletion_other():
     """Three RD1 segments missing, not RD1mic (M. mungi genome): the species stays the group of three."""
     counts = marker_counts(30, rd7=0, rd9=0)

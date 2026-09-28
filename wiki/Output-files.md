@@ -26,7 +26,7 @@ A tab-separated table with a header and one line per sample. The same table is p
 | `RD7`, `RD12` | `deleted` | As `RD9`, `RD4` and `RD1` |
 | `SIT` | `SIT451` | Shared international type of the SITVIT2 database: a SIT, `Orphan` (a SITVIT2 pattern without SIT), or `Not in SITVIT2 list` (not among the SITVIT2 patterns of the list, which does not include the SITs created since 2022). Empty without SIT database: see [Installation](Installation#sit-database) |
 | `SITVIT2family` | `T-H37Rv` | SITVIT2 spoligotype family of the pattern (also for orphan patterns), e.g. Beijing, LAM3, EAI5, BOV_1 |
-| `ClosestSIT` | `SIT451 (spacer 12 differs)` | For a pattern without SIT: the closest SITs, up to 3 spacers away |
+| `ClosestSIT` | `SIT451 (spacer 12 differs)` | For a pattern without SIT: the closest SITs, up to 3 spacers away. Not given for a pattern with an SB number: see [FAQ](FAQ#why-does-my-m-bovis-sample-have-no-sit) |
 
 Columns are only ever added at the end: the first 6 are those of version 0.2, the next 6 were added in 0.3, the next
 8 in 0.4 and the last 5 in 0.5. The species columns are empty with `--no-species`. Version 0.6 renamed `Spoligotype`

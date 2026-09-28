@@ -145,13 +145,21 @@ def call_region(counts, region, control_depth, file_type='fastq'):
 
 
 def rd1mic(check):
-    """True when RD1 lacks exactly its segments in the RD1mic deletion of M. microti (Rv3871 to Rv3876)."""
+    """
+    True when RD1 lacks its segments in the RD1mic deletion of M. microti (Rv3871 to Rv3876) and has the others. As
+    for the regions, one error in ten (at least one) is tolerated on each side: in real reads, a segment inside RD1mic
+    can get a few stray reads, and a GC-rich segment outside it can get none.
+    """
     call = check.regions.get('RD1')
     if call is None or call.state != PARTIAL:
         return False
     names = [n for n in segments() if n.startswith('RD1_')]
     inside = {n for n in names if segments()[n][0] >= RD1MIC[0] and segments()[n][1] <= RD1MIC[1]}
-    return bool(inside) and call.missing == missing_stretches(names, set(names) - inside)
+    missing = {n for n in names if any(start <= segments()[n][0] and segments()[n][1] <= end
+                                       for start, end in call.missing)}
+    outside = set(names) - inside
+    return (bool(inside) and len(inside - missing) <= max(1, round(MISSING_TOLERANCE * len(inside)))
+            and len(missing & outside) <= max(1, round(MISSING_TOLERANCE * len(outside))))
 
 
 def expected_control_reads(depth, read_length, paired):

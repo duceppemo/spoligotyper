@@ -98,9 +98,9 @@ and are ignored when the sample looks contaminated (less than 80% of MTBC reads)
 
 ## Contamination: fraction of MTBC reads
 For reads, the depth of the MTBC control regions is compared with the depth expected from the number of bases
-sequenced. A pure culture gives about 100%; a sample with 50% of reads from another organism gives about 50%.
-spoligotyper warns below 60%. The estimate assumes a 4.4 Mb genome; plasmid-rich or very uneven libraries can
-lower it slightly.
+sequenced. A pure culture gives about 100% with simulated reads, and 69% to 100% with the real reads of pure cultures
+of the [Validation](Validation) (duplicate reads and uneven coverage lower it); a sample with 50% of reads from another
+organism gives about 50%. spoligotyper warns below 60%. The estimate assumes a 4.4 Mb genome.
 
 ## Mixed samples
 A mix of strains is flagged when:

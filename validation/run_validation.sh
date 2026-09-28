@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Validate spoligotyper on public reference genomes (genomes.tsv), public reads, and simulated reads:
 # pure, mixed (two strains) and contaminated (MTBC + M. marinum). Writes results/validation.md.
-# Requires spoligotyper, BBTools (seal.sh, randomreads.sh), curl and unzip. About 600 MB of downloads, kept in data/.
+# Requires spoligotyper, BBTools (seal.sh, randomreads.sh), curl and unzip. About 1.7 GB of downloads, kept in data/.
 # Usage: bash run_validation.sh [threads]
 set -euo pipefail
 
@@ -37,8 +37,38 @@ grep -v '^#' genomes.tsv | tail -n +2 | while IFS=$'\t' read -r sample accession
     sleep 0.4  # NCBI: at most 3 requests per second
 done
 
-# Public reads: M. bovis AF2122/97, Illumina single-end
-download https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR174/004/ERR1744454/ERR1744454.fastq.gz data/reads/ERR1744454.fastq.gz
+reads_head() {  # url output reads: the first reads of a fastq.gz file, to limit the download
+    [ -s "$2" ] && return
+    echo "Downloading the first $3 reads of $1" >&2
+    { curl -sSfL --retry 3 "$1" || true; } | { gzip -dc 2>/dev/null || true; } | head -n $(( $3 * 4 )) | gzip > "$2.part"
+    mv "$2.part" "$2"
+}
+
+# Public reads of strains of known spoligotype, species and lineage (ENA)
+ena=https://ftp.sra.ebi.ac.uk/vol1/fastq
+# M. bovis AF2122/97, Illumina single-end
+download $ena/ERR174/004/ERR1744454/ERR1744454.fastq.gz data/reads/ERR1744454.fastq.gz
+# M. tuberculosis H37Rv, Illumina HiSeq 4000 paired-end (PRJNA634239)
+for mate in 1 2; do
+    download $ena/SRR120/063/SRR12006063/SRR12006063_$mate.fastq.gz data/reads/SRR12006063_$mate.fastq.gz
+done
+# M. microti Maus IV (the M_microti_MausIV genome), Illumina GAII paired-end (PRJEB2091), first 1.5 M pairs
+for mate in 1 2; do
+    reads_head $ena/ERR027/ERR027297/ERR027297_$mate.fastq.gz data/reads/ERR027297_$mate.fastq.gz 1500000
+done
+# M. orygis 51145 (the M_orygis_51145 genome), Illumina MiniSeq paired-end
+for mate in 1 2; do
+    download $ena/SRR166/049/SRR16643349/SRR16643349_$mate.fastq.gz data/reads/SRR16643349_$mate.fastq.gz
+done
+# M. africanum RB30001 (lineage 6, the M_africanum_RB30001 genome), Illumina HiSeq 2500 paired-end, first 1 M pairs
+for mate in 1 2; do
+    reads_head $ena/ERR238/008/ERR2383628/ERR2383628_$mate.fastq.gz data/reads/ERR2383628_$mate.fastq.gz 1000000
+done
+# M. canettii ET1291 (the M_canettii_ET1291 genome): Illumina NextSeq paired-end, and nanopore (first 30,000 reads)
+for mate in 1 2; do
+    download $ena/SRR186/082/SRR18636082/SRR18636082_$mate.fastq.gz data/reads/SRR18636082_$mate.fastq.gz
+done
+reads_head $ena/SRR230/063/SRR23035463/SRR23035463_1.fastq.gz data/reads/SRR23035463.fastq.gz 30000
 
 # Simulated 150 bp reads with sequencing errors, fixed seeds. G = genome size / read length, per 1x of depth.
 simulate() {  # genome depth seed output [paired]

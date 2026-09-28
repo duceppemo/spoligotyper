@@ -47,6 +47,7 @@ LOW_DEPTH = 20  # Below this depth, present spacers may get fewer reads than the
 LOW_MTBC_FRACTION = 0.6  # Below this estimated fraction of MTBC reads, the sample is probably contaminated
 WEAK_SPACER = 0.4  # Present spacers with fewer reads than this fraction of the median: mixed sample?
 WEAK_SPACER_MIN_MEDIAN = 30  # ... when the median is high enough for this not to happen by chance
+LONG_READS = 1000  # Mean read length above which the reads are long reads (nanopore or PacBio)
 
 REPORT_HEADER = ['Sample', 'SpacerCount', 'Binary', 'Octal', 'Hexadecimal', 'SB',
                  'FileType', 'Reads', 'Depth', 'MinCount', 'Status', 'Warnings',
@@ -223,6 +224,9 @@ class RunInfo:
         if sit_db:
             info.sit_database = {'path': sit_db.path, 'sha256': sit_db.sha256, 'patterns': len(sit_db.patterns),
                                  'sits': len(sit_db.sits), 'source': sit_db.source}
+            if info.database['default']:  # How many SB patterns have a SIT: SITVIT2 lacks many animal patterns
+                sb_patterns, sits = load_database(database), sit_db.sits
+                info.sit_database.update(sb_patterns=len(sb_patterns), sb_with_sit=sum(b in sits for b in sb_patterns))
         return info
 
     def to_dict(self):
@@ -315,11 +319,13 @@ def spoligotype(r1, r2=None, sample=None, min_count=None, threads=1, memory='1g'
     result.counts = [stats.counts.get(name, 0) for name in spacer_names]
     result.binary = to_binary(stats.counts, spacer_names, result.min_count)
     result.octal, result.hexadecimal = binary_to_octal(result.binary), binary_to_hex(result.binary)
-    result.sb = lookup(result.binary, db, NOT_FOUND if is_default_database(database) else NOT_FOUND_CUSTOM)
+    default_db = is_default_database(database)
+    result.sb = lookup(result.binary, db, NOT_FOUND if default_db else NOT_FOUND_CUSTOM)
     result.closest = closest(result.binary, db) if any(result.counts) else []
     if sit_db is not None:
         result.sit, result.sit_family = sit_db.lookup(result.binary)
-        if result.sit in (sitdb.NOT_FOUND, sitdb.ORPHAN) and any(result.counts):
+        # No closest SIT for a pattern with an SB number: SITVIT2 lacks many patterns of the animal lineages
+        if result.sit in (sitdb.NOT_FOUND, sitdb.ORPHAN) and any(result.counts) and not (result.found and default_db):
             result.closest_sit = closest(result.binary, sit_db.sits)
     if species_check:
         data_type = 'fastq' if result.is_reads else 'fasta'  # Thresholds for reads or for contigs
@@ -349,6 +355,10 @@ def check_result(result):
     if not result.is_reads and result.min_count > 1:
         result.warn('assembly typed with minimum count %d: spacers are probably missed. '
                     'Leave --min-count unset (1 for assemblies).', result.min_count)
+    if result.is_reads and result.reads and result.bases / result.reads > LONG_READS:
+        result.warn('long reads (mean length %.0f bp): spoligotypes from nanopore reads are often wrong, while those '
+                    'from an assembly of the same reads are almost always right. Type the assembly.',
+                    result.bases / result.reads)
     check_species(result)
     if not any(result.counts):
         if result.species and result.species.species == 'M. canettii':

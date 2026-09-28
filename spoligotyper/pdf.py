@@ -274,8 +274,10 @@ def sample_section(result, number=1, total=1, db_label='SB number (Mbovis.org)')
         rows.insert(position, ('Closest names', describe_closest(result.closest)))
         position += 1
     if result.sit:
-        sit = {sitdb.ORPHAN: 'Orphan: a SITVIT2 pattern without SIT',
-               sitdb.NOT_FOUND: 'Not in SITVIT2 list: the pattern is not among the SITVIT2 patterns of the list'
+        not_found = 'Not in SITVIT2 list: the pattern is not among the SITVIT2 patterns of the list'
+        if result.found and result.sb.startswith('SB'):
+            not_found += ', which lacks many patterns of the animal-adapted lineages: use the SB number'
+        sit = {sitdb.ORPHAN: 'Orphan: a SITVIT2 pattern without SIT', sitdb.NOT_FOUND: not_found
                }.get(result.sit, result.sit)
         family = ' · SITVIT2 family {}'.format(result.sit_family) if result.sit_family else ''
         closest_sit = ' · closest: {}'.format(describe_closest(result.closest_sit)) if result.closest_sit else ''
@@ -368,6 +370,11 @@ def definitions_section(run):
                     'SITVIT2 patterns published with SpolLineages ({:,} patterns, {:,} SITs, 2022 list). "Orphan": a '
                     'SITVIT2 pattern without SIT. "Not in SITVIT2 list": the pattern is not in this list, which does '
                     'not include the SITs created since 2022.'.format(sit['patterns'], sit['sits']))
+        if sit.get('sb_patterns'):
+            sit_text += (' SITVIT2 lacks many patterns of the animal-adapted lineages: only {:,} of the {:,} '
+                         'Mbovis.org patterns have a SIT in this list. For these lineages, the SB number is the '
+                         'reference name, and no closest SIT is given for a pattern with an SB number.'
+                         ).format(sit['sb_with_sit'], sit['sb_patterns'])
     else:
         sit_text = 'Not reported: the SIT database was not installed for this run (spoligotyper-download-sit).'
     definitions = [

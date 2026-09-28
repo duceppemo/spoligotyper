@@ -5,7 +5,7 @@ spoligotype. Everything below is reproducible with
 [`validation/run_validation.sh`](https://github.com/duceppemo/spoligotyper/tree/main/validation), which downloads
 the data, simulates the read sets (BBTools `randomreads.sh`, fixed seeds) and checks each result.
 
-**Result: 39 of 39 checks passed.**
+**Result: 45 of 45 checks passed.**
 
 ## Reference genomes
 * *M. tuberculosis*, *M. bovis*, BCG, *M. africanum* GM041182: the expected lineages are the predictions of
@@ -64,7 +64,26 @@ is SB2277, the pattern with no spacer, flagged with a warning (see the [FAQ](FAQ
 missing spacers, with a warning that the lineage SNPs are not reliable for *M. canettii*.
 
 ## Reads
-* **ERR1744454**: Illumina reads of *M. bovis* AF2122/97.
+Public reads (ENA), of strains of known spoligotype, species and lineage, most of them the strains of the reference
+genomes above:
+* **ERR1744454**: *M. bovis* AF2122/97, Illumina single-end.
+* **SRR12006063**: *M. tuberculosis* H37Rv, Illumina HiSeq 4000 paired-end. This lab stock is not quite the reference
+  genome: in most reads, spacer 39 is followed directly by the direct repeat and the sequence that follows spacer 43
+  in the reference, so most cells lost spacers 40 to 43, and a minority kept spacers 41 to 43 (recombination between
+  direct repeats during passage). Another H37Rv run (ERR15989112) also lacks spacer 40. The resulting pattern,
+  777777477760731, is SIT1647 of the T-H37Rv family in SITVIT2. spoligotyper flags the minority as a mixed sample.
+* **ERR027297**: *M. microti* Maus IV, Illumina GAII paired-end (2010, first 1.5 million pairs). With the strong GC
+  bias of these reads, one RD1<sup>mic</sup> segment gets a few stray reads and one GC-rich RD1 segment none:
+  *M. microti* is still recognised from its RD1<sup>mic</sup> deletion, which tolerates one error on each side.
+* **SRR16643349**: *M. orygis* 51145, Illumina MiniSeq paired-end. 8 reads (median of the present spacers: 73) carry
+  a variant of spacer 3 with one SNP, flanked by direct repeats, absent from the PacBio assembly of the strain: a
+  minority population or cross-contamination. Spacer 3 is called present (octal 700000000000271, instead of
+  600000000000271 for the assembly), and flagged; the octal code is not checked.
+* **ERR2383628**: *M. africanum* RB30001 (lineage 6), Illumina HiSeq 2500 paired-end (first million pairs).
+* **SRR18636082**, **SRR23035463**: *M. canettii* ET1291, Illumina NextSeq paired-end, and nanopore (first 30,000
+  reads, mean length 4.3 kb): the nanopore reads get the long-read warning.
+
+Simulated reads:
 * **sim_...**: 150 bp reads with sequencing errors, simulated from the reference genomes above at 10x or 30x.
 * **sim_mixed_H37Rv70_AF2122_30**: 70% H37Rv and 30% *M. bovis* reads.
 * **sim_contaminated_H37Rv15x_marinum15x**: H37Rv and *M. marinum* reads at the same depth. The *M. marinum* genome
@@ -73,6 +92,12 @@ missing spacers, with a warning that the lineage SNPs are not reliable for *M. c
 | Sample | SB | Octal | Species | Lineage | MTBC fraction | Warnings | Result |
 |---|---|---|---|---|---|---|---|
 | ERR1744454 | SB0140 | 664073777777600 | M. bovis | BOV | 1.00 | - | OK |
+| SRR12006063 | Not in Mbovis.org | 777777477760731 | M. tuberculosis | 4.9 | 0.69 | spacers with few reads, mixed sample | OK |
+| ERR027297 | SB0118 | 000000000000600 | M. microti | BOV_AFRI | 0.70 | - | OK |
+| SRR16643349 | Not in Mbovis.org | 700000000000271 | M. orygis or M. caprae | BOV | 0.87 | mixed sample | OK |
+| ERR2383628 | SB0147 | 770777777777671 | M. africanum (lineage 6) | 6 | 1.00 | - | OK |
+| SRR18636082 | SB2277 | 000000000000000 | M. canettii | - | 0.86 | RD4 partially deleted, no spacer (M. canettii) | OK |
+| SRR23035463 | SB2277 | 000000000000000 | M. canettii | - | 0.95 | long reads, RD4 partially deleted, no spacer (M. canettii) | OK |
 | sim_H37Rv_30x | Not in Mbovis.org | 777777477760771 | M. tuberculosis | 4.9 | 1.00 | - | OK |
 | sim_H37Rv_30x_PE | Not in Mbovis.org | 777777477760771 | M. tuberculosis | 4.9 | 0.97 | - | OK |
 | sim_H37Rv_10x | Not in Mbovis.org | 777677475760761 | M. tuberculosis | 4.9 | 1.00 | low depth, spacers with few reads | OK |
