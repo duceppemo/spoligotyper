@@ -20,9 +20,9 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from . import DOI, __version__
+from . import DOI, __version__, sitdb, species
 from .seal import KMER_SIZE
-from .spoligotype import N_SPACERS, NOT_FOUND, data_file, describe_closest
+from .spoligotype import N_SPACERS, data_file, describe_closest
 
 # Colours of the logo
 NAVY = colors.HexColor('#1C2541')
@@ -168,22 +168,24 @@ def summary_section(results, run):
             counts['warning'], counts['failed'], run.operator), SUBTITLE),
         Paragraph('Summary', H2),
     ]
-    header = [text(h, SMALL) for h in ('Sample', 'Spoligotype', 'Octal', 'Species', 'Lineage',
+    header = [text(h, SMALL) for h in ('Sample', 'Spoligotype (octal)', 'SB / SIT', 'Species', 'Lineage',
                                        'Pattern (spacers 1 to 43)', 'Status')]
     rows, shading = [header], []
     for row, (group, r) in enumerate(by_spoligotype(results), 1):
         if group % 2:
             shading.append(('BACKGROUND', (0, row), (-1, row), GROUP_SHADE))
-        spoligotype = '\n'.join(x for x in (r.spoligotype, r.sit if r.sit.startswith('SIT') else '') if x)
-        rows.append([text(r.sample, WRAP), text(spoligotype or '-', SMALL), text(r.octal or '-', MONO),
+        names = '\n'.join(x for x in (r.spoligotype if r.found else '', r.sit if r.sit.startswith('SIT') else '')
+                           if x)
+        rows.append([text(r.sample, WRAP), text(r.octal or '-', MONO), text(names or '-', SMALL),
                      text(r.species.species if r.species else '-', SMALL),
                      text((r.lineage.lineage if r.lineage else '') or '-', WRAP),
                      pattern(r.binary, square=2.4) if not r.error else text('-', SMALL), status_label(r.status)])
-    widths = [1.0 * inch, 0.8 * inch, 1.05 * inch, 1.15 * inch, 0.7 * inch, 1.95 * inch, WIDTH - 6.65 * inch]
+    widths = [1.0 * inch, 1.05 * inch, 0.8 * inch, 1.15 * inch, 0.7 * inch, 1.95 * inch, WIDTH - 6.65 * inch]
     table = Table(rows, colWidths=widths, repeatRows=1)
     table.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)] + shading))
-    story += [table, text('Samples with the same spoligotype are grouped; the sample pages follow the same order.',
-                          SMALL)]
+    story += [table, text('Samples with the same spoligotype are grouped; the sample pages follow the same order. '
+                          'SB / SIT: names of the pattern in the Mbovis.org and SITVIT2 databases, "-" if the pattern '
+                          'has none. See "Definitions and methods".', SMALL)]
 
     notes = [(r.sample, r.error.splitlines()[0] if r.error else w) for _, r in by_spoligotype(results)
              for w in ([r.error] if r.error else r.warnings)]
@@ -230,7 +232,7 @@ def spacer_table(result):
     return table
 
 
-def sample_section(result, number=1, total=1):
+def sample_section(result, number=1, total=1, db_label='SB number (Mbovis.org)'):
     story = [text('Sample {} of {}'.format(number, total), SUBTITLE),
              Paragraph('{} &nbsp; <font size="9" color="{}">{}</font>'.format(
                  escape(result.sample), _hex(STATUS_COLOURS[result.status]), result.status.upper()), H2)]
@@ -246,11 +248,12 @@ def sample_section(result, number=1, total=1):
     kind = ('reads ({}, {})'.format(result.file_type, 'paired-end' if result.paired else 'single-end')
             if result.is_reads else 'assembly ({})'.format(result.file_type))
     unit = result.unit
-    rows = [('Spoligotype', Paragraph('<b>{}</b>'.format(escape(result.spoligotype)), BODY)),
-            ('Octal', text(result.octal, MONO)),
+    rows = [('Spoligotype (octal)', Paragraph('<b><font face="Courier">{}</font></b>'.format(result.octal), BODY)),
             ('Hexadecimal', text(result.hexadecimal, MONO)),
             ('Binary', text(result.binary, MONO)),
             ('Pattern', pattern(result.binary, square=7, numbers=True)),
+            (db_label, result.spoligotype if result.found else
+             '{}: the pattern has no name in this database'.format(result.spoligotype)),
             ('Data', kind),
             (file_label, files)]
     if result.reads is not None:
@@ -263,14 +266,17 @@ def sample_section(result, number=1, total=1):
              ('Present spacers', '{} of {}, median count {:g}'.format(result.binary.count('1'), N_SPACERS,
                                                                       result.median_present_count)),
              ('Run time', '{:.1f} s'.format(result.seconds))]
+    position = 5  # After the database name
     if result.closest:
-        rows.insert(1, ('Closest patterns', describe_closest(result.closest)))
+        rows.insert(position, ('Closest names', describe_closest(result.closest)))
+        position += 1
     if result.sit:
-        sit = {'Orphan': 'no SIT (SITVIT2 pattern seen once: orphan)',
-               NOT_FOUND: 'not in the SITVIT2 list'}.get(result.sit, result.sit)
+        sit = {sitdb.ORPHAN: 'Orphan: a SITVIT2 pattern without SIT',
+               sitdb.NOT_FOUND: 'Not in SITVIT2 list: the pattern is not among the SITVIT2 patterns of the list'
+               }.get(result.sit, result.sit)
         family = ' · SITVIT2 family {}'.format(result.sit_family) if result.sit_family else ''
         closest_sit = ' · closest: {}'.format(describe_closest(result.closest_sit)) if result.closest_sit else ''
-        rows.insert(1 + bool(result.closest), ('SIT', sit + family + closest_sit))
+        rows.insert(position, ('SIT (SITVIT2)', sit + family + closest_sit))
     story += [key_values(rows)]
     if result.species:
         story.append(KeepTogether(species_block(result)))
@@ -280,6 +286,12 @@ def sample_section(result, number=1, total=1):
     if result.warnings:
         story += [Paragraph('Warnings', H3)] + [text('• ' + w, SMALL) for w in result.warnings]
     return [KeepTogether(story[:4])] + story[4:]
+
+
+DELETED_IN = {'RD1': 'BCG, Dassie bacillus', 'RD4': 'M. bovis, BCG (some M. canettii)',
+              'RD7': 'M. africanum lineage 6, animal lineages',
+              'RD9': 'M. africanum (lineages 5, 6), animal lineages',
+              'RD12': 'M. bovis, BCG, M. caprae, M. orygis (some M. canettii)'}
 
 
 def species_block(result):
@@ -298,17 +310,22 @@ def species_block(result):
         '' if fraction is None else '; about {:.0f}% of the reads are MTBC'.format(fraction * 100))))
     story = [Paragraph('Species and lineage', H3), key_values(rows)]
     if check.regions:
-        table = [[text(h, SMALL) for h in ('Region', 'Deleted in', 'Depth relative to MTBC control', 'Call')]]
-        deleted_in = {'RD1': 'BCG, Dassie bacillus', 'RD4': 'M. bovis, BCG (some M. canettii)',
-                      'RD7': 'M. africanum lineage 6, animal lineages',
-                      'RD9': 'M. africanum (lineages 5, 6), animal lineages',
-                      'RD12': 'M. bovis, BCG, M. caprae, M. orygis (some M. canettii)'}
-        for region, (state, ratio) in check.regions.items():
-            table.append([text(region, SMALL), text(deleted_in[region], SMALL), text('{:.2f}'.format(ratio), SMALL),
-                          text(state, SMALL)])
-        t = Table(table, colWidths=[0.7 * inch, 3.0 * inch, 2.0 * inch, WIDTH - 5.7 * inch])
+        table = [[text(h, SMALL) for h in ('Region', 'H37Rv region', 'Usually deleted in', 'Segments found',
+                                          'Depth vs control', 'Result')]]
+        for region, region_call in check.regions.items():
+            start, end = species.REGION_EXTENTS[region]
+            result_text = '{} {}'.format(region_call.sign.replace('-', '\u2212'), region_call.describe())
+            if region == 'RD1' and species.rd1mic(check):
+                result_text += ' (RD1mic of M. microti)'
+            table.append([text(region, SMALL), text('{:,}-{:,}'.format(start, end), SMALL),
+                          text(DELETED_IN[region], SMALL), text('{} of {}'.format(region_call.found, region_call.total),
+                                                               SMALL),
+                          text('{:.2f}'.format(region_call.ratio), SMALL), text(result_text, WRAP)])
+        t = Table(table, colWidths=[0.5 * inch, 1.15 * inch, 1.75 * inch, 0.75 * inch, 0.7 * inch, WIDTH - 4.85 * inch])
         t.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)]))
-        story += [Spacer(1, 4), t]
+        story += [Spacer(1, 4), t,
+                  text('+ / \u2212: DNA of the region present in / absent from the sample, from 100 bp segments inside '
+                       'the region (not from amplicon sizes). See "Definitions and methods".', SMALL)]
     informative = [s for s in call.snps if s.fraction >= 0.1]  # Not the odd read with a sequencing error
     if informative or call.mixed:
         snps = sorted({s.position: s for s in informative + call.mixed}.values(), key=lambda s: s.position)
@@ -323,22 +340,87 @@ def species_block(result):
     return story
 
 
+def definitions_section(run):
+    """What the reported codes, names and regions of difference mean, and how they were determined."""
+    sit = run.sit_database
+    markers = species.segments()
+    rd_rows = [[text(h, SMALL) for h in ('Region', 'H37Rv region (NC_000962.3)', 'Segments', 'Usually deleted in')]]
+    for region in species.REGIONS:
+        start, end = species.REGION_EXTENTS[region]
+        n = sum(name.startswith(region + '_') for name in markers)
+        rd_rows.append([text(region, SMALL), text('{:,}-{:,} ({:,} bp)'.format(start, end, end - start + 1), SMALL),
+                        text(n, SMALL), text(DELETED_IN[region], SMALL)])
+    rd_table = Table(rd_rows, colWidths=[0.6 * inch, 2.1 * inch, 0.7 * inch, WIDTH - 3.4 * inch])
+    rd_table.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)]))
+    if run.database.get('default', True):
+        sb = ('The name of a pattern in the Mbovis.org database of spoligotypes of the RD9-deleted lineages '
+              '(M. bovis and other animal-adapted lineages). "Not in Mbovis.org" only means that this database has no '
+              'name for the pattern, as for all M. tuberculosis patterns: it does not mean that the spoligotype is '
+              'invalid or new.')
+    else:
+        sb = ('The name of the pattern in the spoligotype database given with --db. "Not in database" only means '
+              'that this database has no name for the pattern.')
+    if sit:
+        sit_text = ('Shared international type of the SITVIT2 database (Institut Pasteur de Guadeloupe), from the '
+                    'SITVIT2 patterns published with SpolLineages ({:,} patterns, {:,} SITs, 2022 list). "Orphan": a '
+                    'SITVIT2 pattern without SIT. "Not in SITVIT2 list": the pattern is not in this list, which does '
+                    'not include the SITs created since 2022.'.format(sit['patterns'], sit['sits']))
+    else:
+        sit_text = 'Not reported: the SIT database was not installed for this run (spoligotyper-download-sit).'
+    definitions = [
+        ('Spoligotype',
+         'The presence (1, filled square) or absence (0, empty square) of the 43 spacers of the direct repeat (DR) '
+         'locus, written as a 43-digit binary pattern, a 15-digit octal code (Dale et al. 2001) or a hexadecimal '
+         'code. These codes are universal: they identify the pattern itself, and are the ones to use to exchange '
+         'spoligotypes.'),
+        ('SB number', sb),
+        ('SIT', sit_text),
+        ('Spoligotype family',
+         'SITVIT2 family of the pattern (e.g. Beijing, LAM3, BOV_1), and the spoligotype families typical of the '
+         'lineage (Coll et al. 2014). Families are labels of patterns, not phylogenetic lineages.'),
+        ('Lineage',
+         'From the 62 SNPs of the barcode of Coll et al. (2014): the reads carrying each allele are counted with '
+         'exact 31-mers; a lineage is called when at least 80% of the reads (at least 3, or 1 contig) carry its '
+         'allele.'),
+    ]
+    rd_method = (
+        'Regions of difference (RD) are determined in silico, from the sequencing data, without PCR. Each region is '
+        'the part of the H37Rv genome missing from M. bovis AF2122/97 (RD4, RD7, RD9, RD12) or from BCG Pasteur '
+        '(RD1), and is represented by 100 bp segments inside it (table below), chosen to be found in all the MTBC '
+        'genomes that have the region and in none of those lacking it or of six non-tuberculous mycobacteria. A '
+        'segment is found when Seal (25-mers, 1 mismatch) finds it in the reads at a depth of at least 5% of the '
+        'depth of MTBC-specific control regions, or in the assembly. A region is present when all its segments are '
+        'found (assemblies; at least 90% for reads) at a depth of at least 50% of the control depth; deleted when at '
+        'most 10% of its segments are found; partially deleted in between, with the H37Rv coordinates of the missing '
+        'segments; present at reduced depth when its segments are found at less than 50% of the control depth '
+        '(mixed sample?).')
+    rd_pcr = (
+        'The + and \u2212 of the RD profile therefore mean that the DNA of the region is present or absent, like a '
+        'PCR with primers inside the region (amplification = present). spoligotyper does not measure amplicon sizes '
+        'or deletion junctions: assays that distinguish RDs by the size of an amplicon spanning the region may '
+        'report partial or strain-specific deletions differently. A partially deleted region counts as + when at '
+        'least half of its segments are found: for example, M. microti lacks the part of RD1 inside its own RD1mic '
+        'deletion (reported as partially deleted) and is RD1 + in the RD profile, as in the classical RD PCR scheme. '
+        'The species is read from the RD profile, refined with the lineage SNPs and the spacers.')
+    spacers = (
+        'Spacers are counted with Seal (BBTools): each of the {n} spacers is searched as a single {k}-mer on both '
+        'strands, allowing 1 mismatch (k={k}, hdist=1, rcomp=t, maskmiddle=f, ambiguous=all). A spacer is present when '
+        'it is found in at least the minimum count of reads (contigs for assemblies). The fraction of MTBC reads is '
+        'the depth of the control regions divided by the depth expected from the number of bases.'
+    ).format(n=N_SPACERS, k=KMER_SIZE)
+    return [
+        PageBreak(),
+        Paragraph('Definitions and methods', H2),
+        key_values([(term, text(definition, SMALL)) for term, definition in definitions]),
+        Paragraph('Regions of difference', H3),
+        text(rd_method, SMALL), Spacer(1, 4), rd_table, Spacer(1, 4), text(rd_pcr, SMALL),
+        Paragraph('Spacers and codes', H3),
+        text(spacers, SMALL),
+    ]
+
+
 def run_section(run):
     params = run.parameters
-    method = ('Spacers were counted with Seal (BBTools): each of the {n} spacers is searched as a single {k}-mer '
-              'on both strands, allowing 1 mismatch (k={k}, hdist=1, rcomp=t, maskmiddle=f, ambiguous=all). A '
-              'spacer is present when it is found in at least the minimum count of reads (contigs for assemblies). '
-              'The binary pattern is converted to the octal code (Dale et al. 2001) and the hexadecimal code, and '
-              'looked up in the spoligotype database for its SB number. '
-              'Species: the read depth of regions of difference RD1, RD4, RD7, RD9 and RD12 (100 bp segments, same '
-              'Seal parameters) is compared with the depth of MTBC-specific control regions; a region is deleted when '
-              'its relative depth is at most 0.1, present when it is at least 0.5, and the species is read from the '
-              'RD profile as in the RD PCR scheme, refined with the lineage SNPs and the spacers. The fraction of '
-              'MTBC reads is the control depth divided by the depth expected from the number of bases. Lineage: '
-              'reads carrying each '
-              'allele of the 62 SNPs of the Coll et al. (2014) barcode are counted with exact 31-mers (k=31, '
-              'hdist=0); a lineage is called when at least 80% of the reads (and at least 3, or 1 contig) carry its '
-              'allele.').format(n=N_SPACERS, k=KMER_SIZE)
     duration = (run.finished - run.started).total_seconds() if run.finished else 0
     return [
         PageBreak(),
@@ -361,8 +443,6 @@ def run_section(run):
                    + [('SIT database', text('{path}\n{patterns:,} patterns, {sits:,} SITs · SHA-256 {sha256}\n'
                                             '{source}'.format(**run.sit_database), WRAP)
                        if run.sit_database else 'not installed (spoligotyper-download-sit)')]),
-        Paragraph('Method', H3),
-        text(method, SMALL),
         Paragraph('References', H3),
         text('Kamerbeek J et al. Simultaneous detection and strain differentiation of Mycobacterium tuberculosis for '
              'diagnosis and epidemiology. J Clin Microbiol 35:907-914 (1997). '
@@ -395,7 +475,9 @@ def write_pdf(results, run, path):
     ordered = by_spoligotype(results)
     for i, (_, result) in enumerate(ordered, 1):
         story.append(PageBreak())  # One sample per page: its tables are never split
-        story += sample_section(result, i, len(ordered))
+        story += sample_section(result, i, len(ordered), 'SB number (Mbovis.org)' if run.database.get('default', True)
+                                else 'Name (spoligotype database)')
+    story += definitions_section(run)
     story += run_section(run)
 
     class Canvas(NumberedCanvas):

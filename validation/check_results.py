@@ -65,7 +65,8 @@ def main():
             exp['sample'], exp['organism'], row['Spoligotype'],
             '{} ({})'.format(row['SIT'], row['SITVIT2family']) if row['SITVIT2family'] else row['SIT'] or '-',
             row['Octal'],
-            '{} ({})'.format(row['Species'], ' '.join({'present': '+', 'deleted': '-'}.get(row[r], row[r] or '?')
+            '{} ({})'.format(row['Species'], ' '.join({'present': '+', 'deleted': '-', 'partial': 'p',
+                                                        'reduced': 'r'}.get(row[r], row[r] or '?')
                                                        for r in ('RD1', 'RD4', 'RD7', 'RD9', 'RD12'))),
             row['Lineage'] or '-',
             {'': '-', '*': 'not documented'}.get(exp['expected_lineage'], exp['expected_lineage']),

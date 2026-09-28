@@ -29,9 +29,9 @@ M_caprae_Allgaeu	GCF_001941665.1	M. caprae Allgaeu	M. orygis or M. caprae	BOV
 M_caprae_SY-1	GCF_050259585.1	M. caprae SY-1	M. orygis or M. caprae	BOV	
 M_orygis_51145	GCF_015265495.1	M. orygis 51145	M. orygis or M. caprae	BOV	
 M_orygis_NIAB	GCF_033782915.1	M. orygis NIAB_BDWBCSHFL_1	M. orygis or M. caprae	BOV	
-M_microti_OV254	GCF_904810325.1	M. microti OV254	M. microti, M. pinnipedii or M. mungi	BOV_AFRI	
-M_microti_MausIV	GCF_904810355.1	M. microti Maus IV	M. microti, M. pinnipedii or M. mungi	BOV_AFRI	
-M_microti_94-2272	GCF_904810365.1	M. microti 94-2272	M. microti, M. pinnipedii or M. mungi	BOV_AFRI	
+M_microti_OV254	GCF_904810325.1	M. microti OV254	M. microti	BOV_AFRI	
+M_microti_MausIV	GCF_904810355.1	M. microti Maus IV	M. microti	BOV_AFRI	
+M_microti_94-2272	GCF_904810365.1	M. microti 94-2272	M. microti	BOV_AFRI	
 M_pinnipedii_MP1	GCF_003027895.2	M. pinnipedii MP1 (draft)	M. microti, M. pinnipedii or M. mungi	BOV_AFRI	
 M_pinnipedii_BAA-688	GCF_002982275.1	M. pinnipedii ATCC BAA-688 (draft)	M. microti, M. pinnipedii or M. mungi	BOV_AFRI	
 M_mungi_BM22813	GCF_001652545.1	M. mungi BM22813 (draft)	M. microti, M. pinnipedii or M. mungi	BOV_AFRI	

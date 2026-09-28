@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+Clearer terminology and RD reporting, after feedback from a tuberculosis expert.
+* A pattern without SB number is reported as `Not in Mbovis.org` (`Not in database` with `--db`) instead of
+  "Spoligo not found": the spoligotype is the binary, octal and hexadecimal codes, which are universal; the SB number is
+  only a name in one database. Likewise, `Not in SITVIT2 list` for SITs.
+* PDF report: the spoligotype codes come first (octal code in the summary and on the sample pages), and the SB number
+  and SIT are labelled with their database. New "Definitions and methods" section: what the codes, names and RD
+  results mean, how the RDs were determined (H37Rv coordinates, segments, thresholds), and how they compare with PCR
+  assays (presence of the region's DNA, not amplicon sizes).
+* Regions of difference are called from their segments: `present`, `deleted`, `partial` (some segments missing, with
+  their H37Rv coordinates) or `reduced` (present at low depth: mixed sample?). Before, a median depth hid partial
+  deletions, such as the part of RD1 lost by *M. microti* (RD1<sup>mic</sup>), now reported, and used to identify
+  *M. microti*. In assemblies, a region is present only if all its segments are found.
+* JSON: segments found, missing coordinates and H37Rv region of each RD.
+
 ## 0.5.1 (2026-09-25)
 * PDF report: the date under the title now shows its time zone, like the other dates of the report. In containers,
   which usually run in UTC, see the [FAQ](FAQ#why-are-the-times-in-the-pdf-report-in-utc) to use the local time zone.

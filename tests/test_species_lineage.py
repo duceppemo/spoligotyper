@@ -10,10 +10,9 @@ from .conftest import SB0140
 
 
 def marker_counts(control=30, rd9=30, rd4=30, rd1=30, rd7=30, rd12=30):
-    counts = {'MTBC_{:02d}'.format(i): control for i in range(1, 41)}
-    for region, value in (('RD9', rd9), ('RD4', rd4), ('RD1', rd1), ('RD7', rd7), ('RD12', rd12)):
-        counts.update({'{}_{:02d}'.format(region, i): value for i in range(1, 9)})
-    return counts
+    """Counts for every segment of markers.fasta: the same count for all the segments of a region."""
+    values = {'MTBC': control, 'RD9': rd9, 'RD4': rd4, 'RD1': rd1, 'RD7': rd7, 'RD12': rd12}
+    return {name: values[name.split('_')[0]] for name in species.segments()}
 
 
 def profile_counts(profile):
@@ -51,9 +50,75 @@ def test_species(profile, lineages, spacers, expected):
     assert check.species == expected
 
 
-def test_species_partial():
+def test_species_reduced_depth():
+    """All the RD9 segments found, but at 30% of the control depth: a mix of strains with and without RD9."""
     check = species.check_species(marker_counts(30, rd9=9), 'fastq')
+    assert check.regions['RD9'].state == species.REDUCED and check.regions['RD9'].sign == '+'
     assert check.species == 'MTBC (mixed or unclear RD profile)'
+
+
+def rd1_segments():
+    return sorted((n for n in species.segments() if n.startswith('RD1_')), key=lambda n: species.segments()[n])
+
+
+def test_partial_deletion_and_rd1mic():
+    """M. microti: the RD1 segments inside RD1mic (Rv3871 to part of Rv3876) are missing, the others present."""
+    counts = marker_counts(30, rd7=0, rd9=0)
+    inside = [n for n in rd1_segments() if species.segments()[n][1] <= species.RD1MIC[1]]
+    counts.update({n: 0 for n in inside})
+    check = species.check_species(counts, 'fastq')
+    rd1 = check.regions['RD1']
+    assert rd1.state == species.PARTIAL and rd1.found == 20 - len(inside) and rd1.sign == '+'
+    assert rd1.missing == [(species.segments()[inside[0]][0], species.segments()[inside[-1]][1])]
+    assert species.rd1mic(check) and species.rd_profile(check) == '++--+'
+    species.name_species(check, ['BOV_AFRI'])
+    assert check.species == 'M. microti'
+    assert 'H37Rv 4,350,651-' in rd1.describe()
+
+
+def test_partial_deletion_other():
+    """Three RD1 segments missing, not RD1mic (M. mungi genome): the species stays the group of three."""
+    counts = marker_counts(30, rd7=0, rd9=0)
+    names = rd1_segments()
+    counts.update({n: 0 for n in names[3:6]})
+    check = species.check_species(counts, 'fastq')
+    assert check.regions['RD1'].state == species.PARTIAL and not species.rd1mic(check)
+    assert check.regions['RD1'].missing == [(species.segments()[names[3]][0], species.segments()[names[5]][1])]
+    species.name_species(check, ['BOV_AFRI'])
+    assert check.species == 'M. microti, M. pinnipedii or M. mungi'
+    # Most of RD4 missing (M. canettii ET1291): "-" in the RD profile
+    counts = marker_counts(30)
+    counts.update({n: 0 for n in sorted(n for n in species.segments() if n.startswith('RD4_'))[:11]})
+    check = species.check_species(counts, 'fastq')
+    assert check.regions['RD4'].state == species.PARTIAL and check.regions['RD4'].sign == '-'
+
+
+def test_gc_rich_segments_at_low_depth():
+    """Real Illumina reads (AF2122/97, ERR1744454): GC-rich RD1 segments at 10% of the control depth are found."""
+    counts = marker_counts(80, rd1=80, rd4=0, rd7=0, rd9=0, rd12=0)
+    counts.update({n: 8 for n in rd1_segments()[4:8]})
+    check = species.check_species(counts, 'fastq')
+    assert check.regions['RD1'].state == species.PRESENT
+    counts.update({n: 3 for n in rd1_segments()[4:8]})  # Below 5% of the control depth: missing
+    assert species.check_species(counts, 'fastq').regions['RD1'].state == species.PARTIAL
+
+
+def test_assembly_needs_all_segments():
+    """In an assembly, one missing segment makes the region partial; reads tolerate 10% (low depth)."""
+    counts = marker_counts(1)
+    counts[rd1_segments()[-1]] = 0
+    assert species.check_species(counts, 'fasta').regions['RD1'].state == species.PARTIAL
+    counts = marker_counts(30)
+    counts[rd1_segments()[-1]] = 0
+    assert species.check_species(counts, 'fastq').regions['RD1'].state == species.PRESENT
+
+
+def test_region_extents():
+    """Every segment lies inside its region of difference."""
+    for name, (start, end) in species.segments().items():
+        region = name.split('_')[0]
+        if region != 'MTBC':
+            assert species.REGION_EXTENTS[region][0] <= start and end <= species.REGION_EXTENTS[region][1], name
 
 
 def test_species_not_mtbc():
@@ -161,8 +226,8 @@ def test_closest():
 
 
 def test_multiqc(tmp_path):
-    write_multiqc([Result('S1', spoligotype='Spoligo not found', octal='000000000003771')], tmp_path / 'x_mqc.json')
+    write_multiqc([Result('S1', spoligotype='Not in Mbovis.org', octal='000000000003771')], tmp_path / 'x_mqc.json')
     content = json.loads((tmp_path / 'x_mqc.json').read_text())
     assert content['id'] == 'spoligotyper' and content['plot_type'] == 'table'
-    assert content['data'] == {'S1': {'Spoligotype': 'Spoligo not found', 'SIT': '-', 'Octal': '000000000003771',
+    assert content['data'] == {'S1': {'Spoligotype': 'Not in Mbovis.org', 'SIT': '-', 'Octal': '000000000003771',
                                       'Species': '-', 'Lineage': '-', 'Status': 'ok'}}

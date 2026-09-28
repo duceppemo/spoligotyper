@@ -10,7 +10,7 @@ A tab-separated table with a header and one line per sample. The same table is p
 | `Binary` | `1101101000001...` | 43 digits: 1 = spacer present (count ≥ `MinCount`), 0 = absent |
 | `Octal` | `664073777777600` | 15-digit octal code |
 | `Hexadecimal` | `6D-03-5F-7F-FF-60` | Hexadecimal code, 6 blocks |
-| `Spoligotype` | `SB0140` | SB number of the pattern in the [Mbovis.org](https://www.mbovis.org/) database, or `Spoligo not found` |
+| `Spoligotype` | `SB0140` | SB number: the name of the pattern in the [Mbovis.org](https://www.mbovis.org/) database, or `Not in Mbovis.org` when this database has no name for it (e.g. all *M. tuberculosis* patterns). The spoligotype itself is the `Binary`, `Octal` and `Hexadecimal` codes. With `--db`: the name in that database, or `Not in database` |
 | `FileType` | `fastq` | File format: `fastq` (reads) or `fasta` (an assembly, or reads in fasta format: see `Warnings`) |
 | `Reads` | `1212727` | Number of reads (or contigs) in the input |
 | `Depth` | `65` | Reads only: estimated sequencing depth, all bases divided by 4.4 Mb |
@@ -20,11 +20,11 @@ A tab-separated table with a header and one line per sample. The same table is p
 | `Species` | `M. bovis` | From the regions of difference and the lineage SNPs, see [Species and lineage](Species-and-lineage) |
 | `Lineage` | `BOV` | Most specific lineage of the SNP barcode (e.g. `4.3.4.2`, `2.2.1`, `BOV`), or `mixed: ...` |
 | `LineageName` | `M. bovis` | e.g. "Euro-American (LAM)", "East-Asian" (Beijing) |
-| `RD9`, `RD4`, `RD1` | `deleted` | `present`, `deleted` or `partial` (also `RD7` and `RD12`, the last two columns) |
+| `RD9`, `RD4`, `RD1` | `deleted` | `present`, `deleted`, `partial` (some segments of the region missing) or `reduced` (present at a low depth: mixed sample?); also `RD7` and `RD12`, the last columns. See [Species and lineage](Species-and-lineage#species-regions-of-difference) |
 | `MTBCFraction` | `1.00` | Reads only: estimated fraction of the reads from the *M. tuberculosis* complex |
 | `Closest` | `SB0140 (spacer 7 differs)` | For a pattern not in the database: the closest SB numbers, up to 3 spacers away |
-| `RD7`, `RD12` | `deleted` | `present`, `deleted` or `partial` |
-| `SIT` | `SIT451` | Shared international type of the SITVIT2 database: a SIT, `Orphan` (a SITVIT2 pattern without SIT), or `Spoligo not found`. Empty without SIT database: see [Installation](Installation#sit-database) |
+| `RD7`, `RD12` | `deleted` | As `RD9`, `RD4` and `RD1` |
+| `SIT` | `SIT451` | Shared international type of the SITVIT2 database: a SIT, `Orphan` (a SITVIT2 pattern without SIT), or `Not in SITVIT2 list` (not among the SITVIT2 patterns of the list, which does not include the SITs created since 2022). Empty without SIT database: see [Installation](Installation#sit-database) |
 | `SITVIT2family` | `T-H37Rv` | SITVIT2 spoligotype family of the pattern (also for orphan patterns), e.g. Beijing, LAM3, EAI5, BOV_1 |
 | `ClosestSIT` | `SIT451 (spacer 12 differs)` | For a pattern without SIT: the closest SITs, up to 3 spacers away |
 

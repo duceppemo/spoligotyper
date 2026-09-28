@@ -56,7 +56,7 @@ def test_assembly(data, tmp_path, capsys):
 def test_not_in_database(data, tmp_path, capsys):
     row = run(capsys, '-r1', data / 'H37Rv.fna', '-o', tmp_path)
     assert [row[c] for c in ('Binary', 'Octal', 'Hexadecimal', 'Spoligotype')] == \
-        [H37RV, '777777477760771', '7F-7F-7C-7F-F0-7F', 'Spoligo not found']
+        [H37RV, '777777477760771', '7F-7F-7C-7F-F0-7F', 'Not in Mbovis.org']
     assert (row['Species'], row['Lineage'], row['RD9']) == ('M. tuberculosis', '4.9', 'present')
     assert row['Status'] == 'ok' and row['Closest'] == ''  # Nothing within 3 spacers
 
@@ -172,7 +172,8 @@ def test_pdf_single_sample(data, tmp_path, capsys):
     assert re.search(r'generated \d{{4}}-\d\d-\d\d \d\d:\d\d {} by'.format(re.escape(zone)), content)
     for expected in ('Spoligotyping report', 'bovis', 'SB0140', '664073777777600', 'paired-end', 'Jane Doe',
                      'Run information', 'Reads per spacer', 'BBTools', __version__, 'MD5', 'Species and lineage',
-                     'M. bovis', 'RD4', 'Coll F et al.', 'Lineage SNP'):
+                     'M. bovis', 'RD4', 'Coll F et al.', 'Lineage SNP', 'Definitions and methods',
+                     'SB number (Mbovis.org)', 'amplicon', 'Spoligotype (octal)'):
         assert expected in content, expected
 
 
@@ -290,8 +291,18 @@ def test_sit_database(data, tmp_path, capsys, caplog):
     row = run(capsys, '-r1', data / 'H37Rv.fna', '-o', tmp_path, '--sit-db', db)
     assert (row['SIT'], row['SITVIT2family']) == ('SIT451', 'T-H37Rv')
     row = run(capsys, '-r1', data / 'AF2122.fasta', '-o', tmp_path, '--sit-db', db)
-    assert row['SIT'] == 'Spoligo not found' and row['SITVIT2family'] == ''
+    assert row['SIT'] == 'Not in SITVIT2 list' and row['SITVIT2family'] == ''
     main(['-r1', str(data / 'H37Rv.fna'), '-o', str(tmp_path / 'pdf'), '-t', '2', '--memory', '500m', '--sit-db', str(db)])
     capsys.readouterr()
     pages, content = pdf_text(tmp_path / 'pdf' / 'H37Rv_spoligotyping.pdf')
     assert 'SIT451' in content and 'SITVIT2 family T-H37Rv' in content and 'SIT database' in content
+
+
+def test_custom_database_wording(data, tmp_path, capsys):
+    """With --db, a pattern without name is "Not in database", not "Not in Mbovis.org"."""
+    db = tmp_path / 'db.txt'
+    db.write_text('777777477760771 SIT451 {}\n'.format(H37RV))
+    row = run(capsys, '-r1', data / 'AF2122.fasta', '-o', tmp_path, '--db', db)
+    assert row['Spoligotype'] == 'Not in database'
+    row = run(capsys, '-r1', data / 'H37Rv.fna', '-o', tmp_path, '--db', db)
+    assert row['Spoligotype'] == 'SIT451'

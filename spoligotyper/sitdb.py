@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from . import __version__
-from .spoligotype import BINARY_PATTERN, NOT_FOUND, SpoligoError, binary_to_octal
+from .spoligotype import BINARY_PATTERN, SpoligoError, binary_to_octal
 
 log = logging.getLogger(__name__)
 
@@ -41,6 +41,7 @@ URLS = [
 ]
 DB_NAME = 'sit_database.tsv'
 ORPHAN = 'Orphan'  # A SITVIT2 pattern without SIT (seen in one isolate only)
+NOT_FOUND = 'Not in SITVIT2 list'  # Not among the SITVIT2 patterns of the list (not necessarily new to SITVIT2)
 
 
 class SitError(Exception):
@@ -130,7 +131,7 @@ class SitDatabase:
         return {binary: 'SIT' + sit for binary, (sit, _) in self.patterns.items() if sit != ORPHAN}
 
     def lookup(self, binary):
-        """(SIT, family): e.g. ("SIT451", "T-H37Rv"), ("Orphan", "LAM5"), or (NOT_FOUND, "")."""
+        """(SIT, family): e.g. ("SIT451", "T-H37Rv"), ("Orphan", "LAM5"), or ("Not in SITVIT2 list", "")."""
         sit, family = self.patterns.get(binary, (None, ''))
         if sit is None:
             return NOT_FOUND, ''

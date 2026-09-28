@@ -5,7 +5,10 @@ from importlib.resources import files
 
 N_SPACERS = 43
 HEX_BLOCKS = (7, 7, 7, 7, 8, 7)  # Spacers per hexadecimal block (6 blocks, 43 spacers)
-NOT_FOUND = 'Spoligo not found'
+# The spoligotype itself is the binary pattern and its octal and hexadecimal codes; SB numbers are names given to
+# patterns by the Mbovis.org database. A pattern without SB number is only absent from that database.
+NOT_FOUND = 'Not in Mbovis.org'
+NOT_FOUND_CUSTOM = 'Not in database'  # With --db
 
 BINARY_PATTERN = re.compile(r'[01]{%d}' % N_SPACERS)
 OCTAL_PATTERN = re.compile(r'[0-7]{14}[01]')
@@ -94,9 +97,9 @@ def load_database(path=SPOLIGOTYPE_DB):
     return database
 
 
-def lookup(binary, database):
-    """SB number of a binary pattern, or NOT_FOUND."""
-    return database.get(binary, NOT_FOUND)
+def lookup(binary, database, not_found=NOT_FOUND):
+    """Name (SB number) of a binary pattern in the database, or not_found."""
+    return database.get(binary, not_found)
 
 
 def closest(binary, database, max_distance=3, limit=3):

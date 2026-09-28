@@ -4,7 +4,7 @@ import json
 import pytest
 
 from spoligotyper import sitdb
-from spoligotyper.spoligotype import NOT_FOUND, closest
+from spoligotyper.spoligotype import closest
 
 from .conftest import H37RV
 
@@ -32,7 +32,7 @@ def test_convert_and_lookup(source, tmp_path):
     db = sitdb.load(database)
     assert db.lookup(H37RV) == ('SIT451', 'T-H37Rv')
     assert db.lookup('1' * 43) == ('Orphan', 'Unknown')
-    assert db.lookup('0' * 43) == (NOT_FOUND, '')
+    assert db.lookup('0' * 43) == ('Not in SITVIT2 list', '')
     assert db.sits == {H37RV: 'SIT451', '0' * 34 + '1' * 9: 'SIT1'}
     assert closest(H37RV[:-1] + '0', db.sits) == [('SIT451', [43])]
     assert db.source.startswith('SIT database for spoligotyper') and len(db.sha256) == 64

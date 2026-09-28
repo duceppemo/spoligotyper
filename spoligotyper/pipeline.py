@@ -15,12 +15,13 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-from . import __version__, lineage, seal, species
+from . import __version__, lineage, seal, sitdb, species
 from .lineage import LineageCall
 from .samples import sample_name
 from .species import SpeciesCheck
 from .spoligotype import (
     NOT_FOUND,
+    NOT_FOUND_CUSTOM,
     SPACERS_FASTA,
     SPOLIGOTYPE_DB,
     SpoligoError,
@@ -88,7 +89,7 @@ class Result:
     error: str = ''
     seconds: float = 0.0
     closest: list = field(default_factory=list)  # Closest database patterns when not found: [(SB, [spacers])]
-    sit: str = ''  # e.g. "SIT451", "Orphan" (SITVIT2 pattern without SIT), "Spoligo not found"; "" without SIT database
+    sit: str = ''  # e.g. "SIT451", "Orphan" (SITVIT2 pattern without SIT), "Not in SITVIT2 list"; "" without database
     sit_family: str = ''  # SITVIT2 family, e.g. "T-H37Rv"
     closest_sit: list = field(default_factory=list)  # Closest SITs when the pattern has none: [(SIT, [spacers])]
     species: SpeciesCheck | None = None
@@ -102,7 +103,8 @@ class Result:
 
     @property
     def found(self):
-        return self.spoligotype not in ('', NOT_FOUND)
+        """The pattern has a name (SB number) in the spoligotype database."""
+        return self.spoligotype not in ('', NOT_FOUND, NOT_FOUND_CUSTOM)
 
     @property
     def is_reads(self):
@@ -166,8 +168,11 @@ class Result:
         data['closest'] = [{'spoligotype': name, 'differing_spacers': diff} for name, diff in self.closest]
         data['closest_sit'] = [{'sit': name, 'differing_spacers': diff} for name, diff in self.closest_sit]
         if self.species:
-            data['species']['regions'] = {r: {'state': state, 'depth_ratio': round(ratio, 3)}
-                                          for r, (state, ratio) in self.species.regions.items()}
+            data['species']['regions'] = {
+                r: {'state': c.state, 'segments_found': c.found, 'segments': c.total, 'depth_ratio': round(c.ratio, 3),
+                    'missing_h37rv': [list(m) for m in c.missing], 'profile': c.sign,
+                    'h37rv_region': list(species.REGION_EXTENTS.get(r, ()))}
+                for r, c in self.species.regions.items()}
         return data
 
 
@@ -202,7 +207,8 @@ class RunInfo:
                          'Python': '{} ({})'.format(platform.python_version(), sys.executable),
                          'Seal': seal.executable() or 'not found', **seal.versions()}
         info.database = {'path': str(Path(str(database)).resolve()), 'md5': file_md5(database),
-                         'patterns': len(load_database(database))}
+                         'patterns': len(load_database(database)),
+                         'default': Path(str(database)).resolve() == Path(str(SPOLIGOTYPE_DB)).resolve()}
         info.spacers = {'path': str(Path(str(spacers)).resolve()), 'md5': file_md5(spacers),
                         'spacers': len(read_spacer_names(spacers))}
         info.species_data = {name: {'path': str(Path(str(path)).resolve()), 'md5': file_md5(path)}
@@ -304,11 +310,12 @@ def spoligotype(r1, r2=None, sample=None, min_count=None, threads=1, memory='1g'
     result.counts = [stats.counts.get(name, 0) for name in spacer_names]
     result.binary = to_binary(stats.counts, spacer_names, result.min_count)
     result.octal, result.hexadecimal = binary_to_octal(result.binary), binary_to_hex(result.binary)
-    result.spoligotype = lookup(result.binary, db)
+    result.spoligotype = lookup(result.binary, db,
+                                NOT_FOUND if Path(str(database)) == Path(str(SPOLIGOTYPE_DB)) else NOT_FOUND_CUSTOM)
     result.closest = closest(result.binary, db) if any(result.counts) else []
     if sit_db is not None:
         result.sit, result.sit_family = sit_db.lookup(result.binary)
-        if result.sit in (NOT_FOUND, 'Orphan') and any(result.counts):
+        if result.sit in (sitdb.NOT_FOUND, sitdb.ORPHAN) and any(result.counts):
             result.closest_sit = closest(result.binary, sit_db.sits)
     if species_check:
         data_type = 'fastq' if result.is_reads else 'fasta'  # Thresholds for reads or for contigs
@@ -378,10 +385,12 @@ def check_species(result):
     if check.mtbc_fraction is not None and check.mtbc_fraction < LOW_MTBC_FRACTION:
         result.warn('only about %d%% of the reads appear to be from the M. tuberculosis complex: contamination?',
                     round(check.mtbc_fraction * 100))
-    partial = [r for r in species.REGIONS if check.state(r) == species.PARTIAL]
-    if partial:
-        result.warn('%s partially deleted (depth ratio %s): mixed sample?', ', '.join(partial),
-                    ', '.join('{:.2f}'.format(check.regions[r][1]) for r in partial))
+    for region, region_call in check.regions.items():
+        if region_call.state == species.REDUCED:
+            result.warn('%s %s', region, region_call.describe())
+        elif region_call.state == species.PARTIAL and not (region == 'RD1' and species.rd1mic(check)):
+            result.warn('%s %s (counted as %s in the RD profile).', region, region_call.describe(),
+                        'present' if region_call.sign == '+' else 'deleted')
     for warning in species.consistency_warnings(check, call.called):
         result.warn(warning)
     if call.conflict:

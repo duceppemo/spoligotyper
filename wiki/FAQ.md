@@ -1,8 +1,10 @@
 # FAQ
 
-### My sample is `Spoligo not found`
-The pattern is not in the [Mbovis.org](https://www.mbovis.org/) database. The `Closest` column lists the closest SB
-numbers (up to 3 spacers different). Either:
+### My sample is `Not in Mbovis.org`
+Its spoligotype is fine: the spoligotype is the binary pattern and its octal and hexadecimal codes, which are
+universal and are the codes to use to exchange spoligotypes. `Not in Mbovis.org` only means that the
+[Mbovis.org](https://www.mbovis.org/) database has no SB number (name) for this pattern. The `Closest` column lists
+the closest SB numbers (up to 3 spacers different). Either:
 * **It is a human-adapted lineage** (*M. tuberculosis*): SB numbers only exist for the RD9-deleted lineages
   (*M. bovis*, *M. caprae*, *M. pinnipedii*, *M. microti*, *M. africanum*, ...). The `Lineage` column gives the
   lineage and its typical spoligotype families, and the `SIT` and `SITVIT2family` columns its shared international
@@ -31,7 +33,7 @@ MTBC reads. See [Species and lineage](Species-and-lineage#contamination-fraction
 From the SITVIT2 database of the Institut Pasteur de Guadeloupe, through the 9,656 SITVIT2 patterns published under
 GPL-3.0 with SpolLineages (3,850 SITs, up to SIT3862, as of 2022). `spoligotyper-download-sit` downloads them: see
 [Installation](Installation#sit-database). SITs created since 2022 are missing: a pattern without SIT is reported as
-`Orphan` (known to SITVIT2, seen once) or `Spoligo not found`, with the closest SITs. SITVIT2 families are given for
+`Orphan` (known to SITVIT2, seen once) or `Not in SITVIT2 list`, with the closest SITs. SITVIT2 families are given for
 orphan patterns too.
 
 ### Can I use another database?

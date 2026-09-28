@@ -214,7 +214,7 @@ def test_low_mtbc_depth_warning():
 
 
 def test_no_sb_warning_without_spacers():
-    check = species.SpeciesCheck(mtbc=True, regions={'RD9': ('present', 1.0)}, species='x')
+    check = species.SpeciesCheck(mtbc=True, regions={'RD9': species.RegionCall('present', 8, 8, 1.0)}, species='x')
     r = Result('S', counts=[0] * 43, binary='0' * 43, spoligotype='SB2277', file_type='fasta', data='assembly',
                min_count=1, species=check, lineage=pipeline.lineage.LineageCall())
     check_result(r)
@@ -238,7 +238,7 @@ def test_batch_unexpected_error(monkeypatch, tmp_path):
 def test_pdf_order_by_spoligotype():
     from spoligotyper.pdf import by_spoligotype
     a, b = '1' * 43, '0' * 43
-    results = [Result('S3', binary=b, spoligotype='Spoligo not found', octal='000'),
+    results = [Result('S3', binary=b, spoligotype='Not in Mbovis.org', octal='000'),
                Result('S2', binary=a, spoligotype='SB0001', octal='777'),
                Result('bad', error='boom'),
                Result('S1', binary=a, spoligotype='SB0001', octal='777'),

@@ -72,7 +72,8 @@ spoligotyper -r1 data/H37Rv.fasta -o results/
 For fasta files, each spacer is found once or not at all, so the minimum count is automatically 1. The AF2122/97
 assembly gives the same spoligotype as its reads, SB0140.
 
-H37Rv gives `Spoligo not found`: SB numbers only exist for the animal-adapted lineages. Its octal code,
+H37Rv gives `Not in Mbovis.org`: SB numbers only exist for the animal-adapted lineages, so the Mbovis.org database
+has no name for this pattern. The spoligotype itself is the pattern and its octal code,
 777777477760771, is the one to use for *M. tuberculosis*, for example to look up its shared international type
 (SIT) in SITVIT (see the [FAQ](FAQ#my-sample-is-spoligo-not-found)). The species is *M. tuberculosis* (all five
 regions of difference present) and the lineage 4.9, "Euro-American (H37Rv-like)".

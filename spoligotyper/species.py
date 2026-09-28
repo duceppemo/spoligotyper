@@ -15,17 +15,58 @@ is deleted, and in between for a mix of strains with and without it.
 
 import statistics
 from dataclasses import dataclass, field
+from functools import cache
 
 from .spoligotype import data_file
 
 MARKERS_FASTA = data_file('markers.fasta')
 CONTROL = 'MTBC'
 REGIONS = ('RD1', 'RD4', 'RD7', 'RD9', 'RD12')
-PRESENT, DELETED, PARTIAL = 'present', 'deleted', 'partial'
-PRESENT_RATIO, DELETED_RATIO = 0.5, 0.1  # Region depth / control depth
+PRESENT, DELETED, PARTIAL, REDUCED = 'present', 'deleted', 'partial', 'reduced'
+SEGMENT_FOUND = 0.05  # A segment is found when its depth is at least this fraction of the control depth. Deleted
+# segments have no read at all, while GC-rich segments (ESX region of RD1) can drop to 10% of the control depth in
+# real Illumina reads.
+PRESENT_FOUND, DELETED_FOUND = 0.9, 0.1  # Fraction of the segments found: present (at least), deleted (at most)
+REDUCED_RATIO = 0.5  # Depth of a present region below this fraction of the control depth: mixed sample?
+# The regions of difference on the H37Rv genome (NC_000962.3), as found by scripts/make_reference_data.py: the
+# H37Rv segments missing from M. bovis AF2122/97 (RD4, RD7, RD9, RD12) and from BCG Pasteur (RD1).
+REGION_EXTENTS = {'RD1': (4350251, 4359740), 'RD4': (1696001, 1708740), 'RD7': (2208001, 2220740),
+                  'RD9': (2330051, 2332140), 'RD12': (3485101, 3487540)}
+# M. microti lost part of RD1 with its own deletion, RD1mic (Brodin et al. 2002), which ends in Rv3876: in three
+# M. microti genomes, the RD1 segments up to H37Rv 4,354,450 are missing and those from 4,354,851 are present.
+RD1MIC = (4348827, 4354800)
 MIN_CONTROL_READS = 3  # Median reads per control chunk to call the species from reads
 MIN_CONTROL_FRACTION = 0.5  # Fraction of the control chunks found
 CHUNK = 100
+
+
+@dataclass
+class RegionCall:
+    state: str  # PRESENT, DELETED, PARTIAL (some segments missing) or REDUCED (all found, at low depth)
+    found: int  # Segments found
+    total: int
+    ratio: float  # Median depth of the segments found, relative to the control depth (0 if none)
+    missing: list = field(default_factory=list)  # H37Rv ranges of the missing segments: [(start, end)]
+
+    @property
+    def fraction(self):
+        return self.found / self.total if self.total else 0.0
+
+    @property
+    def sign(self):
+        """+ or - in the RD profile: a partially deleted region counts as present if most of its segments are found."""
+        if self.state == PARTIAL:
+            return '+' if self.fraction >= 0.5 else '-'
+        return '-' if self.state == DELETED else '+'
+
+    def describe(self):
+        """e.g. "partially deleted: 11 of 20 segments found, H37Rv 4,350,651-4,354,950 missing"."""
+        if self.state == PARTIAL:
+            return 'partially deleted: {} of {} segments found, H37Rv {} missing'.format(
+                self.found, self.total, ', '.join('{:,}-{:,}'.format(a, b) for a, b in self.missing))
+        if self.state == REDUCED:
+            return 'present at reduced depth ({:.2f} of the control): mixed sample?'.format(self.ratio)
+        return self.state
 
 
 @dataclass
@@ -33,12 +74,12 @@ class SpeciesCheck:
     mtbc: bool = False  # Enough MTBC DNA to call the regions
     control_depth: float = 0.0  # Median reads (or contigs) per control chunk
     control_found: float = 0.0  # Fraction of the control chunks found
-    regions: dict = field(default_factory=dict)  # {region: (state, depth ratio)}
+    regions: dict = field(default_factory=dict)  # {region: RegionCall}
     mtbc_fraction: float | None = None  # Estimated fraction of the reads from MTBC, reads only
     species: str = ''
 
     def state(self, region):
-        return self.regions.get(region, ('', 0))[0]
+        return self.regions[region].state if region in self.regions else ''
 
     def summary(self):
         """e.g. "RD9 deleted, RD4 deleted, RD1 present"."""
@@ -47,6 +88,69 @@ class SpeciesCheck:
 
 def chunk_counts(counts, prefix):
     return [c for name, c in counts.items() if name.startswith(prefix + '_')]
+
+
+@cache
+def segments(path=MARKERS_FASTA):
+    """{marker name: (H37Rv start, end)}, from the descriptions of markers.fasta ("RD1_01 H37Rv:4350651-4350750")."""
+    result = {}
+    with open(path) as f:
+        for line in f:
+            if line.startswith('>'):
+                name, location = line[1:].split()[:2]
+                start, end = location.split(':')[1].split('-')
+                result[name] = (int(start), int(end))
+    return result
+
+
+def missing_stretches(names, found):
+    """
+    H37Rv ranges of the missing segments: consecutive missing segments (no segment found between them) form one
+    stretch, from the start of the first to the end of the last.
+    """
+    stretches, current = [], None
+    for name in sorted(names, key=lambda n: segments()[n]):
+        start, end = segments()[name]
+        if name in found:
+            current = None
+        elif current is None:
+            current = [start, end]
+            stretches.append(current)
+        else:
+            current[1] = end
+    return [tuple(s) for s in stretches]
+
+
+def call_region(counts, region, control_depth, file_type='fastq'):
+    """
+    Presence of a region from its segments, found when their depth is at least 5% of the control depth. In an
+    assembly, a missing segment is a real absence: the region is present only if all its segments are found.
+    """
+    names = sorted(name for name in segments() if name.startswith(region + '_'))
+    if not names:
+        return None
+    threshold = max(1.0, SEGMENT_FOUND * control_depth)
+    found = [name for name in names if counts.get(name, 0) >= threshold]
+    fraction = len(found) / len(names)
+    ratio = statistics.median(counts[name] for name in found) / control_depth if found else 0.0
+    missing = missing_stretches(names, set(found))
+    if fraction <= DELETED_FOUND:
+        state = DELETED
+    elif fraction < (1.0 if file_type == 'fasta' else PRESENT_FOUND):
+        state = PARTIAL
+    else:
+        state = REDUCED if ratio < REDUCED_RATIO else PRESENT
+    return RegionCall(state, len(found), len(names), ratio, missing if state == PARTIAL else [])
+
+
+def rd1mic(check):
+    """True when RD1 lacks exactly its segments in the RD1mic deletion of M. microti (Rv3871 to Rv3876)."""
+    call = check.regions.get('RD1')
+    if call is None or call.state != PARTIAL:
+        return False
+    names = [n for n in segments() if n.startswith('RD1_')]
+    inside = {n for n in names if segments()[n][0] >= RD1MIC[0] and segments()[n][1] <= RD1MIC[1]}
+    return bool(inside) and call.missing == missing_stretches(names, set(names) - inside)
 
 
 def expected_control_reads(depth, read_length, paired):
@@ -80,12 +184,9 @@ def check_species(counts, file_type, depth=None, read_length=None, paired=False,
         return check
 
     for region in REGIONS:
-        region_counts = chunk_counts(counts, region)
-        if not region_counts:
-            continue
-        ratio = statistics.median(region_counts) / check.control_depth
-        state = PRESENT if ratio >= PRESENT_RATIO else DELETED if ratio <= DELETED_RATIO else PARTIAL
-        check.regions[region] = (state, ratio)
+        call = call_region(counts, region, check.control_depth, file_type)
+        if call is not None:
+            check.regions[region] = call
     check.species = 'MTBC, mixed sample?' if mixed else call_species(check, lineages)
     return check
 
@@ -110,8 +211,11 @@ RD_PROFILES = {
 
 
 def rd_profile(check):
-    """e.g. "+----" for RD1 present, RD4, RD7, RD9 and RD12 deleted; "?" for a region not measured."""
-    return ''.join({PRESENT: '+', DELETED: '-'}.get(check.state(r), '?') for r in REGIONS)
+    """
+    e.g. "+----" for RD1 present, RD4, RD7, RD9 and RD12 deleted; "?" for a region not measured. A partially deleted
+    region is "+" when at least half of its segments are found (e.g. RD1 of M. microti), "-" otherwise.
+    """
+    return ''.join(check.regions[r].sign if r in check.regions else '?' for r in REGIONS)
 
 
 def call_species(check, lineages=(), spacers=True):
@@ -120,7 +224,7 @@ def call_species(check, lineages=(), spacers=True):
     :param spacers: whether any of the 43 standard spacers was found (M. canettii usually has none)
     """
     main = {lineage.split('.')[0] for lineage in lineages}
-    if any(check.state(r) == PARTIAL for r in REGIONS):
+    if any(check.state(r) == REDUCED for r in REGIONS):
         return 'MTBC (mixed or unclear RD profile)'
     profile = rd_profile(check)
     rd1, rd4, rd7, rd9, rd12 = profile
@@ -146,6 +250,8 @@ def call_species(check, lineages=(), spacers=True):
     if profile == '++--+':
         if '6' in main:
             return 'M. africanum (lineage 6)'
+        if rd1mic(check):
+            return 'M. microti'
         if 'BOV_AFRI' in main:  # The clade of the animal lineages and lineage 6, without the lineage 6 SNP
             return 'M. microti, M. pinnipedii or M. mungi'
     return species
