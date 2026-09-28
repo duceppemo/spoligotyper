@@ -4,4 +4,4 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::spoligotyper=0.6.0
+  - bioconda::spoligotyper=0.7.0

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.7.0 (2026-09-28)
 * Patterns with an SB number get no closest SITs: SITVIT2 lacks many patterns of the animal-adapted lineages (only 603
   of the 1,976 Mbovis.org patterns have a SIT), for which the SB number is the reference name. The PDF report says so.
 * Warning for long reads (mean length above 1,000 bp): spoligotypes from nanopore reads are often wrong; type an
