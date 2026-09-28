@@ -1,7 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.6.0 (2026-09-28)
 Clearer terminology and RD reporting, after feedback from a tuberculosis expert.
+* **Renamed columns**: `Spoligotype` is now `SB` and `Closest` is now `ClosestSB` in the TSV (same positions), `SB` in
+  the MultiQC table, and `sb` in the JSON (`closest` entries too): they hold the name of the pattern in the Mbovis.org
+  database, not the spoligotype. Scripts that read these columns need the new names.
 * A pattern without SB number is reported as `Not in Mbovis.org` (`Not in database` with `--db`) instead of
   "Spoligo not found": the spoligotype is the binary, octal and hexadecimal codes, which are universal; the SB number is
   only a name in one database. Likewise, `Not in SITVIT2 list` for SITs.
@@ -13,10 +16,10 @@ Clearer terminology and RD reporting, after feedback from a tuberculosis expert.
   their H37Rv coordinates) or `reduced` (present at low depth: mixed sample?). Before, a median depth hid partial
   deletions, such as the part of RD1 lost by *M. microti* (RD1<sup>mic</sup>), now reported, and used to identify
   *M. microti*. In assemblies, a region is present only if all its segments are found.
+  In reads, a segment is found at 5% of the control depth (GC-rich RD1 segments can drop to 10% in real Illumina
+  reads), and one missing or stray segment is tolerated in the short RD9 region. Assemblies are never "reduced".
+* The "is an SB number, but RD9 is present" warning is only given for SB numbers, not for names from `--db`.
 * JSON: segments found, missing coordinates and H37Rv region of each RD.
-* **Renamed columns**: `Spoligotype` is now `SB` and `Closest` is now `ClosestSB` in the TSV (same positions), `SB` in
-  the MultiQC table, and `sb` in the JSON (`closest` entries too): they hold the name of the pattern in the Mbovis.org
-  database, not the spoligotype. Scripts that read these columns need the new names.
 
 ## 0.5.1 (2026-09-25)
 * PDF report: the date under the title now shows its time zone, like the other dates of the report. In containers,
