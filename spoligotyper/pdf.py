@@ -274,11 +274,11 @@ def sample_section(result, number=1, total=1, db_label='SB number (Mbovis.org)')
         rows.insert(position, ('Closest names', describe_closest(result.closest)))
         position += 1
     if result.sit:
-        not_found = 'Not in SITVIT2 list: the pattern is not among the SITVIT2 patterns of the list'
-        if result.found and result.sb.startswith('SB'):
-            not_found += ', which lacks many patterns of the animal-adapted lineages: use the SB number'
-        sit = {sitdb.ORPHAN: 'Orphan: a SITVIT2 pattern without SIT', sitdb.NOT_FOUND: not_found
-               }.get(result.sit, result.sit)
+        sb_note = (', and SITVIT2 lacks many patterns of the animal-adapted lineages: use the SB number'
+                   if result.has_sb else '')
+        sit = {sitdb.ORPHAN: 'Orphan: a SITVIT2 pattern without SIT',
+               sitdb.NOT_FOUND: 'Not in SITVIT2 list: the pattern is not among the SITVIT2 patterns of the list'
+               }.get(result.sit, result.sit) + (sb_note if result.sit in (sitdb.ORPHAN, sitdb.NOT_FOUND) else '')
         family = ' · SITVIT2 family {}'.format(result.sit_family) if result.sit_family else ''
         closest_sit = ' · closest: {}'.format(describe_closest(result.closest_sit)) if result.closest_sit else ''
         rows.insert(position, ('SIT (SITVIT2)', sit + family + closest_sit))
@@ -320,7 +320,7 @@ def species_block(result):
         for region, region_call in check.regions.items():
             start, end = species.REGION_EXTENTS[region]
             result_text = '{} {}'.format(region_call.sign.replace('-', '\u2212'), region_call.describe())
-            if region == 'RD1' and species.rd1mic(check):
+            if region == 'RD1' and check.species == 'M. microti':
                 result_text += ' (RD1mic of M. microti)'
             table.append([text(region, SMALL), text('{:,}-{:,}'.format(start, end), SMALL),
                           text(DELETED_IN[region], SMALL), text('{} of {}'.format(region_call.found, region_call.total),

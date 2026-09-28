@@ -143,6 +143,11 @@ class Result:
         return self.bases / self.reads if self.is_reads and self.reads and self.bases else None
 
     @property
+    def has_sb(self):
+        """True when the pattern has an SB number (Mbovis.org, or a --db with SB numbers)."""
+        return self.found and self.sb.startswith('SB')
+
+    @property
     def median_present_count(self):
         present = [c for c, bit in zip(self.counts, self.binary, strict=False) if bit == '1']
         return statistics.median(present) if present else 0
@@ -224,8 +229,10 @@ class RunInfo:
         if sit_db:
             info.sit_database = {'path': sit_db.path, 'sha256': sit_db.sha256, 'patterns': len(sit_db.patterns),
                                  'sits': len(sit_db.sits), 'source': sit_db.source}
-            if info.database['default']:  # How many SB patterns have a SIT: SITVIT2 lacks many animal patterns
-                sb_patterns, sits = load_database(database), sit_db.sits
+            # How many SB patterns have a SIT: SITVIT2 lacks many patterns of the animal lineages
+            sb_patterns = [b for b, name in load_database(database).items() if name.startswith('SB')]
+            if sb_patterns:
+                sits = sit_db.sits
                 info.sit_database.update(sb_patterns=len(sb_patterns), sb_with_sit=sum(b in sits for b in sb_patterns))
         return info
 
@@ -319,13 +326,12 @@ def spoligotype(r1, r2=None, sample=None, min_count=None, threads=1, memory='1g'
     result.counts = [stats.counts.get(name, 0) for name in spacer_names]
     result.binary = to_binary(stats.counts, spacer_names, result.min_count)
     result.octal, result.hexadecimal = binary_to_octal(result.binary), binary_to_hex(result.binary)
-    default_db = is_default_database(database)
-    result.sb = lookup(result.binary, db, NOT_FOUND if default_db else NOT_FOUND_CUSTOM)
+    result.sb = lookup(result.binary, db, NOT_FOUND if is_default_database(database) else NOT_FOUND_CUSTOM)
     result.closest = closest(result.binary, db) if any(result.counts) else []
     if sit_db is not None:
         result.sit, result.sit_family = sit_db.lookup(result.binary)
         # No closest SIT for a pattern with an SB number: SITVIT2 lacks many patterns of the animal lineages
-        if result.sit in (sitdb.NOT_FOUND, sitdb.ORPHAN) and any(result.counts) and not (result.found and default_db):
+        if result.sit in (sitdb.NOT_FOUND, sitdb.ORPHAN) and any(result.counts) and not result.has_sb:
             result.closest_sit = closest(result.binary, sit_db.sits)
     if species_check:
         data_type = 'fastq' if result.is_reads else 'fasta'  # Thresholds for reads or for contigs
@@ -355,10 +361,10 @@ def check_result(result):
     if not result.is_reads and result.min_count > 1:
         result.warn('assembly typed with minimum count %d: spacers are probably missed. '
                     'Leave --min-count unset (1 for assemblies).', result.min_count)
-    if result.is_reads and result.reads and result.bases / result.reads > LONG_READS:
+    if result.file_type == 'fastq' and (result.read_length or 0) > LONG_READS:
         result.warn('long reads (mean length %.0f bp): spoligotypes from nanopore reads are often wrong, while those '
                     'from an assembly of the same reads are almost always right. Type the assembly.',
-                    result.bases / result.reads)
+                    result.read_length)
     check_species(result)
     if not any(result.counts):
         if result.species and result.species.species == 'M. canettii':
@@ -402,7 +408,7 @@ def check_species(result):
     for region, region_call in check.regions.items():
         if region_call.state == species.REDUCED:
             result.warn('%s %s', region, region_call.describe())
-        elif region_call.state == species.PARTIAL and not (region == 'RD1' and species.rd1mic(check)):
+        elif region_call.state == species.PARTIAL and not (region == 'RD1' and check.species == 'M. microti'):
             result.warn('%s %s (counted as %s in the RD profile).', region, region_call.describe(),
                         'present' if region_call.sign == '+' else 'deleted')
     for warning in species.consistency_warnings(check, call.called):
@@ -412,7 +418,7 @@ def check_species(result):
     if call.mixed:
         result.warn('both alleles of %d lineage SNP(s) seen (%s): mixed sample?', len(call.mixed),
                     ', '.join('{} {:.0f}%'.format(s.lineage, s.fraction * 100) for s in call.mixed))
-    if result.found and result.sb.startswith('SB') and any(result.counts) and check.state('RD9') == species.PRESENT:
+    if result.has_sb and any(result.counts) and check.state('RD9') == species.PRESENT:
         result.warn('%s is an SB number, but RD9 is present: SB numbers are for RD9-deleted (animal) lineages.',
                     result.sb)
 

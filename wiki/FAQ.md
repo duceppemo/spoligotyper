@@ -40,9 +40,9 @@ orphan patterns too.
 ### Why does my *M. bovis* sample have no SIT?
 SITVIT2 lacks many patterns of the animal-adapted lineages: only 603 of the 1,976 Mbovis.org patterns have a SIT in
 the SITVIT2 list. For *M. bovis*, *M. caprae*, *M. microti* and the other animal-adapted lineages, the SB number of
-[Mbovis.org](https://www.mbovis.org/) is the reference name. So, for a pattern with an SB number, spoligotyper
-reports `Not in SITVIT2 list` without closest SITs, which would suggest a relationship that is only an artefact of
-the gaps of the list, and the PDF report points to the SB number.
+[Mbovis.org](https://www.mbovis.org/) is the reference name. So, for a pattern with an SB number that is not in the
+SITVIT2 list (or is an orphan), spoligotyper gives no closest SITs, which would suggest a relationship that is only an
+artefact of the gaps of the list, and the PDF report points to the SB number.
 
 ### Can I use another database?
 Yes, with `--db my_database.txt`. The file has one pattern per line, with 3 columns separated by spaces or tabs:

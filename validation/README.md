@@ -13,6 +13,6 @@
 ```
 bash run_validation.sh 8   # 8 threads
 ```
-It downloads about 1.7 GB into `data/`, writes the reports in `results/`, and prints `results/validation.md`. The
+It downloads about 1.4 GB into `data/`, writes the reports in `results/`, and prints `results/validation.md`. The
 results of the latest release are on the [Validation](https://github.com/duceppemo/spoligotyper/wiki/Validation)
 page of the wiki.

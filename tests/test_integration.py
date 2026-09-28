@@ -310,6 +310,11 @@ def test_no_closest_sit_for_sb_patterns(data, tmp_path, capsys):
     pages, content = pdf_text(tmp_path / 'AF2122_spoligotyping.pdf')
     content = ' '.join(content.split())
     assert 'use the SB number' in content and 'of the 1,976 Mbovis.org patterns have a SIT' in content
+    # The same with a copy of the Mbovis.org database given with --db (e.g. a newer version)
+    copy = tmp_path / 'mbovis.txt'
+    copy.write_text(SPOLIGOTYPE_DB.read_text())
+    row = run(capsys, '-r1', data / 'AF2122.fasta', '-o', tmp_path, '--sit-db', db, '--db', copy)
+    assert (row['SB'], row['ClosestSIT']) == ('SB0140', '')
 
 
 def test_custom_database_wording(data, tmp_path, capsys):

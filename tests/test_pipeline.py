@@ -225,6 +225,12 @@ def test_long_reads_warning():
                    bases=bases)
         check_result(r)
         assert not any('long reads' in w for w in r.warnings)
+    # Unknown number of bases, or an assembly typed as reads (fasta): no warning, no error
+    for kind, bases in (('fastq', None), ('fasta', 30_000 * 4200)):
+        r = Result('S', counts=[20] * 43, binary='1' * 43, file_type=kind, data='reads', min_count=5,
+                   reads=30_000, bases=bases)
+        check_result(r)
+        assert not any('long reads' in w for w in r.warnings)
 
 
 def test_no_sb_warning_without_spacers():

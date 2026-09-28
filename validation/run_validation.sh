@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Validate spoligotyper on public reference genomes (genomes.tsv), public reads, and simulated reads:
 # pure, mixed (two strains) and contaminated (MTBC + M. marinum). Writes results/validation.md.
-# Requires spoligotyper, BBTools (seal.sh, randomreads.sh), curl and unzip. About 1.7 GB of downloads, kept in data/.
+# Requires spoligotyper, BBTools (seal.sh, randomreads.sh), curl and unzip. About 1.4 GB of downloads, kept in data/.
 # Usage: bash run_validation.sh [threads]
 set -euo pipefail
 
@@ -40,7 +40,13 @@ done
 reads_head() {  # url output reads: the first reads of a fastq.gz file, to limit the download
     [ -s "$2" ] && return
     echo "Downloading the first $3 reads of $1" >&2
-    { curl -sSfL --retry 3 "$1" || true; } | { gzip -dc 2>/dev/null || true; } | head -n $(( $3 * 4 )) | gzip > "$2.part"
+    { curl -sSfL "$1" 2>/dev/null || true; } | { gzip -dc 2>/dev/null || true; } | head -n $(( $3 * 4 )) | gzip > "$2.part"
+    # curl and gzip stop with an error when head has enough reads: check the number of reads instead
+    if [ "$(gzip -dc "$2.part" | wc -l)" -ne $(( $3 * 4 )) ]; then
+        rm -f "$2.part"
+        echo "Download failed or incomplete: $1" >&2
+        return 1
+    fi
     mv "$2.part" "$2"
 }
 

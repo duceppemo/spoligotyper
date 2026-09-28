@@ -61,7 +61,9 @@ Any other combination is reported as an unusual RD profile. Notes:
 * *M. microti* has its own deletion, RD1<sup>mic</sup>, which removes the part of RD1 from Rv3871 to Rv3876: RD1 is
   reported as partially deleted (11 of 20 segments found, H37Rv 4,350,651-4,354,450 missing, in three *M. microti*
   genomes) and counts as + in the RD profile, as *M. microti* is RD1 + in the RD PCR scheme. This RD1<sup>mic</sup>
-  pattern identifies *M. microti* among the three species of its row.
+  pattern identifies *M. microti* among the three species of its row. One error is tolerated on each
+  side (a few stray reads on one RD1<sup>mic</sup> segment, or no read on one GC-rich segment outside it), as seen in
+  real Illumina reads of *M. microti* (see [Validation](Validation)).
 * Other partial deletions seen in the validation genomes: RD4 of *M. canettii* ET1291 (9 of 20 segments), RD1 of the
   *M. mungi* draft genome (17 of 20) and RD7 of *M. africanum* RB30065 (18 of 20). They are reported with their
   coordinates and do not change the species.
