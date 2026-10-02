@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.0 (2026-10-02)
 * **Livestock lineages** after [Zwyer *et al.* 2021](https://doi.org/10.12688/openreseurope.14029.2): La1
   (*M. bovis*), La2 (*M. caprae*), La3 (*M. orygis*) and the La1 sublineages La1.1 to La1.8 (e.g. La1.8.1, formerly
   Eu1; BCG in La1.2), from the 88-SNP barcode of the paper, in the same pass as the lineage SNPs. New `LaLineage`

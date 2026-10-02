@@ -1,4 +1,4 @@
 """In silico spoligotyping of Mycobacterium tuberculosis complex genomes, from reads or assemblies."""
 
-__version__ = '0.7.0'
+__version__ = '0.8.0'
 DOI = '10.5281/zenodo.22926160'  # Zenodo concept DOI: all versions
