@@ -5,8 +5,9 @@ sublineages La1.1 to La1.8.
 
 livestock_snps.fasta has, for each SNP of livestock_barcode.tsv, the 61 bp of H37Rv centred on the SNP with the
 ancestral and the derived allele. Seal counts the reads containing an exact 31-mer of each sequence (in the same pass
-as the SNPs of the lineage barcode of Coll et al.). As in the KvarQ test suite of the paper, a group is called when
-at least 2 of its SNPs carry the derived allele.
+as the SNPs of the lineage barcode of Coll et al.). As in the KvarQ test suite published with the paper
+(https://github.com/dbrites/LivestockAssociatedMTBC), a group is called when at least 2 of its SNPs carry the derived
+allele; likewise, a group is mixed when at least 2 of its SNPs have both alleles.
 """
 
 import csv
@@ -53,12 +54,18 @@ class LivestockCall:
     snps: list = field(default_factory=list)  # SnpCall for every SNP covered by reads (lineage = group)
     mixed: list = field(default_factory=list)  # SnpCall with both alleles
     conflict: bool = False  # Groups that cannot occur together, e.g. La1 and La3, or La1.7 and La1.8
+    unsupported: list = field(default_factory=list)  # Parents of the group reported whose covered SNPs are ancestral
 
     @property
     def main(self):
         """La1, La2 or La3, or '' when none or conflicting."""
         roots = {root(g) for g in self.called} - {''}
         return roots.pop() if len(roots) == 1 and not self.conflict else ''
+
+    @property
+    def mixed_within(self):
+        """A mix of sublineages of one lineage (e.g. La1.7.1 and La1.8.1): the lineage and species are known."""
+        return bool(self.mixed and self.main and all(GROUPS[s.lineage][0] for s in self.mixed))
 
 
 def read_barcode(path=BARCODE):
@@ -99,11 +106,16 @@ def on_one_path(groups):
     return groups <= set(ancestors(deepest))
 
 
+def label(group):
+    """Name of a barcode group in reports: La1.7.X-unk4, La1/La2 (shared by La1 and La2), La1.2 BCG."""
+    return {'La1_La2': 'La1/La2', 'La1.2_BCG': 'La1.2 BCG'}.get(group, group)
+
+
 def mixed_summary(mixed):
     """e.g. "La1 35%, La1.8 36%": the derived allele fraction of each group, over its SNPs with both alleles."""
     pooled = {}
     for s in mixed:
-        pooled.setdefault(GROUPS[s.lineage][1] or s.lineage.replace('_', '/'), []).append(s)
+        pooled.setdefault(label(s.lineage), []).append(s)
     return ', '.join('{} {:.0f}%'.format(name, 100 * sum(s.lineage_reads for s in snps) / sum(s.reads for s in snps))
                      for name, snps in pooled.items())
 
@@ -134,7 +146,10 @@ def call_livestock(counts, file_type, barcode=None, contaminated=False):
                 MIXED_FRACTION[0] <= snp.fraction <= MIXED_FRACTION[1]:
             result.mixed.append(snp)
     result.called = [group for group in GROUPS if positives.get(group, 0) >= MIN_SNPS]
-    result.mixed = confirmed_mixed(result.mixed, result.snps, lambda group: ancestors(group)[1:])
+    used = [s for s in result.snps if not (contaminated and '{}|{}'.format(s.lineage, s.position) in conserved_snps)]
+    mixed = confirmed_mixed(result.mixed, used, lambda group: ancestors(group)[1:])
+    # As for the calls, a group is mixed when at least 2 of its SNPs have both alleles: not for one odd site
+    result.mixed = [s for s in mixed if sum(m.lineage == s.lineage for m in mixed) >= MIN_SNPS]
     if result.mixed:
         result.lineage = 'mixed: ' + mixed_summary(result.mixed)
     reported = [g for g in result.called if g != 'La1_La2']
@@ -144,8 +159,11 @@ def call_livestock(counts, file_type, barcode=None, contaminated=False):
     if result.mixed:
         pass
     elif result.conflict:
-        result.lineage = 'mixed: ' + ', '.join(sorted({GROUPS[g][1] for g in reported}))
+        result.lineage = 'mixed: ' + ', '.join(label(g) for g in result.called)
     else:
         result.group = max(reported, key=lambda g: len(ancestors(g)))
         _, result.lineage, result.name = GROUPS[result.group]
+        # A parent whose SNPs are covered but all ancestral contradicts the group reported
+        result.unsupported = [g for g in ancestors(result.group)[1:] if positives.get(g, 0) == 0 and sum(
+            s.lineage == g and s.reads >= minimum for s in used) >= MIN_SNPS]
     return result

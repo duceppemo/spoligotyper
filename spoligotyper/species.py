@@ -200,10 +200,16 @@ def check_species(counts, file_type, depth=None, read_length=None, paired=False,
     return check
 
 
-def name_species(check, lineages=(), mixed=False, spacers=True, livestock=''):
-    """Name the species once the lineage is known (check_species runs before the lineage call)."""
+def name_species(check, lineages=(), mixed=False, spacers=True, livestock='', mixed_within=False):
+    """
+    Name the species once the lineage is known (check_species runs before the lineage call).
+
+    :param mixed_within: a mix of sublineages of one livestock lineage (e.g. two La1 sublineages): the species is known
+    """
     if check.mtbc:
         check.species = 'MTBC, mixed sample?' if mixed else call_species(check, lineages, spacers, livestock)
+        if mixed_within and not mixed:
+            check.species += ', mixed sample?'
 
 
 # Species from the RD profile (RD1, RD4, RD7, RD9, RD12; + present, - deleted), after the classical RD PCR scheme.

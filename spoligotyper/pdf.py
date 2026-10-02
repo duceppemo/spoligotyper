@@ -20,7 +20,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from . import DOI, __version__, livestock, sitdb, species
+from . import DOI, __version__, lineage, livestock, sitdb, species
 from .seal import KMER_SIZE
 from .spoligotype import N_SPACERS, data_file, describe_closest
 
@@ -300,11 +300,17 @@ DELETED_IN = {'RD1': 'BCG, Dassie bacillus', 'RD4': 'M. bovis, BCG (some M. cane
 
 
 def livestock_support(la):
-    """e.g. " · SNPs with the derived allele: La1 4 of 4, La1.8 4 of 4", for the groups with derived alleles."""
+    """
+    e.g. " · SNPs with the derived allele: La1 4 of 4, La1.8 4 of 4", for the groups with derived alleles. Nothing for a
+    mixed sample, whose lineage text gives the fraction of reads with each group's derived allele.
+    """
+    if la.mixed:
+        return ''
     groups = {}
     for s in la.snps:
         groups.setdefault(s.lineage, []).append(s)
-    support = ['{} {} of {}'.format(g.replace('_', '/'), sum(s.fraction >= 0.8 for s in groups[g]), len(groups[g]))
+    support = ['{} {} of {}'.format(livestock.label(g), sum(s.fraction >= lineage.CALL_FRACTION for s in groups[g]),
+                                    len(groups[g]))
                for g in livestock.GROUPS if any(s.fraction >= 0.1 for s in groups.get(g, []))]
     return ' · SNPs with the derived allele: ' + ', '.join(support) if support else ''
 
@@ -409,9 +415,10 @@ def definitions_section(run):
         ('Livestock lineage',
          'Lineage of the livestock-associated MTBC after Zwyer et al. (2021): La1 (M. bovis), La2 (M. caprae), La3 '
          '(M. orygis), and the La1 sublineages La1.1 to La1.8, with their former names (e.g. La1.8.1: clonal complex '
-         'Eu1; BCG belongs to La1.2). From the {} SNPs of the barcode of the paper (4 or 5 per group), counted as '
-         'above; a group is called when at least 2 of its SNPs carry the derived allele, as in the paper. La2 and '
-         'La3 tell M. caprae from M. orygis, which have the same RD profile.'.format(len(livestock.read_barcode()))),
+         'Eu1; BCG belongs to La1.2). From {} of the SNPs marked as markers in the extended data of the paper (4 or 5 '
+         'per group), counted as above; a group is called when at least 2 of its SNPs carry the derived allele, as in '
+         'the KvarQ test suite of the paper. La2 and La3 tell M. caprae from M. orygis, which have the same RD '
+         'profile.'.format(len(livestock.read_barcode()))),
     ]
     rd_method = (
         'Regions of difference (RD) are determined in silico, from the sequencing data, without PCR. Each region is '

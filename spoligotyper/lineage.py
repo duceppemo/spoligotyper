@@ -132,7 +132,8 @@ def call_lineage(counts, file_type, barcode=None, contaminated=False):
         if file_type == 'fastq' and snp.lineage not in conserved and snp.reads >= MIXED_MIN_READS and \
                 MIXED_FRACTION[0] <= snp.fraction <= MIXED_FRACTION[1]:
             result.mixed.append(snp)
-    result.mixed = confirmed_mixed(result.mixed, result.snps, parents)
+    used = [s for s in result.snps if not (contaminated and s.lineage in conserved)]
+    result.mixed = confirmed_mixed(result.mixed, used, parents)
     if result.mixed:  # e.g. "mixed: 4.9 58%, BOV 31%": the lineage allele fraction of each mixed SNP
         result.lineage = 'mixed: ' + ', '.join('{} {:.0f}%'.format(s.lineage, s.fraction * 100)
                                                for s in sorted(result.mixed, key=lambda s: -s.fraction))

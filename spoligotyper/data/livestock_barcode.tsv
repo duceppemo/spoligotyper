@@ -2,7 +2,7 @@
 # and of the La1 sublineages, from Zwyer M et al. A new nomenclature for the livestock-associated Mycobacterium
 # tuberculosis complex based on phylogenomics. Open Research Europe 1:100 (2021).
 # https://doi.org/10.12688/openreseurope.14029.2. Extended data Table 4 (https://doi.org/10.5281/zenodo.5730685),
-# the SNPs marked "KvarQ_informative". Creative Commons Attribution 4.0 license.
+# the 89 SNPs marked "KvarQ_informative" (one left out, below). Creative Commons Attribution 4.0 license.
 # Positions on the H37Rv reference genome NC_000962.3 (and on the MTBC ancestor of the paper, which has the same
 # coordinates). group: the lineage or sublineage defined by the derived allele; La1_La2: shared by La1 and La2;
 # La1.2_BCG: the BCG strains, within La1.2. Left out: La1.1 2339255 (G>A), whose derived allele H37Rv also carries.

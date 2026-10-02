@@ -8,8 +8,10 @@
   supporting each group.
 * *M. caprae* and *M. orygis*, which have the same RD profile, are now told apart (La2 and La3). Warnings when the
   livestock lineage contradicts the regions of difference.
-* Mixed samples: a sublineage SNP with both alleles is a mix only if the SNP of its parent lineage also has both
-  alleles. A lone lineage 2.1 SNP at 23% in an *M. bovis* strain no longer makes it "mixed".
+* Mixed samples: a sublineage SNP with both alleles is a mix only if the SNP of its parent lineage also has the
+  lineage allele (in at least 15% of its reads). A lone lineage 2.1 SNP at 23% in an *M. bovis* strain no longer
+  makes it "mixed". A livestock lineage group is mixed when at least 2 of its SNPs have both alleles, and a mix of
+  sublineages of one lineage keeps its species (e.g. "M. bovis, mixed sample?").
 * Validation (59 of 59 checks): one public run of each livestock lineage and sublineage, from the genomes of the
   paper, with its sublineage and SB number. The validation script downloads complete runs when they are small, and
   whole runs whose reads are sorted by position.

@@ -85,3 +85,46 @@ def test_species_from_livestock_lineage():
     assert species.consistency_warnings(check, [], 'La1') == [
         'RD9 is present but the livestock lineage SNPs indicate La1 (M. bovis)',
         'RD4 is present but the livestock lineage SNPs indicate La1 (M. bovis)']
+
+
+def set_snps(counts, group, derived, ancestral, n=None):
+    """Set the counts of the first n SNPs of a group (all by default)."""
+    rows = [r for r in BARCODE if r['group'] == group][:n]
+    for row in rows:
+        key = '{}|{}|'.format(row['group'], row['position'])
+        counts[key + 'derived'], counts[key + 'ancestral'] = derived, ancestral
+    return counts
+
+
+def test_conflict_text_names_the_groups():
+    call = livestock.call_livestock(counts_for({'La1_La2', 'La3'}, reads=1), 'fasta')
+    assert call.conflict and call.lineage == 'mixed: La1/La2, La3'
+    call = livestock.call_livestock(counts_for({'La1', 'La1.7', 'La1.7.X-unk4', 'La1.7.X-unk5'}, reads=1), 'fasta')
+    assert call.lineage == 'mixed: La1, La1.7, La1.7.X-unk4, La1.7.X-unk5'
+
+
+def test_one_odd_site_is_not_a_mix():
+    counts = set_snps(counts_for({'La1_La2', 'La1', 'La1.8', 'La1.8.1'}), 'La1.3', 6, 14, n=1)
+    call = livestock.call_livestock(counts, 'fastq')
+    assert call.mixed == [] and call.lineage == 'La1.8.1'
+    call = livestock.call_livestock(set_snps(counts, 'La1.3', 6, 14, n=2), 'fastq')
+    assert [s.lineage for s in call.mixed] == ['La1.3', 'La1.3']
+
+
+def test_mix_of_sublineages_keeps_the_species():
+    """La1.7.1 and La1.8.1 at 50% each: M. bovis (La1 in all the reads), mixed sample."""
+    counts = counts_for({'La1_La2', 'La1'})
+    for group in ('La1.7', 'La1.7.1', 'La1.8', 'La1.8.1'):
+        set_snps(counts, group, 10, 10)
+    call = livestock.call_livestock(counts, 'fastq')
+    assert call.mixed_within and call.main == 'La1' and call.lineage.startswith('mixed: La1.7 50%')
+    check = species.check_species(profile_counts('+----'), 'fastq')
+    species.name_species(check, ['BOV', 'BOV_AFRI'], livestock=call.main, mixed_within=call.mixed_within)
+    assert check.species == 'M. bovis, mixed sample?'
+
+
+def test_parent_without_its_snps():
+    counts = counts_for({'La1.8', 'La1.8.1'})  # La1 SNPs covered, all ancestral
+    call = livestock.call_livestock(counts, 'fastq')
+    assert call.lineage == 'La1.8.1' and call.unsupported == ['La1']
+    assert livestock.call_livestock(counts_for({'La1', 'La1.8', 'La1.8.1'}), 'fastq').unsupported == []

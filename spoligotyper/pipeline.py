@@ -352,9 +352,10 @@ def spoligotype(r1, r2=None, sample=None, min_count=None, threads=1, memory='1g'
             result.lineage = lineage.call_lineage(snps.counts, data_type, contaminated=contaminated)
             result.livestock = livestock.call_livestock(snps.counts, data_type, contaminated=contaminated)
             species.name_species(result.species, result.lineage.called,
-                                 mixed=bool(result.lineage.mixed or result.lineage.conflict or
-                                            result.livestock.mixed or result.livestock.conflict),
-                                 spacers=any(result.counts), livestock=result.livestock.main)
+                                 mixed=bool(result.lineage.mixed or result.lineage.conflict or result.livestock.conflict
+                                            or (result.livestock.mixed and not result.livestock.mixed_within)),
+                                 spacers=any(result.counts), livestock=result.livestock.main,
+                                 mixed_within=result.livestock.mixed_within)
     check_result(result)
     result.seconds = time.monotonic() - start
     log.info('%s: %s (octal %s)%s', result.sample, result.sb, result.octal,
@@ -423,10 +424,14 @@ def check_species(result):
     for warning in species.consistency_warnings(check, call.called, la.main):
         result.warn(warning)
     if la.conflict:
-        result.warn('SNPs of several livestock lineages (%s): mixed sample?', ', '.join(sorted(la.called)))
+        result.warn('SNPs of several livestock lineages (%s): mixed sample?',
+                    ', '.join(map(livestock.label, la.called)))
     if la.mixed:
         result.warn('both alleles of %d livestock lineage SNP(s) seen (%s): mixed sample?', len(la.mixed),
                     livestock.mixed_summary(la.mixed))
+    if la.unsupported:
+        result.warn('livestock lineage %s, but the SNPs of %s have the ancestral allele: unusual strain?', la.lineage,
+                    ', '.join(la.unsupported))
     if call.conflict:
         result.warn('SNPs of several lineages (%s): mixed sample?', ', '.join(sorted(call.called)))
     if call.mixed:

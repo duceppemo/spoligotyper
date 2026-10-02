@@ -79,6 +79,10 @@ def main():
     with open(HERE / 'genomes.tsv') as f:
         expected = list(csv.DictReader((line for line in f if not line.startswith('#')), delimiter='\t'))
     for exp in expected:
+        if exp['sample'] not in genomes:
+            failures += 1
+            lines.append('| {} | {} | not typed | | | | | | | **FAIL** |'.format(exp['sample'], exp['organism']))
+            continue
         row = genomes[exp['sample']]
         # The lineage can be more specific than expected (a sublineage), but not different
         lineage_ok = matches(row['Lineage'], exp['expected_lineage']) or (
@@ -101,6 +105,10 @@ def main():
               'Result |', '|---|---|---|---|---|---|---|---|---|']
     reads = read_table(HERE / 'results' / 'reads' / 'spoligotyping.tsv')
     for sample, (species, lineage, octal, warning, la) in READS.items():
+        if sample not in reads:
+            failures += 1
+            lines.append('| {} | not typed | | | | | | | **FAIL** |'.format(sample))
+            continue
         row = reads[sample]
         ok = (row['Species'] == species and row['Lineage'].startswith(lineage) and octal_ok(row, octal)
               and (warning in row['Warnings'] if warning else row['Status'] == 'ok') and matches(row['LaLineage'], la))
@@ -116,6 +124,10 @@ def main():
     la_rows = read_table(HERE / 'results' / 'la_reads' / 'spoligotyping.tsv')
     la_json = read_json(HERE / 'results' / 'la_reads' / 'spoligotyping.json')
     for exp in la_expected:
+        if exp['run'] not in la_rows:
+            failures += 1
+            lines.append('| {} | not typed | | | | | | | **FAIL** |'.format(exp['run']))
+            continue
         row = la_rows[exp['run']]
         species = {'La2': 'M. caprae', 'La3': 'M. orygis'}.get(exp['expected_la'], 'M. bovis')
         ok = row['LaLineage'] == exp['expected_la'] and row['Species'] == species

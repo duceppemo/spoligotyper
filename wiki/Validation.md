@@ -109,6 +109,13 @@ Simulated reads:
 | sim_mixed_H37Rv70_AF2122_30 | Not in Mbovis.org | 777777777767771 | MTBC, mixed sample? | mixed: 4 68%, BOV 35%, BOV_AFRI 26% | mixed: La1/La2 26%, La1 28%, La1.8 31%, La1.8.1 28% | 1.00 | mixed sample, mixed sample, spacers with few reads | OK |
 | sim_contaminated_H37Rv15x_marinum15x | Not in Mbovis.org | 777777477760771 | M. tuberculosis | 4.9 | - | 0.40 | contamination, low MTBC depth | OK |
 
+* At 10x, three present spacers get fewer than 5 reads and are called absent: the pattern is wrong, but flagged
+  ("low depth", "spacers with few reads"). Use `--min-count 2` or `3` for low depth data, see
+  [How it works](How-it-works#minimum-count).
+* The mixed sample is detected from both alleles of the lineage SNPs; its spoligotype is the union of the two
+  strains' patterns.
+* The contaminated sample keeps its spoligotype, species and lineage, with a contamination warning.
+
 ## Livestock lineages
 One run per lineage and sublineage of the livestock-associated complex, from the genomes of
 [Zwyer *et al.* 2021](https://doi.org/10.12688/openreseurope.14029.2) (extended data Table 1), with the sublineage
@@ -137,15 +144,6 @@ SRR1173570 (from a chimpanzee) has only about 50% of MTBC reads, which spoligoty
 | SRR1792479 | USA, cervid | La1.8.X | La1.8.X | La1 4/4, La1.8 4/4, La1.8.X-unk6 5/5 | M. bovis | SB1069 | SB1069 | OK |
 | SRR13888769 | Spain, goat | La2 | La2 | La2 5/5 | M. caprae | SB0415 | SB0415 | OK |
 | ERR2659154 | Australia, human | La3 | La3 | La3 5/5 | M. orygis | SB0422 | Not in Mbovis.org | OK |
-
-**59 of 59 checks passed.
-
-* At 10x, three present spacers get fewer than 5 reads and are called absent: the pattern is wrong, but flagged
-  ("low depth", "spacers with few reads"). Use `--min-count 2` or `3` for low depth data, see
-  [How it works](How-it-works#minimum-count).
-* The mixed sample is detected from both alleles of the lineage SNPs; its spoligotype is the union of the two
-  strains' patterns.
-* The contaminated sample keeps its spoligotype, species and lineage, with a contamination warning.
 
 ## Comparison with SpoTyping
 [SpoTyping](https://github.com/xiaeryu/SpoTyping-v2.0) 2.1 (Xia *et al.* 2016, BLAST-based), an independent in silico
