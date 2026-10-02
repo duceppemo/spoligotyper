@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.0 (2026-10-02)
 * **Lineage 1 sublineages** after [Netikul *et al.* 2022](https://doi.org/10.1038/s41598-022-05524-0): L1.1 to
   L1.3 and their sublineages down to the fourth level (32 in all), from the 1,835 sublineage-specific SNPs of the
   paper, in the same pass as the other SNPs. New `L1Sublineage` column (at the end), MultiQC column, JSON `l1`, and a
