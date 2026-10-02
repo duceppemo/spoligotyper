@@ -69,3 +69,12 @@ def test_symlinked_folders(tmp_path):
 def test_sample_name_without_tabs():
     """Tabs and line breaks in file names would break the table."""
     assert sample_name('my\tsample\n1.fasta') == 'my_sample_1'
+
+
+def test_find_samples_without_tabs(tmp_path):
+    """Folder mode: tabs in file names are replaced too (and a clash with the replaced name is reported)."""
+    (tmp_path / 'my\tsample.fasta').write_text('>a\nACGT\n')
+    assert [s.name for s in find_samples(tmp_path)] == ['my_sample']
+    (tmp_path / 'my_sample.fasta').write_text('>a\nACGT\n')
+    with pytest.raises(SpoligoError, match='same sample name'):
+        find_samples(tmp_path)

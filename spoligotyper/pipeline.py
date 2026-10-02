@@ -432,7 +432,6 @@ def check_result(result):
                     'mixed sample?', ', '.join(str(i) for i in weak), WEAK_SPACER * 100, median)
 
 
-
 def check_species(result):
     """Warnings about the species and lineage: their topic is "species"."""
     start = len(result.warnings)
@@ -526,7 +525,6 @@ def write_tsv(results, path):
         f.write('\t'.join(REPORT_HEADER) + '\n')
         for result in results:
             f.write('\t'.join(result.row()) + '\n')
-
 
 
 def write_json(results, run, path):

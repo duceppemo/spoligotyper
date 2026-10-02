@@ -18,7 +18,8 @@
   under each table) and their warnings; a page too long (long input paths, many warnings) is scaled down to fit.
   Summary and warnings tables: groups of samples with the same spoligotype between blue lines, a header row for the
   warnings, and tables over several pages titled "(page 1 of n)" with their header repeated. Short RD results (the coordinates of partial deletions are in the
-  warnings). Checked on the 84 samples of the validation (176 pages).
+  warnings). Checked on the 84 samples of the validation (185 pages in 4 reports). JSON: new `warning_topics`
+  (for each warning, "spacers" or "species": its page).
 * Validation (84 of 84 checks): one public run of each of the 25 terminal lineage 1 sublineages, from the genomes of
   the paper.
 * **Dassie bacillus**: identified from its own partial deletion of RD1, RD1<sup>das</sup> (Rv3874 to Rv3877), in the

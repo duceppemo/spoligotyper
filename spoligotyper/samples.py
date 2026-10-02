@@ -85,6 +85,7 @@ def find_samples(folder, exclude=()):
                 match = READ_SUFFIX.search(stem)
                 if match and match.start() > 0:
                     mate, stem = int(match.group(1)), stem[:match.start()]
+            stem = re.sub(r'[\t\r\n]', '_', stem)  # Tabs and line breaks would break the table
             found.setdefault(stem, []).append((file_type, mate, os.path.join(root, filename)))
 
     samples, errors = [], []

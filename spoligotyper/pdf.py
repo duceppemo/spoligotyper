@@ -29,10 +29,8 @@ from .spoligotype import N_SPACERS, data_file, describe_closest
 NAVY = colors.HexColor('#1C2541')
 BLUE = colors.HexColor('#2B5FA8')
 PALE_BLUE = colors.HexColor('#9DB3D4')
-MAGENTA = colors.HexColor('#C8215F')
 GREY = colors.HexColor('#56627A')
 LIGHT = colors.HexColor('#EEF2F8')
-ROW_SHADE = colors.HexColor('#F0F3F8')  # Every other row of the summary tables
 AMBER = colors.HexColor('#F6D8A8')
 STATUS_COLOURS = {'ok': colors.HexColor('#2E7D32'), 'warning': colors.HexColor('#B26A00'),
                   'failed': colors.HexColor('#C62828')}
@@ -244,6 +242,8 @@ def summary_section(results, run):
 
     notes = [(r.sample, r.error.splitlines()[0] if r.error else w) for _, r in by_spoligotype(results)
              for w in ([r.error] if r.error else r.warnings)]
+    # A row taller than a page cannot be placed: very long texts are cut (in full on the sample page)
+    notes = [(s, n if len(n) <= 2000 else n[:2000] + '... (in full on the sample page)') for s, n in notes]
     if notes:
         rows = [[text('Sample', SMALL), text('Warning or error', SMALL)]] + [[text(s, WRAP), text(n, SMALL)]
                                                                            for s, n in notes]
@@ -297,16 +297,18 @@ def sample_title(result, number, total, page, pages):
 
 
 def warning_list(result, topic):
-    warnings = [w for w, t in zip(result.warnings, result.warning_topics, strict=True) if t == topic]
+    topics = result.warning_topics + ['spacers'] * (len(result.warnings) - len(result.warning_topics))
+    warnings = [w for w, t in zip(result.warnings, topics, strict=False) if t == topic]
     return [Paragraph('Warnings', H3)] + [text('• ' + w, SMALL) for w in warnings] if warnings else []
 
 
 def sample_section(result, number=1, total=1, db_label='SB number (Mbovis.org)'):
     """
     The pages of a sample: 1. its spoligotype, input and spacer counts, with their warnings; 2. its species and
-    lineage, with their warnings (without species check or for a failed sample, page 1 only).
+    lineage, with their warnings. Page 1 only without species check, for a failed sample, or without MTBC DNA (with
+    the species check on page 1).
     """
-    pages = 2 if result.species and not result.error else 1
+    pages = 2 if result.species and result.species.mtbc and not result.error else 1
     story = sample_title(result, number, total, 1, pages)
     files = [text('{}{}\n{} · modified {}{}'.format(f.path, '\n→ {}'.format(f.target) if f.target else '',
                                                     human_size(f.size), f.modified,
@@ -360,6 +362,8 @@ def sample_section(result, number=1, total=1, db_label='SB number (Mbovis.org)')
               text('Blue: present (count ≥ {}). Orange: called absent but seen in some {}.'.format(
                   result.min_count, unit), SMALL)] + variant_notes + warning_list(result, 'spacers')
     if pages == 1:
+        if result.species:  # No MTBC DNA: the short species check on the same page
+            story += species_block(result) + warning_list(result, 'species')
         return [story]
     return [story, sample_title(result, number, total, 2, 2) + species_block(result) + warning_list(result, 'species')]
 
@@ -371,7 +375,7 @@ DELETED_IN = {'RD1': 'BCG (in part: M. microti, Dassie bacillus)', 'RD4': 'M. bo
 
 
 def species_block(result):
-    check, call = result.species, result.lineage
+    check, call = result.species, result.lineage or lineage.LineageCall()
     rows = [('Species', Paragraph('<b>{}</b>'.format(escape(check.species)), BODY))]
     if call.lineage:
         rows.append(('Lineage', '{}{}{}'.format(call.lineage, ' · {}'.format(call.name) if call.name else '',
@@ -408,7 +412,7 @@ def species_block(result):
                           text(DELETED_IN[region], SMALL), text('{} of {}'.format(region_call.found, region_call.total),
                                                                SMALL),
                           text('{:.2f}'.format(region_call.ratio), SMALL), text(result_text, WRAP)])
-        # One line per region (except the RD1mic of M. microti)
+        # One line per region, except a partial deletion of RD1 that names the species (RD1mic, RD1das)
         t = Table(table, colWidths=[0.45 * inch, 1.2 * inch, 2.75 * inch, 0.65 * inch, 0.6 * inch, WIDTH - 5.65 * inch])
         t.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)]))
         story += [Spacer(1, 10), t,
@@ -446,7 +450,8 @@ def species_block(result):
 def group_table(group_call, scheme, reads=True):
     """
     One row per group of a barcode with a SNP carrying its derived allele, or detected or mixed: its SNPs covered,
-    with the derived allele and with both alleles (as counted for the calls), their reads, and the result; then a note
+    with the derived allele and with both alleles (by the thresholds of the calls, before their other rules: SNPs
+    conserved in NTM, parent checks of mixes), their reads, and the result; then a note
     on what the values mean. None when no group has any.
     """
     if not group_call:

@@ -74,9 +74,9 @@ Made for quality assurance: everything needed to check a result, and to trace ho
    samples come last. The warnings and errors follow in a table with a header row, then a
    box for the reviewer's name, date and signature. A table longer than a page continues on the next ones, each part
    titled e.g. "Summary (page 1 of 3)", with its header row repeated.
-2. **Samples**: two pages per sample (one for a failed sample, or with `--no-species`), in the order of the summary,
-   so their tables are never split (a page too long, with long input paths or many warnings, is scaled down slightly
-   to fit):
+2. **Samples**: two pages per sample (one for a failed sample, a sample without MTBC DNA, or with `--no-species`), in
+   the order of the summary, so their tables are never split (a page too long, with long input paths or many
+   warnings, is scaled down slightly to fit):
    * page 1, the spoligotype: octal, hexadecimal and binary codes, and the pattern, its SB number and SIT, the
      closest known patterns when it has no name; the input files: full path (and the real file when it is a symbolic
      link), size, modification date and MD5 checksum; the number of reads and bases, estimated depth, minimum count,

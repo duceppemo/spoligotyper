@@ -366,6 +366,7 @@ def test_pdf_many_samples(tmp_path):
                    file_type='fasta', data='assembly', min_count=1)
         r.warn('warning %d', i)
         results.append(r)
+    results[0].warn('%s', 'x ' * 4800)  # A warning taller than a page in the summary table: cut, no crash
     run = RunInfo.collect('spoligotyper -i x', spacers=SPACERS_FASTA)
     write_pdf(results, run, tmp_path / 'report.pdf')
     pages, content = pdf_text(tmp_path / 'report.pdf')
