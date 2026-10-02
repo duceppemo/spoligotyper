@@ -15,7 +15,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-from . import __version__, lineage, livestock, seal, sitdb, species
+from . import __version__, l1, lineage, livestock, seal, sitdb, species
 from .lineage import LineageCall
 from .livestock import LivestockCall
 from .samples import sample_name
@@ -56,7 +56,7 @@ LONG_READS = 1000  # Mean read length above which the reads are long reads (nano
 REPORT_HEADER = ['Sample', 'SpacerCount', 'Binary', 'Octal', 'Hexadecimal', 'SB',
                  'FileType', 'Reads', 'Depth', 'MinCount', 'Status', 'Warnings',
                  'Species', 'Lineage', 'LineageName', 'RD9', 'RD4', 'RD1', 'MTBCFraction', 'ClosestSB', 'RD7', 'RD12',
-                 'SIT', 'SITVIT2family', 'ClosestSIT', 'LaLineage']
+                 'SIT', 'SITVIT2family', 'ClosestSIT', 'LaLineage', 'L1Sublineage']
 
 
 def is_default_database(database):
@@ -107,6 +107,7 @@ class Result:
     species: SpeciesCheck | None = None
     lineage: LineageCall | None = None
     livestock: LivestockCall | None = None  # Lineage of the livestock-associated MTBC (Zwyer et al. 2021)
+    l1: LivestockCall | None = None  # Lineage 1 sublineage (Netikul et al. 2022), the same kind of call
 
     @property
     def status(self):
@@ -177,7 +178,8 @@ class Result:
                 state['RD9'], state['RD4'], state['RD1'], fraction, describe_closest(self.closest),
                 state['RD7'], state['RD12'],  # RD7 and RD12 were added in version 0.5: at the end
                 self.sit, self.sit_family, describe_closest(self.closest_sit),
-                self.livestock.lineage if self.livestock else '']  # Added in version 0.8
+                self.livestock.lineage if self.livestock else '',  # Added in version 0.8
+                self.l1.lineage if self.l1 else '']  # Added in version 0.9
 
     def to_dict(self):
         """Everything about the result, for the JSON report."""
@@ -238,7 +240,9 @@ class RunInfo:
                                                 ('Lineage SNP barcode', lineage.BARCODE),
                                                 ('Lineage SNP sequences', lineage.LINEAGE_SNPS_FASTA),
                                                 ('Livestock lineage SNP barcode', livestock.BARCODE),
-                                                ('Livestock lineage SNP sequences', livestock.SNPS_FASTA))}
+                                                ('Livestock lineage SNP sequences', livestock.SNPS_FASTA),
+                                                ('Lineage 1 sublineage SNP barcode', l1.BARCODE),
+                                                ('Lineage 1 sublineage SNP sequences', l1.SNPS_FASTA))}
         if sit_db:
             info.sit_database = {'path': sit_db.path, 'sha256': sit_db.sha256, 'patterns': len(sit_db.patterns),
                                  'sits': len(sit_db.sits), 'source': sit_db.source}
@@ -355,25 +359,28 @@ def spoligotype(r1, r2=None, sample=None, min_count=None, threads=1, memory='1g'
         data_type = 'fastq' if result.is_reads else 'fasta'  # Thresholds for reads or for contigs
         result.species = species.check_species(stats.counts, data_type, result.depth, result.read_length,
                                                 result.paired)
-        result.lineage, result.livestock = lineage.LineageCall(), livestock.LivestockCall()
+        result.lineage, result.livestock, result.l1 = lineage.LineageCall(), LivestockCall(), LivestockCall()
         if result.species.mtbc:  # Some lineage SNPs are conserved in other mycobacteria: no lineage without MTBC
             # Lineage SNPs need exact matches: a second pass with 31-mers and no mismatch, for both barcodes
-            snps = seal.run_seal(inputs, [lineage.LINEAGE_SNPS_FASTA, livestock.SNPS_FASTA], threads=threads,
-                                 memory=memory, k=lineage.KMER_SIZE, hdist=0)
+            snps = seal.run_seal(inputs, [lineage.LINEAGE_SNPS_FASTA, livestock.SNPS_FASTA, l1.SNPS_FASTA],
+                                 threads=threads, memory=memory, k=lineage.KMER_SIZE, hdist=0)
             fraction = result.species.mtbc_fraction
             contaminated = fraction is not None and fraction < lineage.CONTAMINATED_FRACTION
             result.lineage = lineage.call_lineage(snps.counts, data_type, contaminated=contaminated)
             result.livestock = livestock.call_livestock(snps.counts, data_type, contaminated=contaminated)
+            result.l1 = l1.call_l1(snps.counts, data_type, contaminated=contaminated)
+            # A mix of sublineages of one lineage keeps its species ("M. bovis, mixed sample?")
+            groups = (result.livestock, result.l1)
             species.name_species(result.species, result.lineage.called,
-                                 mixed=bool(result.lineage.mixed or result.lineage.conflict or result.livestock.conflict
-                                            or (result.livestock.mixed and not result.livestock.mixed_within)),
+                                 mixed=bool(result.lineage.mixed or result.lineage.conflict or
+                                            any(g.conflict or (g.mixed and not g.mixed_within) for g in groups)),
                                  spacers=any(result.counts), livestock=result.livestock.main,
-                                 mixed_within=result.livestock.mixed_within)
+                                 mixed_within=any(g.mixed_within for g in groups))
     check_result(result)
     result.seconds = time.monotonic() - start
     log.info('%s: %s (octal %s)%s', result.sample, result.sb, result.octal,
              ', {}, lineage {}{}'.format(result.species.species, result.lineage.lineage or '-',
-                                         ' ' + result.livestock.lineage if result.livestock.lineage else '')
+                                         ''.join(' ' + g.lineage for g in (result.livestock, result.l1) if g.lineage))
              if result.species else '')
     return result
 
@@ -433,18 +440,24 @@ def check_species(result):
         elif region_call.state == species.PARTIAL and not (region == 'RD1' and check.species == 'M. microti'):
             result.warn('%s %s (counted as %s in the RD profile).', region, region_call.describe(),
                         'present' if region_call.sign == '+' else 'deleted')
-    la = result.livestock or livestock.LivestockCall()
+    la = result.livestock or LivestockCall()
     for warning in species.consistency_warnings(check, call.called, la.main):
         result.warn(warning)
-    if la.conflict:
-        result.warn('SNPs of several livestock lineages (%s): mixed sample?',
-                    ', '.join(map(livestock.label, la.called)))
-    if la.mixed:
-        result.warn('both alleles of %d livestock lineage SNP(s) seen (%s): mixed sample?', len(la.mixed),
-                    livestock.mixed_summary(la.mixed))
-    if la.unsupported:
-        result.warn('livestock lineage %s, but the SNPs of %s have the ancestral allele: unusual strain?', la.lineage,
-                    ', '.join(la.unsupported))
+    sub = result.l1 or LivestockCall()
+    if sub.called and not sub.conflict and {lin.split('.')[0] for lin in call.called} - {'1'}:
+        result.warn('lineage 1 sublineage SNPs (%s) but the lineage SNPs indicate lineage %s', sub.lineage or
+                    ', '.join(sub.called), '/'.join(sorted({lin.split('.')[0] for lin in call.called})))
+    for kind, scheme, group_call in (('livestock lineage', livestock.SCHEME, la),
+                                     ('lineage 1 sublineage', l1.SCHEME, sub)):
+        if group_call.conflict:
+            result.warn('SNPs of several %ss (%s): mixed sample?', kind,
+                        ', '.join(map(scheme.label, group_call.called)))
+        if group_call.mixed:
+            result.warn('both alleles of %d %s SNP(s) seen (%s): mixed sample?', len(group_call.mixed), kind,
+                        scheme.mixed_summary(group_call.mixed))
+        if group_call.unsupported:
+            result.warn('%s %s, but the SNPs of %s have the ancestral allele: unusual strain?', kind,
+                        group_call.lineage, ', '.join(group_call.unsupported))
     if call.conflict:
         result.warn('SNPs of several lineages (%s): mixed sample?', ', '.join(sorted(call.called)))
     if call.mixed:
@@ -509,11 +522,12 @@ def write_multiqc(results, path):
     such as 000000000003771 stay text instead of being read as numbers.
     """
     import json
-    columns = ('SB', 'SIT', 'Octal', 'Species', 'Lineage', 'La lineage', 'Status')
+    columns = ('SB', 'SIT', 'Octal', 'Species', 'Lineage', 'La lineage', 'L1 sublineage', 'Status')
     data = {}
     for r in results:
         values = (r.sb, r.sit, r.octal, r.species.species if r.species else '',
-                  r.lineage.lineage if r.lineage else '', r.livestock.lineage if r.livestock else '', r.status)
+                  r.lineage.lineage if r.lineage else '', r.livestock.lineage if r.livestock else '',
+                  r.l1.lineage if r.l1 else '', r.status)
         data[r.sample] = {column: value or '-' for column, value in zip(columns, values, strict=True)}
     link = '<a href="https://github.com/duceppemo/spoligotyper">spoligotyper</a> {}'.format(__version__)
     content = {'id': 'spoligotyper', 'section_name': 'Spoligotyping',

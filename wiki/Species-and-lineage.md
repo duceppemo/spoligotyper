@@ -5,6 +5,8 @@ Besides the spoligotype, spoligotyper checks every sample for:
 * **the lineage**, from the SNP barcode of [Coll *et al.* 2014](https://doi.org/10.1038/ncomms5812);
 * **the livestock lineage** (La1 to La3 and the *M. bovis* sublineages), from the SNP barcode of
   [Zwyer *et al.* 2021](https://doi.org/10.12688/openreseurope.14029.2);
+* **the lineage 1 sublineage** (L1.1 to L1.3, down to e.g. L1.1.1.10), from the SNPs of
+  [Netikul *et al.* 2022](https://doi.org/10.1038/s41598-022-05524-0);
 * **how much of the sample is MTBC**, to detect contaminated samples;
 * **mixed samples**, containing several strains.
 
@@ -130,6 +132,29 @@ alleles, as a mixed sample: a group is mixed when at least 2 of its SNPs have bo
 one lineage keeps its species (e.g. "M. bovis, mixed sample?"). spoligotyper also warns when a parent group has its
 SNPs covered but all ancestral. The barcode was designed from 829 genomes (2021): a strain of a newer clade (or of
 unknown8) may only get La1 or La1.8. One SNP of the paper (La1.1, position 2,339,255) is left out: H37Rv has its derived allele.
+
+## Lineage 1 sublineages
+[Netikul *et al.* 2022](https://doi.org/10.1038/s41598-022-05524-0) described the sublineages of lineage 1 (East
+African-Indian) from 1,764 genomes, in the revised nomenclature of lineage 1: three groups, L1.1 to L1.3, and their
+sublineages down to the fourth level (e.g. L1.1.1.10, L1.2.2.3), 32 in all. spoligotyper uses the 1,835
+sublineage-specific SNPs of the paper (Supplementary Table S6, 4 to 224 per sublineage), counted like the other SNPs.
+A sublineage is called when at least 2 of its SNPs, **and at least half of those covered**, carry the derived allele:
+with up to 224 SNPs per sublineage, a distant strain can share 2 by chance (*M. canettii* does). The most specific
+sublineage is reported in the `L1Sublineage` column, with its typical spoligotype families in the paper (e.g. L1.2.2.2:
+EAI2-nonthaburi).
+
+The names differ from those of Coll *et al.* (the `Lineage` column) for lineage 1.2, which the revised nomenclature
+split:
+
+| Coll *et al.* 2014 (`Lineage`) | Netikul *et al.* 2022 (`L1Sublineage`) |
+|---|---|
+| 1.1, 1.1.1, 1.1.2, 1.1.3 | L1.1, L1.1.1, L1.1.2, L1.1.3 (and their sublineages) |
+| 1.2.1 | L1.2.2 |
+| 1.2.2 | L1.3 |
+| - | L1.2.1 (not in the barcode of Coll *et al.*) |
+
+The two columns are kept apart, so that each name has one meaning. spoligotyper warns when lineage 1 sublineage SNPs
+are found in a sample of another lineage, and flags mixes as for the livestock lineages.
 
 ## Contamination: fraction of MTBC reads
 For reads, the depth of the MTBC control regions is compared with the depth expected from the number of bases

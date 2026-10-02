@@ -100,11 +100,11 @@ def test_write_tsv(tmp_path):
     assert lines[0] == ['Sample', 'SpacerCount', 'Binary', 'Octal', 'Hexadecimal', 'SB',
                         'FileType', 'Reads', 'Depth', 'MinCount', 'Status', 'Warnings',
                         'Species', 'Lineage', 'LineageName', 'RD9', 'RD4', 'RD1', 'MTBCFraction', 'ClosestSB',
-                        'RD7', 'RD12', 'SIT', 'SITVIT2family', 'ClosestSIT', 'LaLineage']
+                        'RD7', 'RD12', 'SIT', 'SITVIT2family', 'ClosestSIT', 'LaLineage', 'L1Sublineage']
     assert lines[1][:2] == ['S1', '3:0:' + ':'.join(['1'] * 41)]
     assert lines[1][6:12] == ['fastq', '1000', '20', '1', 'warning', 'a warning']
     assert lines[2][0] == 'S2' and lines[2][10:12] == ['failed', 'Seal failed: boom']
-    assert all(len(line) == 26 for line in lines)
+    assert all(len(line) == 27 for line in lines)
 
 
 def test_result_properties():

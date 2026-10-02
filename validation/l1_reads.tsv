@@ -1,0 +1,30 @@
+# Public reads of M. tuberculosis lineage 1 from Netikul et al. 2022 (Supplementary Table S2,
+# https://doi.org/10.1038/s41598-022-05524-0): one run per terminal sublineage, with the sublineage and the in silico
+# spoligotype (SpoTyping) given in the paper. first_reads: the read pairs downloaded, "all" for the runs whose reads
+# are sorted by position (converted from alignments), whose first reads cover only part of the genome.
+run	expected_l1	paper_octal	country	first_reads	fastq
+SRR7496526	L1.1.1.1	777777774413771	USA	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR749/006/SRR7496526/SRR7496526_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR749/006/SRR7496526/SRR7496526_2.fastq.gz
+ERR718539	L1.1.1.2	000000000000000	Thailand	all	https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR718/ERR718539/ERR718539_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR718/ERR718539/ERR718539_2.fastq.gz
+ERR752108	L1.1.1.3	777777777413771	Thailand	all	https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR752/ERR752108/ERR752108_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR752/ERR752108/ERR752108_2.fastq.gz
+SRR5074090	L1.1.1.4	777760017413771	Vietnam	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR507/000/SRR5074090/SRR5074090_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR507/000/SRR5074090/SRR5074090_2.fastq.gz
+SRR5073801	L1.1.1.5	774177777413471	Vietnam	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR507/001/SRR5073801/SRR5073801_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR507/001/SRR5073801/SRR5073801_2.fastq.gz
+ERR718538	L1.1.1.6	777777777413771	Thailand	all	https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR718/ERR718538/ERR718538_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR718/ERR718538/ERR718538_2.fastq.gz
+SRR5709758	L1.1.1.7	777775777413031	Thailand	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR570/008/SRR5709758/SRR5709758_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR570/008/SRR5709758/SRR5709758_2.fastq.gz
+ERR718512	L1.1.1.8	777777777413671	Thailand	all	https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR718/ERR718512/ERR718512_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR718/ERR718512/ERR718512_2.fastq.gz
+SRR5709913	L1.1.1.9	677623377401711	Thailand	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR570/003/SRR5709913/SRR5709913_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR570/003/SRR5709913/SRR5709913_2.fastq.gz
+SRR5073987	L1.1.1.10	777777777413731	Vietnam	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR507/007/SRR5073987/SRR5073987_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR507/007/SRR5073987/SRR5073987_2.fastq.gz
+ERR550994	L1.1.1.11	677777777413771	Sierra Leone	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR550/ERR550994/ERR550994_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR550/ERR550994/ERR550994_2.fastq.gz
+ERR718556	L1.1.2.1	775777777403171	Thailand	all	https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR718/ERR718556/ERR718556_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR718/ERR718556/ERR718556_2.fastq.gz
+SRR1173116	L1.1.2.2	477777777413071	India	all	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR117/006/SRR1173116/SRR1173116_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR117/006/SRR1173116/SRR1173116_2.fastq.gz
+ERR551865	L1.1.3.1	777777747413371	Republic of the Congo	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR551/ERR551865/ERR551865_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR551/ERR551865/ERR551865_2.fastq.gz
+SRR5709920	L1.1.3.2	717367757413771	Thailand	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR570/000/SRR5709920/SRR5709920_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR570/000/SRR5709920/SRR5709920_2.fastq.gz
+ERR718265	L1.1.3.3	777777753413771	Thailand	all	https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR718/ERR718265/ERR718265_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR718/ERR718265/ERR718265_2.fastq.gz
+ERR2660447	L1.1.3.4	700777747413771	Mozambique	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR266/007/ERR2660447/ERR2660447_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR266/007/ERR2660447/ERR2660447_2.fastq.gz
+ERR1023355	L1.2.1	777777747413771	Peru	all	https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR102/005/ERR1023355/ERR1023355_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR102/005/ERR1023355/ERR1023355_2.fastq.gz
+SRR12882106	L1.2.2.1	677777477413771	Taiwan	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR128/006/SRR12882106/SRR12882106_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR128/006/SRR12882106/SRR12882106_2.fastq.gz
+ERR718472	L1.2.2.2	674000003413771	Thailand	all	https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR718/ERR718472/ERR718472_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR718/ERR718472/ERR718472_2.fastq.gz
+SRR7496477	L1.2.2.3	677777477413771	USA	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR749/007/SRR7496477/SRR7496477_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR749/007/SRR7496477/SRR7496477_2.fastq.gz
+ERR3256187	L1.2.2.4	602003477413771	Philippines	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR325/007/ERR3256187/ERR3256187_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR325/007/ERR3256187/ERR3256187_2.fastq.gz
+SRR5073617	L1.2.2.5	677777477413771	Vietnam	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR507/007/SRR5073617/SRR5073617_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR507/007/SRR5073617/SRR5073617_2.fastq.gz
+SRR8380953	L1.3.1	074000000000731	India	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR838/003/SRR8380953/SRR8380953_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR838/003/SRR8380953/SRR8380953_2.fastq.gz
+SRR5709924	L1.3.2	755777777413531	Thailand	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR570/004/SRR5709924/SRR5709924_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR570/004/SRR5709924/SRR5709924_2.fastq.gz

@@ -32,8 +32,8 @@ flowchart LR
    (1,976 patterns, included with spoligotyper). When it is not there, the closest patterns (up to 3 spacers
    different) are reported.
 5. **Species and lineage.** In the same pass, Seal also counts the reads on MTBC control regions and regions of
-   difference; a second pass counts the reads carrying each allele of the 62 lineage SNPs of Coll *et al.* and of the 88
-   livestock lineage SNPs of Zwyer *et al.* See
+   difference; a second pass counts the reads carrying each allele of the 62 lineage SNPs of Coll *et al.*, of the 88
+   livestock lineage SNPs of Zwyer *et al.* and of the 1,835 lineage 1 sublineage SNPs of Netikul *et al.* See
    [Species and lineage](Species-and-lineage).
 
 ## Minimum count

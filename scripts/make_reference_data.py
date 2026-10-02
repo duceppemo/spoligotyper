@@ -21,8 +21,9 @@ lineage_snps.fasta
     lists the NTM whose genome contains one of these 31-mers ("ntm=M. avium,M. marinum"): reads of such
     contaminants can add support to that allele.
 
-livestock_snps.fasta
-    The same for each SNP of livestock_barcode.tsv (Zwyer et al. 2021): "ancestral" and "derived" alleles.
+livestock_snps.fasta, l1_snps.fasta
+    The same for each SNP of livestock_barcode.tsv (Zwyer et al. 2021) and of l1_barcode.tsv (Netikul et al. 2022):
+    "ancestral" and "derived" alleles.
 
 Requirements: seal.sh (BBTools) and internet access to NCBI. Usage: python scripts/make_reference_data.py [cache_dir]
 """
@@ -182,10 +183,13 @@ def make_lineage_snps(cache):
     print('{} lineage SNPs'.format(len(rows)), file=sys.stderr)
 
 
-def make_livestock_snps(cache):
-    """livestock_snps.fasta: the 61 bp of H37Rv centred on each SNP of livestock_barcode.tsv, with each allele."""
+def make_group_snps(cache, barcode, fasta):
+    """
+    For the SNPs of a group barcode (livestock_barcode.tsv, l1_barcode.tsv): the 61 bp of H37Rv centred on each SNP,
+    with the ancestral and the derived allele.
+    """
     ref = genome(H37RV, cache)
-    with open(DATA / 'livestock_barcode.tsv') as f:
+    with open(DATA / barcode) as f:
         rows = list(csv.DictReader((line for line in f if not line.startswith('#')), delimiter='\t'))
     sequences = {}
     for row in rows:
@@ -199,13 +203,13 @@ def make_livestock_snps(cache):
     for accession in NTM:
         genome(accession, cache)
     hits = seal_hits(sequences, NTM, cache, k=31, hdist=0)
-    with open(DATA / 'livestock_snps.fasta', 'w') as f:
+    with open(DATA / fasta, 'w') as f:
         for name, seq in sequences.items():
             ntm = sorted(NTM_NAMES[a] for a in NTM if hits[name][a])
             f.write('>{}{}\n{}\n'.format(name, ' ntm={}'.format(','.join(ntm)) if ntm else '', seq))
             if ntm:
                 print('{} also in {}'.format(name, ', '.join(ntm)), file=sys.stderr)
-    print('{} livestock lineage SNPs'.format(len(rows)), file=sys.stderr)
+    print('{}: {} SNPs'.format(barcode, len(rows)), file=sys.stderr)
 
 
 if __name__ == '__main__':
@@ -213,4 +217,5 @@ if __name__ == '__main__':
     cache_dir.mkdir(parents=True, exist_ok=True)
     make_markers(cache_dir)
     make_lineage_snps(cache_dir)
-    make_livestock_snps(cache_dir)
+    make_group_snps(cache_dir, 'livestock_barcode.tsv', 'livestock_snps.fasta')
+    make_group_snps(cache_dir, 'l1_barcode.tsv', 'l1_snps.fasta')

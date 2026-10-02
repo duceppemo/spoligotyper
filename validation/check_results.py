@@ -11,25 +11,26 @@ BEIJING = '0' * 34 + '1' * 9
 # Documented SITs: H37Rv SIT451, BCG SIT482, and SIT1 for the Beijing strain
 DOCUMENTED_SIT = {'H37Rv': 'SIT451', 'BCG_Pasteur': 'SIT482', 'CCDC5079': 'SIT1'}
 
-# Simulated and public reads: expected species, lineage (prefix), octal, warning and livestock lineage (* not checked)
+# Simulated and public reads: expected species, lineage (prefix), octal, warning, livestock lineage and lineage 1
+# sublineage (* not checked)
 READS = {
-    'ERR1744454': ('M. bovis', 'BOV', '664073777777600', '', 'La1.8.1'),
+    'ERR1744454': ('M. bovis', 'BOV', '664073777777600', '', 'La1.8.1', ''),
     # H37Rv lab stock: spacer 40 lost by most cells, spacers 41-43 kept by a minority (recombination between direct
     # repeats during passage; SIT1647, T-H37Rv family). The reference genome has spacers 40-43 (SIT451)
-    'SRR12006063': ('M. tuberculosis', '4.9', '777777477760731', 'mixed sample', ''),
-    'ERR027297': ('M. microti', 'BOV_AFRI', '000000000000600', '', ''),  # M. microti Maus IV, 2010 GAII reads
+    'SRR12006063': ('M. tuberculosis', '4.9', '777777477760731', 'mixed sample', '', ''),
+    'ERR027297': ('M. microti', 'BOV_AFRI', '000000000000600', '', '', ''),  # M. microti Maus IV, 2010 GAII reads
     # M. orygis 51145: spacer 3 as the M. orygis variant (2 mismatches), as in the assembly
-    'SRR16643349': ('M. orygis', 'BOV', '700000000000271', '', 'La3'),
-    'ERR2383628': ('M. africanum (lineage 6)', '6', '770777777777671', '', ''),  # M. africanum RB30001
-    'SRR18636082': ('M. canettii', '', '000000000000000', 'as usual for M. canettii', ''),  # M. canettii ET1291
-    'SRR23035463': ('M. canettii', '', '000000000000000', 'long reads', ''),  # ET1291, nanopore
-    'sim_H37Rv_30x': ('M. tuberculosis', '4.9', '777777477760771', '', ''),
-    'sim_H37Rv_30x_PE': ('M. tuberculosis', '4.9', '777777477760771', '', ''),
-    'sim_H37Rv_10x': ('M. tuberculosis', '4.9', '', 'depth', ''),  # Low depth: warning expected
-    'sim_Beijing_30x': ('M. tuberculosis', '2.2.1', 'Beijing', '', ''),
-    'sim_AF2122_97_30x': ('M. bovis', 'BOV', '664073777777600', '', 'La1.8.1'),
-    'sim_mixed_H37Rv70_AF2122_30': ('MTBC, mixed sample?', 'mixed', '', 'mixed sample', '*'),
-    'sim_contaminated_H37Rv15x_marinum15x': ('M. tuberculosis', '4.9', '777777477760771', 'contamination', ''),
+    'SRR16643349': ('M. orygis', 'BOV', '700000000000271', '', 'La3', ''),
+    'ERR2383628': ('M. africanum (lineage 6)', '6', '770777777777671', '', '', ''),  # M. africanum RB30001
+    'SRR18636082': ('M. canettii', '', '000000000000000', 'as usual for M. canettii', '', ''),  # M. canettii ET1291
+    'SRR23035463': ('M. canettii', '', '000000000000000', 'long reads', '', ''),  # ET1291, nanopore
+    'sim_H37Rv_30x': ('M. tuberculosis', '4.9', '777777477760771', '', '', ''),
+    'sim_H37Rv_30x_PE': ('M. tuberculosis', '4.9', '777777477760771', '', '', ''),
+    'sim_H37Rv_10x': ('M. tuberculosis', '4.9', '', 'depth', '', ''),  # Low depth: warning expected
+    'sim_Beijing_30x': ('M. tuberculosis', '2.2.1', 'Beijing', '', '', ''),
+    'sim_AF2122_97_30x': ('M. bovis', 'BOV', '664073777777600', '', 'La1.8.1', ''),
+    'sim_mixed_H37Rv70_AF2122_30': ('MTBC, mixed sample?', 'mixed', '', 'mixed sample', '*', '*'),
+    'sim_contaminated_H37Rv15x_marinum15x': ('M. tuberculosis', '4.9', '777777477760771', 'contamination', '', ''),
 }
 
 
@@ -43,14 +44,14 @@ def read_json(path):
         return {sample['sample']: sample for sample in json.load(f)['samples']}
 
 
-def la_support(sample):
+def la_support(sample, key='livestock'):
     """e.g. "La1 4/4, La1.8 4/4, La1.8.1 4/4": SNPs with the derived allele of each group called."""
-    if not sample or not sample.get('livestock'):
+    if not sample or not sample.get(key):
         return '-'
-    snps = sample['livestock']['snps']
+    snps = sample[key]['snps']
     return ', '.join('{} {}/{}'.format(group, sum(s['lineage'] == group and s['lineage_reads'] >= 0.8 * (
         s['lineage_reads'] + s['other_reads']) for s in snps), sum(s['lineage'] == group for s in snps))
-        for group in sample['livestock']['called'] if group != 'La1_La2') or '-'
+        for group in sample[key]['called'] if group != 'La1_La2') or '-'
 
 
 def matches(value, expected):
@@ -72,8 +73,8 @@ def main():
     failures = 0
     lines = ['# Validation', '', '## Reference genomes', '',
              '| Sample | Organism | SB | SIT (family) | Octal | Species (RD1 RD4 RD7 RD9 RD12) | Lineage '
-             '| Expected lineage | La lineage | Result |',
-             '|---|---|---|---|---|---|---|---|---|---|']
+             '| Expected lineage | La lineage | L1 sublineage | Result |',
+             '|---|---|---|---|---|---|---|---|---|---|---|']
     genomes = read_table(HERE / 'results' / 'genomes' / 'spoligotyping.tsv')
     with open(HERE / 'genomes.tsv') as f:
         expected = list(csv.DictReader((line for line in f if not line.startswith('#')), delimiter='\t'))
@@ -88,9 +89,10 @@ def main():
             exp['expected_lineage'] not in ('', '*') and row['Lineage'].startswith(exp['expected_lineage'] + '.'))
         sit_ok = row['SIT'] == DOCUMENTED_SIT.get(exp['sample'], row['SIT'])
         ok = (matches(row['Species'], exp['expected_species']) and lineage_ok and octal_ok(row, exp['expected_octal'])
-              and sit_ok and row['LaLineage'] == exp['expected_la'])
+              and sit_ok and row['LaLineage'] == exp['expected_la']
+              and matches(row['L1Sublineage'], exp['expected_l1']))
         failures += not ok
-        lines.append('| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |'.format(
+        lines.append('| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |'.format(
             exp['sample'], exp['organism'], row['SB'],
             '{} ({})'.format(row['SIT'], row['SITVIT2family']) if row['SITVIT2family'] else row['SIT'] or '-',
             row['Octal'],
@@ -99,22 +101,24 @@ def main():
                                                        for r in ('RD1', 'RD4', 'RD7', 'RD9', 'RD12'))),
             row['Lineage'] or '-',
             {'': '-', '*': 'not documented'}.get(exp['expected_lineage'], exp['expected_lineage']),
-            row['LaLineage'] or '-', 'OK' if ok else '**FAIL**'))
-    lines += ['', '## Reads', '', '| Sample | SB | Octal | Species | Lineage | La lineage | MTBC fraction | Warnings | '
-              'Result |', '|---|---|---|---|---|---|---|---|---|']
+            row['LaLineage'] or '-', row['L1Sublineage'] or '-', 'OK' if ok else '**FAIL**'))
+    lines += ['', '## Reads', '', '| Sample | SB | Octal | Species | Lineage | La lineage | L1 sublineage '
+              '| MTBC fraction | Warnings | Result |', '|---|---|---|---|---|---|---|---|---|---|']
     reads = read_table(HERE / 'results' / 'reads' / 'spoligotyping.tsv')
-    for sample, (species, lineage, octal, warning, la) in READS.items():
+    for sample, (species, lineage, octal, warning, la, sub) in READS.items():
         if sample not in reads:
             failures += 1
-            lines.append('| {} | not typed | | | | | | | **FAIL** |'.format(sample))
+            lines.append('| {} | not typed | | | | | | | | **FAIL** |'.format(sample))
             continue
         row = reads[sample]
         ok = (row['Species'] == species and row['Lineage'].startswith(lineage) and octal_ok(row, octal)
-              and (warning in row['Warnings'] if warning else row['Status'] == 'ok') and matches(row['LaLineage'], la))
+              and (warning in row['Warnings'] if warning else row['Status'] == 'ok') and matches(row['LaLineage'], la)
+              and matches(row['L1Sublineage'], sub))
         failures += not ok
-        lines.append('| {} | {} | {} | {} | {} | {} | {} | {} | {} |'.format(
+        lines.append('| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |'.format(
             sample, row['SB'], row['Octal'], row['Species'], row['Lineage'] or '-', row['LaLineage'] or '-',
-            row['MTBCFraction'], row['Warnings'].replace('|', '/') or '-', 'OK' if ok else '**FAIL**'))
+            row['L1Sublineage'] or '-', row['MTBCFraction'], row['Warnings'].replace('|', '/') or '-',
+            'OK' if ok else '**FAIL**'))
     # Livestock lineages: the sublineage and SB number given by Zwyer et al. 2021 for each run
     lines += ['', '## Livestock lineages', '', '| Run | Origin | Expected | La lineage | SNPs | Species | SB (paper) | '
               'SB | Result |', '|---|---|---|---|---|---|---|---|---|']
@@ -135,7 +139,26 @@ def main():
             exp['run'], '{}, {}'.format(exp['country'], exp['host']), exp['expected_la'], row['LaLineage'] or '-',
             la_support(la_json.get(exp['run'])), row['Species'], exp['expected_sb'], row['SB'],
             'OK' if ok else '**FAIL**'))
-    total = len(expected) + len(READS) + len(la_expected)
+    # Lineage 1 sublineages: the sublineage given by Netikul et al. 2022 for each run, and their spoligotype
+    lines += ['', '## Lineage 1 sublineages', '', '| Run | Origin | Expected | L1 sublineage | SNPs | Species '
+              '| Lineage | Octal (paper) | Octal | Result |', '|---|---|---|---|---|---|---|---|---|---|']
+    with open(HERE / 'l1_reads.tsv') as f:
+        l1_expected = list(csv.DictReader((line for line in f if not line.startswith('#')), delimiter='\t'))
+    l1_rows = read_table(HERE / 'results' / 'l1_reads' / 'spoligotyping.tsv')
+    l1_json = read_json(HERE / 'results' / 'l1_reads' / 'spoligotyping.json')
+    for exp in l1_expected:
+        if exp['run'] not in l1_rows:
+            failures += 1
+            lines.append('| {} | not typed | | | | | | | | **FAIL** |'.format(exp['run']))
+            continue
+        row = l1_rows[exp['run']]
+        ok = row['L1Sublineage'] == exp['expected_l1'] and row['Species'] == 'M. tuberculosis'
+        failures += not ok
+        lines.append('| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |'.format(
+            exp['run'], exp['country'], exp['expected_l1'], row['L1Sublineage'] or '-',
+            la_support(l1_json.get(exp['run']), 'l1'), row['Species'], row['Lineage'] or '-', exp['paper_octal'],
+            row['Octal'], 'OK' if ok else '**FAIL**'))
+    total = len(expected) + len(READS) + len(la_expected) + len(l1_expected)
     lines += ['', '**{} of {} checks passed.**'.format(total - failures, total)]
     print('\n'.join(lines))
     return 1 if failures else 0

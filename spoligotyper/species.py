@@ -248,6 +248,12 @@ def call_species(check, lineages=(), spacers=True, livestock=''):
         return 'M. canettii'
     species = RD_PROFILES.get(profile)
     if species is None:
+        # A region partially deleted in one strain (e.g. 9 kb of RD7 in a lineage 1 strain) does not make a species:
+        # count it as present when that gives a known profile (the partial deletion is reported as a warning)
+        present = ''.join('+' if check.state(r) == PARTIAL else sign for r, sign in zip(REGIONS, profile, strict=True))
+        if present in RD_PROFILES:
+            profile, species = present, RD_PROFILES[present]
+    if species is None:
         return 'MTBC (unusual RD profile: {})'.format(', '.join(
             '{}{}'.format(r, s) for r, s in zip(REGIONS, profile, strict=True)))
     if profile == '+++++':

@@ -10,15 +10,13 @@ as the SNPs of the lineage barcode of Coll et al.). As in the KvarQ test suite p
 allele; likewise, a group is mixed when at least 2 of its SNPs have both alleles.
 """
 
-import csv
-from dataclasses import dataclass, field
-
-from .lineage import CALL_FRACTION, MIN_READS, MIXED_FRACTION, MIXED_MIN_READS, SnpCall, confirmed_mixed
+from . import snp_groups
+from .snp_groups import GroupCall as LivestockCall  # noqa: F401 (the call of this barcode)
 from .spoligotype import data_file
 
 BARCODE = data_file('livestock_barcode.tsv')
 SNPS_FASTA = data_file('livestock_snps.fasta')
-MIN_SNPS = 2  # SNPs with the derived allele to call a group (Zwyer et al. 2021)
+MIN_SNPS = snp_groups.MIN_SNPS
 
 # Group: (parent, lineage reported, former name). La1_La2 (shared by M. bovis and M. caprae) is not reported: it
 # confirms La1 or La2. The groups of La1.7.X and La1.8.X are not monophyletic: they keep the names of their groups.
@@ -44,126 +42,21 @@ GROUPS = {
     'La1.8.X-unk6': ('La1.8', 'La1.8.X', 'unknown6'),
 }
 
-
-@dataclass
-class LivestockCall:
-    lineage: str = ''  # Most specific group, e.g. "La1.8.1", or "" when none; "mixed: ..." for a mix
-    name: str = ''  # Former name of the group, e.g. "Eu1"
-    group: str = ''  # Group of the barcode, e.g. "La1.7.X-unk4" for lineage "La1.7.X"
-    called: list = field(default_factory=list)  # Groups with at least 2 SNPs with the derived allele
-    snps: list = field(default_factory=list)  # SnpCall for every SNP covered by reads (lineage = group)
-    mixed: list = field(default_factory=list)  # SnpCall with both alleles
-    conflict: bool = False  # Groups that cannot occur together, e.g. La1 and La3, or La1.7 and La1.8
-    unsupported: list = field(default_factory=list)  # Parents of the group reported whose covered SNPs are ancestral
-
-    @property
-    def main(self):
-        """La1, La2 or La3, or '' when none or conflicting."""
-        roots = {root(g) for g in self.called} - {''}
-        return roots.pop() if len(roots) == 1 and not self.conflict else ''
-
-    @property
-    def mixed_within(self):
-        """A mix of sublineages of one lineage (e.g. La1.7.1 and La1.8.1): the lineage and species are known."""
-        return bool(self.mixed and self.main and all(GROUPS[s.lineage][0] for s in self.mixed))
+SCHEME = snp_groups.Scheme(BARCODE, SNPS_FASTA, tuple(GROUPS.items()), shared=(('La1_La2', ('La1', 'La2')),),
+                           labels=(('La1_La2', 'La1/La2'), ('La1.2_BCG', 'La1.2 BCG')))
+label, ancestors, root, on_one_path, mixed_summary = (SCHEME.label, SCHEME.ancestors, SCHEME.root,
+                                                      SCHEME.on_one_path, SCHEME.mixed_summary)
 
 
 def read_barcode(path=BARCODE):
-    with open(path) as f:
-        return list(csv.DictReader((line for line in f if not line.startswith('#')), delimiter='\t'))
+    return snp_groups.read_barcode(str(path))
 
 
 def ntm_conserved_snps(path=SNPS_FASTA):
     """SNPs ("<group>|<position>") with an allele whose sequence is also found in NTM genomes."""
-    with open(path) as f:
-        return {line[1:].split(' ')[0].rsplit('|', 1)[0] for line in f if line.startswith('>') and ' ntm=' in line}
+    return snp_groups.ntm_conserved_snps(str(path))
 
 
-def ancestors(group):
-    """The group and its parents, e.g. La1.8.1, La1.8, La1."""
-    chain = []
-    while group:
-        chain.append(group)
-        group = GROUPS[group][0]
-    return chain
-
-
-def root(group):
-    return '' if group == 'La1_La2' else ancestors(group)[-1]
-
-
-def on_one_path(groups):
-    """True when the groups can occur in one strain: each is an ancestor of the most specific one (La1_La2 goes with
-    La1 or La2)."""
-    groups = set(groups)
-    if 'La1_La2' in groups:
-        groups.discard('La1_La2')
-        if groups and {root(g) for g in groups} - {'La1', 'La2'}:
-            return False
-    if not groups:
-        return True
-    deepest = max(groups, key=lambda g: len(ancestors(g)))
-    return groups <= set(ancestors(deepest))
-
-
-def label(group):
-    """Name of a barcode group in reports: La1.7.X-unk4, La1/La2 (shared by La1 and La2), La1.2 BCG."""
-    return {'La1_La2': 'La1/La2', 'La1.2_BCG': 'La1.2 BCG'}.get(group, group)
-
-
-def mixed_summary(mixed):
-    """e.g. "La1 35%, La1.8 36%": the derived allele fraction of each group, over its SNPs with both alleles."""
-    pooled = {}
-    for s in mixed:
-        pooled.setdefault(label(s.lineage), []).append(s)
-    return ', '.join('{} {:.0f}%'.format(name, 100 * sum(s.lineage_reads for s in snps) / sum(s.reads for s in snps))
-                     for name, snps in pooled.items())
-
-
-def call_livestock(counts, file_type, barcode=None, contaminated=False):
-    """
-    :param counts: {"<group>|<position>|ancestral" or "...|derived": reads} from Seal
-    :param contaminated: the sample contains non-MTBC DNA: SNPs conserved in NTM are not used
-    :return: LivestockCall
-    """
-    barcode = barcode or read_barcode()
-    conserved_snps = ntm_conserved_snps()
-    minimum = 1 if file_type == 'fasta' else MIN_READS
-    result = LivestockCall()
-    positives = {}
-    for row in barcode:
-        key = '{}|{}'.format(row['group'], row['position'])
-        snp = SnpCall(row['group'], int(row['position']), row['gene'], counts.get(key + '|derived', 0),
-                      counts.get(key + '|ancestral', 0))
-        if snp.reads == 0:
-            continue
-        result.snps.append(snp)
-        if key in conserved_snps and contaminated:
-            continue
-        if snp.reads >= minimum and snp.fraction >= CALL_FRACTION:
-            positives[snp.lineage] = positives.get(snp.lineage, 0) + 1
-        if file_type == 'fastq' and key not in conserved_snps and snp.reads >= MIXED_MIN_READS and \
-                MIXED_FRACTION[0] <= snp.fraction <= MIXED_FRACTION[1]:
-            result.mixed.append(snp)
-    result.called = [group for group in GROUPS if positives.get(group, 0) >= MIN_SNPS]
-    used = [s for s in result.snps if not (contaminated and '{}|{}'.format(s.lineage, s.position) in conserved_snps)]
-    mixed = confirmed_mixed(result.mixed, used, lambda group: ancestors(group)[1:])
-    # As for the calls, a group is mixed when at least 2 of its SNPs have both alleles: not for one odd site
-    result.mixed = [s for s in mixed if sum(m.lineage == s.lineage for m in mixed) >= MIN_SNPS]
-    if result.mixed:
-        result.lineage = 'mixed: ' + mixed_summary(result.mixed)
-    reported = [g for g in result.called if g != 'La1_La2']
-    if not reported:
-        return result
-    result.conflict = not on_one_path(result.called)
-    if result.mixed:
-        pass
-    elif result.conflict:
-        result.lineage = 'mixed: ' + ', '.join(label(g) for g in result.called)
-    else:
-        result.group = max(reported, key=lambda g: len(ancestors(g)))
-        _, result.lineage, result.name = GROUPS[result.group]
-        # A parent whose SNPs are covered but all ancestral contradicts the group reported
-        result.unsupported = [g for g in ancestors(result.group)[1:] if positives.get(g, 0) == 0 and sum(
-            s.lineage == g and s.reads >= minimum for s in used) >= MIN_SNPS]
-    return result
+def call_livestock(counts, file_type, contaminated=False):
+    """La1 to La3 and the La1 sublineages: see snp_groups.Scheme.call."""
+    return SCHEME.call(counts, file_type, contaminated)

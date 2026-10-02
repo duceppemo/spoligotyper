@@ -28,9 +28,10 @@ A tab-separated table with a header and one line per sample. The same table is p
 | `SITVIT2family` | `T-H37Rv` | SITVIT2 spoligotype family of the pattern (also for orphan patterns), e.g. Beijing, LAM3, EAI5, BOV_1 |
 | `ClosestSIT` | `SIT451 (spacer 12 differs)` | For a pattern without SIT: the closest SITs, up to 3 spacers away. Not given for a pattern with an SB number (from Mbovis.org, or a `--db` with SB numbers): see [FAQ](FAQ#why-does-my-m-bovis-sample-have-no-sit) |
 | `LaLineage` | `La1.8.1` | Lineage of the livestock-associated complex ([Zwyer *et al.* 2021](https://doi.org/10.12688/openreseurope.14029.2)): `La1` (*M. bovis*), `La2` (*M. caprae*), `La3` (*M. orygis*), or an La1 sublineage, e.g. `La1.8.1` (formerly Eu1); `mixed: ...` for a mix; empty for other lineages. See [Species and lineage](Species-and-lineage#livestock-lineages-la1-to-la3) |
+| `L1Sublineage` | `L1.2.2.2` | Lineage 1 sublineage ([Netikul *et al.* 2022](https://doi.org/10.1038/s41598-022-05524-0)), in the revised lineage 1 nomenclature, which differs from that of the `Lineage` column for lineage 1.2 (Coll 1.2.1 = L1.2.2, Coll 1.2.2 = L1.3); `mixed: ...` for a mix; empty for other lineages. See [Species and lineage](Species-and-lineage#lineage-1-sublineages) |
 
 Columns are only ever added at the end: the first 6 are those of version 0.2, the next 6 were added in 0.3, the next
-8 in 0.4, the next 5 in 0.5 and the last one in 0.8. The species columns are empty with `--no-species`. Version 0.6 renamed `Spoligotype`
+8 in 0.4, the next 5 in 0.5, `LaLineage` in 0.8 and `L1Sublineage` in 0.9. The species columns are empty with `--no-species`. Version 0.6 renamed `Spoligotype`
 to `SB` and `Closest` to `ClosestSB` (same positions): they hold names in the Mbovis.org database, not the
 spoligotype itself.
 
@@ -54,13 +55,13 @@ hexadecimal number.
 
 ## JSON: `spoligotyping.json` or `<sample>_spoligotyping.json`
 Everything in the table and the PDF report, for pipelines: for each sample the input files, codes, spacer counts,
-closest patterns, spacers counted from a known variant (`spacer_variants`), species check (with the depth of each region), lineage and livestock lineage (`livestock`, with
+closest patterns, spacers counted from a known variant (`spacer_variants`), species check (with the depth of each region), lineage, livestock lineage and lineage 1 sublineage (`livestock`, `l1`, with
 the groups called and the reads supporting each SNP allele) and warnings, and the run information (software versions, parameters, checksums of the reference data).
 
 ## MultiQC: `spoligotyping_mqc.json` or `<sample>_spoligotyping_mqc.json`
 A [MultiQC custom content](https://docs.seqera.io/multiqc/custom_content) file (JSON, so that octal codes keep their
 leading zeros) with the SB number, SIT, octal code,
-species, lineage, livestock lineage and status of each sample. Run `multiqc` on the output folder to get a "Spoligotyping" section.
+species, lineage, livestock lineage, lineage 1 sublineage and status of each sample. Run `multiqc` on the output folder to get a "Spoligotyping" section.
 
 ## PDF report: `spoligotyping_report.pdf` or `<sample>_spoligotyping.pdf`
 Made for quality assurance: everything needed to check a result, and to trace how it was produced.

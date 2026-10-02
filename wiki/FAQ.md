@@ -20,10 +20,11 @@ warning, and the `Species` column says "MTBC not detected" when there is no MTBC
 spacer either: it is reported with RD9 intact and no lineage.
 
 ### How reliable are the species and the lineage?
-They were checked on 31 reference genomes, 21 public read sets (Illumina and nanopore) and 7 simulated read sets of
+They were checked on 31 reference genomes, 46 public read sets (Illumina and nanopore) and 7 simulated read sets of
 known species and lineage: see [Validation](Validation). The lineage comes from the SNP barcode of Coll *et al.*
 (2014), the reference method for SNP-based lineage typing, and the livestock lineage from the barcode of Zwyer *et al.*
-(2021), checked on one strain of each of its lineages and sublineages.
+(2021) and the lineage 1 sublineages from the SNPs of Netikul *et al.* (2022), each checked on one strain of each of
+their lineages and sublineages.
 For drug resistance and a finer lineage, use a dedicated tool such as [TB-Profiler](https://github.com/jodyphelan/TBProfiler).
 
 ### What does "only about X% of the reads appear to be from the M. tuberculosis complex" mean?

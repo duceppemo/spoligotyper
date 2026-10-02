@@ -38,12 +38,13 @@ the species and the lineage, and flags contaminated or mixed samples.
   SIT and SITVIT2 family with the optional [SIT database](https://github.com/duceppemo/spoligotyper/wiki/Installation#sit-database).
 * **Species and lineage**: *M. tuberculosis*, *M. africanum*, *M. bovis*, BCG, *M. caprae*, *M. orygis*, ... from
   regions of difference, the lineage (1 to 7 and sublineages) from a 62-SNP barcode, and the lineage of the
-  livestock-associated complex (La1 to La3, and the *M. bovis* sublineages La1.1 to La1.8, e.g. La1.8.1 = Eu1).
+  livestock-associated complex (La1 to La3, and the *M. bovis* sublineages La1.1 to La1.8, e.g. La1.8.1 = Eu1), and
+  the 32 sublineages of lineage 1 (e.g. L1.2.2.2).
 * **Quality checks**: fraction of MTBC reads (contamination), mixed samples, consistency between the spoligotype,
   species and lineage, and the closest known patterns for new spoligotypes.
 * **PDF report for QA**: results, reads supporting each spacer, input files with checksums, software versions,
   parameters, operator, date, and a review box. Plus a table, JSON and a MultiQC section for pipelines.
-* **Validated** on 31 reference genomes, 21 public and 7 simulated read sets of known species, lineage and spoligotype
+* **Validated** on 31 reference genomes, 46 public and 7 simulated read sets of known species, lineage and spoligotype
   ([Validation](https://github.com/duceppemo/spoligotyper/wiki/Validation)).
 * **Workflow ready**: nf-core module and Galaxy tool in [`integrations/`](integrations/).
 * **Transparent**: borderline calls, low depth and failed samples are flagged, never hidden.
@@ -98,6 +99,11 @@ and, for the livestock lineages (La1 to La3):
 
 > Zwyer M *et al.* A new nomenclature for the livestock-associated *Mycobacterium tuberculosis* complex based on
 > phylogenomics. *Open Research Europe* 1, 100 (2021). https://doi.org/10.12688/openreseurope.14029.2
+
+and, for the lineage 1 sublineages:
+
+> Netikul T *et al.* Whole-genome single nucleotide variant phylogenetic analysis of *Mycobacterium tuberculosis*
+> Lineage 1 in endemic regions of Asia and Africa. *Sci Rep* 12, 1565 (2022). https://doi.org/10.1038/s41598-022-05524-0
 
 ## Contributing
 Bug reports, questions and pull requests are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).

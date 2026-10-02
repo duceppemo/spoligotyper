@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Validate spoligotyper on public reference genomes (genomes.tsv), public reads, and simulated reads:
 # pure, mixed (two strains) and contaminated (MTBC + M. marinum). Writes results/validation.md.
-# Requires spoligotyper, BBTools (seal.sh, randomreads.sh), curl and unzip. About 3.5 GB of downloads, kept in data/.
+# Requires spoligotyper, BBTools (seal.sh, randomreads.sh), curl and unzip. About 8 GB of downloads, kept in data/.
 # Usage: bash run_validation.sh [threads]
 set -euo pipefail
 
@@ -82,19 +82,24 @@ for mate in 1 2; do
 done
 reads_head $ena/SRR230/063/SRR23035463/SRR23035463_1.fastq.gz data/reads/SRR23035463.fastq.gz 30000
 
-# Livestock lineages: one run per lineage and sublineage of Zwyer et al. 2021 (first 600,000 read pairs, or all)
-mkdir -p data/la_reads
-grep -v '^#' livestock_reads.tsv | tail -n +2 | while IFS=$'\t' read -r run _ _ _ _ first fastq; do
-    mate=1
-    for url in ${fastq//;/ }; do
-        if [ "$first" = all ]; then
-            download "$url" "data/la_reads/${run}_$mate.fastq.gz"
-        else
-            reads_head "$url" "data/la_reads/${run}_$mate.fastq.gz" "$first"
-        fi
-        mate=$(( mate + 1 ))
+runs() {  # list folder: download the runs of a list (first_reads and fastq: the last two columns)
+    mkdir -p "$2"
+    grep -v '^#' "$1" | tail -n +2 | while IFS=$'\t' read -r -a fields; do
+        local run=${fields[0]} first=${fields[-2]} fastq=${fields[-1]} mate=1
+        for url in ${fastq//;/ }; do
+            if [ "$first" = all ]; then
+                download "$url" "$2/${run}_$mate.fastq.gz"
+            else
+                reads_head "$url" "$2/${run}_$mate.fastq.gz" "$first"
+            fi
+            mate=$(( mate + 1 ))
+        done
     done
-done
+}
+# Livestock lineages: one run per lineage and sublineage of Zwyer et al. 2021 (first 600,000 read pairs, or all)
+runs livestock_reads.tsv data/la_reads
+# Lineage 1 sublineages: one run per terminal sublineage of Netikul et al. 2022
+runs l1_reads.tsv data/l1_reads
 
 # Simulated 150 bp reads with sequencing errors, fixed seeds. G = genome size / read length, per 1x of depth.
 simulate() {  # genome depth seed output [paired]
@@ -131,5 +136,6 @@ simulate M_marinum 15 9 data/sim/M_marinum_15x.fastq.gz
 spoligotyper -i data/genomes -o results/genomes -t "$threads" -j 4 --operator validation --sit-db data/sit/sit_database.tsv || true
 spoligotyper -i data/reads -o results/reads -t "$threads" -j 2 --operator validation --sit-db data/sit/sit_database.tsv || true
 spoligotyper -i data/la_reads -o results/la_reads -t "$threads" -j 2 --operator validation --sit-db data/sit/sit_database.tsv || true
+spoligotyper -i data/l1_reads -o results/l1_reads -t "$threads" -j 2 --operator validation --sit-db data/sit/sit_database.tsv || true
 python3 check_results.py > results/validation.md
 cat results/validation.md

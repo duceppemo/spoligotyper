@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+* **Lineage 1 sublineages** after [Netikul *et al.* 2022](https://doi.org/10.1038/s41598-022-05524-0): L1.1 to
+  L1.3 and their sublineages down to the fourth level (32 in all), from the 1,835 sublineage-specific SNPs of the
+  paper, in the same pass as the other SNPs. New `L1Sublineage` column (at the end), MultiQC column, JSON `l1`, and a
+  line in the PDF report with the typical spoligotype families. The names are those of the revised lineage 1
+  nomenclature, kept apart from those of Coll *et al.* in the `Lineage` column (Coll 1.2.1 = L1.2.2, Coll 1.2.2 =
+  L1.3). Warning when lineage 1 sublineage SNPs are found in a sample of another lineage.
+* A region partially deleted in one strain no longer makes the RD profile "unusual": when the profile is unknown, a
+  partially deleted region counts as present if that gives a known profile (e.g. a lineage 1 strain lacking 9 kb of
+  RD7 stays *M. tuberculosis*; the partial deletion is still reported).
+* PDF report: more compact tables, and short RD results (the coordinates of partial deletions are in the warnings),
+  so that each sample, with its warnings, fits on one page: checked on the 84 samples of the validation.
+* Validation (84 of 84 checks): one public run of each of the 25 terminal lineage 1 sublineages, from the genomes of
+  the paper.
+* The livestock lineages and the lineage 1 sublineages share one implementation (`snp_groups`).
+
 ## 0.8.0 (2026-10-02)
 * **Livestock lineages** after [Zwyer *et al.* 2021](https://doi.org/10.12688/openreseurope.14029.2): La1
   (*M. bovis*), La2 (*M. caprae*), La3 (*M. orygis*) and the La1 sublineages La1.1 to La1.8 (e.g. La1.8.1, formerly

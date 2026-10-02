@@ -20,7 +20,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from . import DOI, __version__, lineage, livestock, sitdb, species
+from . import DOI, __version__, l1, lineage, livestock, sitdb, snp_groups, species
 from .seal import KMER_SIZE
 from .spoligotype import N_SPACERS, data_file, describe_closest
 
@@ -55,8 +55,8 @@ SUBTITLE = ParagraphStyle('subtitle', parent=BODY, textColor=GREY, fontSize=9)
 
 GRID = [('GRID', (0, 0), (-1, -1), 0.4, PALE_BLUE),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 2.5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2.5),
+        ('TOPPADDING', (0, 0), (-1, -1), 1.5),  # Compact rows: each sample fits on one page
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 1.5),
         ('LEFTPADDING', (0, 0), (-1, -1), 4),
         ('RIGHTPADDING', (0, 0), (-1, -1), 4)]
 
@@ -303,7 +303,7 @@ DELETED_IN = {'RD1': 'BCG, Dassie bacillus', 'RD4': 'M. bovis, BCG (some M. cane
               'RD12': 'M. bovis, BCG, M. caprae, M. orygis (some M. canettii)'}
 
 
-def livestock_support(la):
+def group_support(la, scheme):
     """
     e.g. " · SNPs with the derived allele: La1 4 of 4, La1.8 4 of 4", for the groups with derived alleles. Nothing for a
     mixed sample, whose lineage text gives the fraction of reads with each group's derived allele.
@@ -313,9 +313,9 @@ def livestock_support(la):
     groups = {}
     for s in la.snps:
         groups.setdefault(s.lineage, []).append(s)
-    support = ['{} {} of {}'.format(livestock.label(g), sum(s.fraction >= lineage.CALL_FRACTION for s in groups[g]),
+    support = ['{} {} of {}'.format(scheme.label(g), sum(s.fraction >= lineage.CALL_FRACTION for s in groups[g]),
                                     len(groups[g]))
-               for g in livestock.GROUPS if any(s.fraction >= 0.1 for s in groups.get(g, []))]
+               for g in scheme.group_info if any(s.fraction >= 0.1 for s in groups.get(g, []))]
     return ' · SNPs with the derived allele: ' + ', '.join(support) if support else ''
 
 
@@ -331,7 +331,11 @@ def species_block(result):
     la = result.livestock
     if la and la.lineage:
         rows.append(('Livestock lineage', '{}{} (Zwyer et al. 2021){}'.format(
-            la.lineage, ' · {}'.format(la.name) if la.name else '', livestock_support(la))))
+            la.lineage, ' · {}'.format(la.name) if la.name else '', group_support(la, livestock.SCHEME))))
+    sub = result.l1
+    if sub and sub.lineage:
+        rows.append(('L1 sublineage', '{}{} (Netikul et al. 2022){}'.format(
+            sub.lineage, ' · {}'.format(sub.name) if sub.name else '', group_support(sub, l1.SCHEME))))
     unit = result.unit
     fraction = check.mtbc_fraction
     rows.append(('MTBC DNA', 'median {:g} {} per control region, {:.0f}% of the control regions found{}'.format(
@@ -343,14 +347,18 @@ def species_block(result):
                                           'Depth vs control', 'Result')]]
         for region, region_call in check.regions.items():
             start, end = species.REGION_EXTENTS[region]
-            result_text = '{} {}'.format(region_call.sign.replace('-', '\u2212'), region_call.describe())
+            # Short: the coordinates of a partial deletion are in the warnings, except for RD1mic (no warning)
+            state = {species.PARTIAL: 'partially deleted', species.REDUCED: 'present at reduced depth: mixed sample?'
+                     }.get(region_call.state, region_call.state)
             if region == 'RD1' and check.species == 'M. microti':
-                result_text += ' (RD1mic of M. microti)'
+                state = region_call.describe() + ' (RD1mic of M. microti)'
+            result_text = '{} {}'.format(region_call.sign.replace('-', '\u2212'), state)
             table.append([text(region, SMALL), text('{:,}-{:,}'.format(start, end), SMALL),
                           text(DELETED_IN[region], SMALL), text('{} of {}'.format(region_call.found, region_call.total),
                                                                SMALL),
                           text('{:.2f}'.format(region_call.ratio), SMALL), text(result_text, WRAP)])
-        t = Table(table, colWidths=[0.5 * inch, 1.15 * inch, 1.75 * inch, 0.75 * inch, 0.7 * inch, WIDTH - 4.85 * inch])
+        # One line per region (except the RD1mic of M. microti)
+        t = Table(table, colWidths=[0.45 * inch, 1.2 * inch, 2.75 * inch, 0.65 * inch, 0.6 * inch, WIDTH - 5.65 * inch])
         t.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)]))
         story += [Spacer(1, 4), t,
                   text('+ / \u2212: DNA of the region present in / absent from the sample, from 100 bp segments inside '
@@ -423,6 +431,12 @@ def definitions_section(run):
          'per group), counted as above; a group is called when at least 2 of its SNPs carry the derived allele, as in '
          'the KvarQ test suite of the paper. La2 and La3 tell M. caprae from M. orygis, which have the same RD '
          'profile.'.format(len(livestock.read_barcode()))),
+        ('L1 sublineage',
+         'Sublineage of lineage 1 (East-African-Indian) after Netikul et al. (2022), in the revised nomenclature of '
+         'lineage 1 (L1.1 to L1.3, down to e.g. L1.1.1.10), from the {:,} sublineage-specific SNPs of the paper (4 to '
+         '224 per sublineage), counted as above; a sublineage is called when at least 2 of its SNPs, and at least '
+         'half of those covered, carry the derived allele. Its names differ from those of Coll et al. for lineage 1.2: '
+         'Coll 1.2.1 is L1.2.2 and Coll 1.2.2 is L1.3.'.format(len(snp_groups.read_barcode(str(l1.BARCODE))))),
     ]
     rd_method = (
         'Regions of difference (RD) are determined in silico, from the sequencing data, without PCR. Each region is '
@@ -505,6 +519,9 @@ def run_section(run):
              '2020:baaa108. doi:10.1093/database/baaa108 (SIT database, from SITVIT2)', SMALL),
         text('Coll F et al. A robust SNP barcode for typing Mycobacterium tuberculosis complex strains. Nat Commun '
              '5:4812 (2014). doi:10.1038/ncomms5812', SMALL),
+        text('Netikul T et al. Whole-genome single nucleotide variant phylogenetic analysis of Mycobacterium '
+             'tuberculosis Lineage 1 in endemic regions of Asia and Africa. Sci Rep 12:1565 (2022). '
+             'doi:10.1038/s41598-022-05524-0', SMALL),
         text('Zwyer M et al. A new nomenclature for the livestock-associated Mycobacterium tuberculosis complex based '
              'on phylogenomics. Open Res Eur 1:100 (2021). doi:10.12688/openreseurope.14029.2', SMALL),
         text('Bushnell B. BBTools. https://sourceforge.net/projects/bbmap/', SMALL),

@@ -9,12 +9,14 @@
   reference genomes; large runs are limited to their first reads;
 * public reads of one strain of each lineage and sublineage of the livestock-associated complex (La1.1 to La1.8, La2,
   La3), from the genomes of Zwyer *et al.* 2021 (`livestock_reads.tsv`), with the sublineage and SB number of the paper;
+* public reads of one strain of each terminal sublineage of lineage 1 (25), from the genomes of Netikul *et al.* 2022
+  (`l1_reads.tsv`), with the sublineage of the paper;
 * simulated reads: pure samples at 10x and 30x, single-end and paired-end, a mix of two strains (70% H37Rv, 30%
   *M. bovis*), and a culture contaminated with *M. marinum* (equal depth, so 40% of the reads are MTBC: its genome is larger).
 
 ```
 bash run_validation.sh 8   # 8 threads
 ```
-It downloads about 3.5 GB into `data/`, writes the reports in `results/`, and prints `results/validation.md`. The
+It downloads about 8 GB into `data/`, writes the reports in `results/`, and prints `results/validation.md`. The
 results of the latest release are on the [Validation](https://github.com/duceppemo/spoligotyper/wiki/Validation)
 page of the wiki.

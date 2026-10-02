@@ -263,7 +263,7 @@ def test_multiqc(tmp_path):
     content = json.loads((tmp_path / 'x_mqc.json').read_text())
     assert content['id'] == 'spoligotyper' and content['plot_type'] == 'table'
     assert content['data'] == {'S1': {'SB': 'Not in Mbovis.org', 'SIT': '-', 'Octal': '000000000003771',
-                                      'Species': '-', 'Lineage': '-', 'La lineage': '-', 'Status': 'ok'}}
+                                      'Species': '-', 'Lineage': '-', 'La lineage': '-', 'L1 sublineage': '-', 'Status': 'ok'}}
 
 
 def test_mixed_needs_parent_lineage():
@@ -276,3 +276,14 @@ def test_mixed_needs_parent_lineage():
     assert lineage.confirmed_mixed([snp_21], [snp_21, lineage_2], lineage.parents) == [snp_21]
     few_reads = lineage.SnpCall('2', 497491, 'y', 0, 5)  # Too few reads to check the parent
     assert lineage.confirmed_mixed([snp_21], [snp_21, few_reads], lineage.parents) == [snp_21]
+
+
+def test_strain_specific_partial_deletion():
+    """Lineage 1.2.2.1 strain SRR12882106: 15 of the 20 RD7 segments lost (9 kb), the other regions present."""
+    counts = marker_counts(70, rd1=70, rd4=70, rd7=70, rd9=70, rd12=70)
+    rd7 = sorted((n for n in species.segments() if n.startswith('RD7_')), key=lambda n: species.segments()[n])
+    counts.update({n: 0 for n in rd7[2:17]})
+    check = species.check_species(counts, 'fastq')
+    assert check.regions['RD7'].state == species.PARTIAL and check.regions['RD7'].sign == '-'
+    species.name_species(check, ['1', '1.2', '1.2.1'])
+    assert check.species == 'M. tuberculosis'
