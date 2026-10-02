@@ -15,8 +15,9 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-from . import __version__, lineage, seal, sitdb, species
+from . import __version__, lineage, livestock, seal, sitdb, species
 from .lineage import LineageCall
+from .livestock import LivestockCall
 from .samples import sample_name
 from .species import SpeciesCheck
 from .spoligotype import (
@@ -52,7 +53,7 @@ LONG_READS = 1000  # Mean read length above which the reads are long reads (nano
 REPORT_HEADER = ['Sample', 'SpacerCount', 'Binary', 'Octal', 'Hexadecimal', 'SB',
                  'FileType', 'Reads', 'Depth', 'MinCount', 'Status', 'Warnings',
                  'Species', 'Lineage', 'LineageName', 'RD9', 'RD4', 'RD1', 'MTBCFraction', 'ClosestSB', 'RD7', 'RD12',
-                 'SIT', 'SITVIT2family', 'ClosestSIT']
+                 'SIT', 'SITVIT2family', 'ClosestSIT', 'LaLineage']
 
 
 def is_default_database(database):
@@ -100,6 +101,7 @@ class Result:
     closest_sit: list = field(default_factory=list)  # Closest SITs when the pattern has none: [(SIT, [spacers])]
     species: SpeciesCheck | None = None
     lineage: LineageCall | None = None
+    livestock: LivestockCall | None = None  # Lineage of the livestock-associated MTBC (Zwyer et al. 2021)
 
     @property
     def status(self):
@@ -169,7 +171,8 @@ class Result:
                 check.species if check else '', call.lineage if call else '', call.name if call else '',
                 state['RD9'], state['RD4'], state['RD1'], fraction, describe_closest(self.closest),
                 state['RD7'], state['RD12'],  # RD7 and RD12 were added in version 0.5: at the end
-                self.sit, self.sit_family, describe_closest(self.closest_sit)]
+                self.sit, self.sit_family, describe_closest(self.closest_sit),
+                self.livestock.lineage if self.livestock else '']  # Added in version 0.8
 
     def to_dict(self):
         """Everything about the result, for the JSON report."""
@@ -225,7 +228,9 @@ class RunInfo:
         info.species_data = {name: {'path': str(Path(str(path)).resolve()), 'md5': file_md5(path)}
                              for name, path in (('Species markers', species.MARKERS_FASTA),
                                                 ('Lineage SNP barcode', lineage.BARCODE),
-                                                ('Lineage SNP sequences', lineage.LINEAGE_SNPS_FASTA))}
+                                                ('Lineage SNP sequences', lineage.LINEAGE_SNPS_FASTA),
+                                                ('Livestock lineage SNP barcode', livestock.BARCODE),
+                                                ('Livestock lineage SNP sequences', livestock.SNPS_FASTA))}
         if sit_db:
             info.sit_database = {'path': sit_db.path, 'sha256': sit_db.sha256, 'patterns': len(sit_db.patterns),
                                  'sits': len(sit_db.sits), 'source': sit_db.source}
@@ -337,21 +342,24 @@ def spoligotype(r1, r2=None, sample=None, min_count=None, threads=1, memory='1g'
         data_type = 'fastq' if result.is_reads else 'fasta'  # Thresholds for reads or for contigs
         result.species = species.check_species(stats.counts, data_type, result.depth, result.read_length,
                                                 result.paired)
-        result.lineage = lineage.LineageCall()
+        result.lineage, result.livestock = lineage.LineageCall(), livestock.LivestockCall()
         if result.species.mtbc:  # Some lineage SNPs are conserved in other mycobacteria: no lineage without MTBC
-            # Lineage SNPs need exact matches: a second pass with 31-mers and no mismatch
-            snps = seal.run_seal(inputs, lineage.LINEAGE_SNPS_FASTA, threads=threads, memory=memory,
-                                 k=lineage.KMER_SIZE, hdist=0)
+            # Lineage SNPs need exact matches: a second pass with 31-mers and no mismatch, for both barcodes
+            snps = seal.run_seal(inputs, [lineage.LINEAGE_SNPS_FASTA, livestock.SNPS_FASTA], threads=threads,
+                                 memory=memory, k=lineage.KMER_SIZE, hdist=0)
             fraction = result.species.mtbc_fraction
-            result.lineage = lineage.call_lineage(snps.counts, data_type, contaminated=fraction is not None and
-                                                  fraction < lineage.CONTAMINATED_FRACTION)
+            contaminated = fraction is not None and fraction < lineage.CONTAMINATED_FRACTION
+            result.lineage = lineage.call_lineage(snps.counts, data_type, contaminated=contaminated)
+            result.livestock = livestock.call_livestock(snps.counts, data_type, contaminated=contaminated)
             species.name_species(result.species, result.lineage.called,
-                                 mixed=bool(result.lineage.mixed or result.lineage.conflict),
-                                 spacers=any(result.counts))
+                                 mixed=bool(result.lineage.mixed or result.lineage.conflict or
+                                            result.livestock.mixed or result.livestock.conflict),
+                                 spacers=any(result.counts), livestock=result.livestock.main)
     check_result(result)
     result.seconds = time.monotonic() - start
     log.info('%s: %s (octal %s)%s', result.sample, result.sb, result.octal,
-             ', {}, lineage {}'.format(result.species.species, result.lineage.lineage or '-')
+             ', {}, lineage {}{}'.format(result.species.species, result.lineage.lineage or '-',
+                                         ' ' + result.livestock.lineage if result.livestock.lineage else '')
              if result.species else '')
     return result
 
@@ -411,8 +419,14 @@ def check_species(result):
         elif region_call.state == species.PARTIAL and not (region == 'RD1' and check.species == 'M. microti'):
             result.warn('%s %s (counted as %s in the RD profile).', region, region_call.describe(),
                         'present' if region_call.sign == '+' else 'deleted')
-    for warning in species.consistency_warnings(check, call.called):
+    la = result.livestock or livestock.LivestockCall()
+    for warning in species.consistency_warnings(check, call.called, la.main):
         result.warn(warning)
+    if la.conflict:
+        result.warn('SNPs of several livestock lineages (%s): mixed sample?', ', '.join(sorted(la.called)))
+    if la.mixed:
+        result.warn('both alleles of %d livestock lineage SNP(s) seen (%s): mixed sample?', len(la.mixed),
+                    livestock.mixed_summary(la.mixed))
     if call.conflict:
         result.warn('SNPs of several lineages (%s): mixed sample?', ', '.join(sorted(call.called)))
     if call.mixed:
@@ -477,11 +491,11 @@ def write_multiqc(results, path):
     such as 000000000003771 stay text instead of being read as numbers.
     """
     import json
-    columns = ('SB', 'SIT', 'Octal', 'Species', 'Lineage', 'Status')
+    columns = ('SB', 'SIT', 'Octal', 'Species', 'Lineage', 'La lineage', 'Status')
     data = {}
     for r in results:
         values = (r.sb, r.sit, r.octal, r.species.species if r.species else '',
-                  r.lineage.lineage if r.lineage else '', r.status)
+                  r.lineage.lineage if r.lineage else '', r.livestock.lineage if r.livestock else '', r.status)
         data[r.sample] = {column: value or '-' for column, value in zip(columns, values, strict=True)}
     link = '<a href="https://github.com/duceppemo/spoligotyper">spoligotyper</a> {}'.format(__version__)
     content = {'id': 'spoligotyper', 'section_name': 'Spoligotyping',

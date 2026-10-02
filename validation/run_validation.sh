@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Validate spoligotyper on public reference genomes (genomes.tsv), public reads, and simulated reads:
 # pure, mixed (two strains) and contaminated (MTBC + M. marinum). Writes results/validation.md.
-# Requires spoligotyper, BBTools (seal.sh, randomreads.sh), curl and unzip. About 1.4 GB of downloads, kept in data/.
+# Requires spoligotyper, BBTools (seal.sh, randomreads.sh), curl and unzip. About 3.5 GB of downloads, kept in data/.
 # Usage: bash run_validation.sh [threads]
 set -euo pipefail
 
@@ -40,9 +40,15 @@ done
 reads_head() {  # url output reads: the first reads of a fastq.gz file, to limit the download
     [ -s "$2" ] && return
     echo "Downloading the first $3 reads of $1" >&2
-    { curl -sSfL "$1" 2>/dev/null || true; } | { gzip -dc 2>/dev/null || true; } | head -n $(( $3 * 4 )) | gzip > "$2.part"
-    # curl and gzip stop with an error when head has enough reads: check the number of reads instead
-    if [ "$(gzip -dc "$2.part" | wc -l)" -ne $(( $3 * 4 )) ]; then
+    { curl -sSfL "$1" 2>/dev/null && echo 0 > "$2.status" || echo $? > "$2.status"; } |
+        { gzip -dc 2>/dev/null || true; } | head -n $(( $3 * 4 )) | gzip > "$2.part"
+    # curl stops with an error (23) when head has enough reads: then check the number of reads. A complete download
+    # (status 0) is a run with fewer reads
+    local lines status
+    lines=$(gzip -dc "$2.part" | wc -l)
+    status=$(cat "$2.status")
+    rm -f "$2.status"
+    if [ "$lines" -ne $(( $3 * 4 )) ] && { [ "$status" -ne 0 ] || [ "$lines" -eq 0 ] || [ $(( lines % 4 )) -ne 0 ]; }; then
         rm -f "$2.part"
         echo "Download failed or incomplete: $1" >&2
         return 1
@@ -75,6 +81,20 @@ for mate in 1 2; do
     download $ena/SRR186/082/SRR18636082/SRR18636082_$mate.fastq.gz data/reads/SRR18636082_$mate.fastq.gz
 done
 reads_head $ena/SRR230/063/SRR23035463/SRR23035463_1.fastq.gz data/reads/SRR23035463.fastq.gz 30000
+
+# Livestock lineages: one run per lineage and sublineage of Zwyer et al. 2021 (first 600,000 read pairs, or all)
+mkdir -p data/la_reads
+grep -v '^#' livestock_reads.tsv | tail -n +2 | while IFS=$'\t' read -r run _ _ _ _ first fastq; do
+    mate=1
+    for url in ${fastq//;/ }; do
+        if [ "$first" = all ]; then
+            download "$url" "data/la_reads/${run}_$mate.fastq.gz"
+        else
+            reads_head "$url" "data/la_reads/${run}_$mate.fastq.gz" "$first"
+        fi
+        mate=$(( mate + 1 ))
+    done
+done
 
 # Simulated 150 bp reads with sequencing errors, fixed seeds. G = genome size / read length, per 1x of depth.
 simulate() {  # genome depth seed output [paired]
@@ -110,5 +130,6 @@ simulate M_marinum 15 9 data/sim/M_marinum_15x.fastq.gz
 
 spoligotyper -i data/genomes -o results/genomes -t "$threads" -j 4 --operator validation --sit-db data/sit/sit_database.tsv || true
 spoligotyper -i data/reads -o results/reads -t "$threads" -j 2 --operator validation --sit-db data/sit/sit_database.tsv || true
+spoligotyper -i data/la_reads -o results/la_reads -t "$threads" -j 2 --operator validation --sit-db data/sit/sit_database.tsv || true
 python3 check_results.py > results/validation.md
 cat results/validation.md

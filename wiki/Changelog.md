@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+* **Livestock lineages** after [Zwyer *et al.* 2021](https://doi.org/10.12688/openreseurope.14029.2): La1
+  (*M. bovis*), La2 (*M. caprae*), La3 (*M. orygis*) and the La1 sublineages La1.1 to La1.8 (e.g. La1.8.1, formerly
+  Eu1; BCG in La1.2), from the 88-SNP barcode of the paper, in the same pass as the lineage SNPs. New `LaLineage`
+  column (at the end of the table), MultiQC column, JSON `livestock`, and a line in the PDF report with the SNPs
+  supporting each group.
+* *M. caprae* and *M. orygis*, which have the same RD profile, are now told apart (La2 and La3). Warnings when the
+  livestock lineage contradicts the regions of difference.
+* Mixed samples: a sublineage SNP with both alleles is a mix only if the SNP of its parent lineage also has both
+  alleles. A lone lineage 2.1 SNP at 23% in an *M. bovis* strain no longer makes it "mixed".
+* Validation (59 of 59 checks): one public run of each livestock lineage and sublineage, from the genomes of the
+  paper, with its sublineage and SB number. The validation script downloads complete runs when they are small, and
+  whole runs whose reads are sorted by position.
+
 ## 0.7.0 (2026-09-28)
 * Patterns with an SB number get no closest SITs: SITVIT2 lacks many patterns of the animal-adapted lineages (only 603
   of the 1,976 Mbovis.org patterns have a SIT), for which the SB number is the reference name. The PDF report says so.

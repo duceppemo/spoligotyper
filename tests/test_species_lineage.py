@@ -263,4 +263,16 @@ def test_multiqc(tmp_path):
     content = json.loads((tmp_path / 'x_mqc.json').read_text())
     assert content['id'] == 'spoligotyper' and content['plot_type'] == 'table'
     assert content['data'] == {'S1': {'SB': 'Not in Mbovis.org', 'SIT': '-', 'Octal': '000000000003771',
-                                      'Species': '-', 'Lineage': '-', 'Status': 'ok'}}
+                                      'Species': '-', 'Lineage': '-', 'La lineage': '-', 'Status': 'ok'}}
+
+
+def test_mixed_needs_parent_lineage():
+    """M. bovis La1.5 reads (ERR2212116): the 2.1 SNP with both alleles, but not the lineage 2 SNP: not a mix."""
+    assert lineage.parents('4.1.1.2') == ['4.1.1', '4.1', '4'] and lineage.parents('BOV') == []
+    snp_21 = lineage.SnpCall('2.1', 1881090, 'x', 14, 48)
+    lineage_2 = lineage.SnpCall('2', 497491, 'y', 0, 60)
+    assert lineage.confirmed_mixed([snp_21], [snp_21, lineage_2], lineage.parents) == []
+    lineage_2 = lineage.SnpCall('2', 497491, 'y', 15, 45)  # A real lineage 2 strain: both SNPs
+    assert lineage.confirmed_mixed([snp_21], [snp_21, lineage_2], lineage.parents) == [snp_21]
+    few_reads = lineage.SnpCall('2', 497491, 'y', 0, 5)  # Too few reads to check the parent
+    assert lineage.confirmed_mixed([snp_21], [snp_21, few_reads], lineage.parents) == [snp_21]

@@ -21,6 +21,9 @@ lineage_snps.fasta
     lists the NTM whose genome contains one of these 31-mers ("ntm=M. avium,M. marinum"): reads of such
     contaminants can add support to that allele.
 
+livestock_snps.fasta
+    The same for each SNP of livestock_barcode.tsv (Zwyer et al. 2021): "ancestral" and "derived" alleles.
+
 Requirements: seal.sh (BBTools) and internet access to NCBI. Usage: python scripts/make_reference_data.py [cache_dir]
 """
 
@@ -179,8 +182,35 @@ def make_lineage_snps(cache):
     print('{} lineage SNPs'.format(len(rows)), file=sys.stderr)
 
 
+def make_livestock_snps(cache):
+    """livestock_snps.fasta: the 61 bp of H37Rv centred on each SNP of livestock_barcode.tsv, with each allele."""
+    ref = genome(H37RV, cache)
+    with open(DATA / 'livestock_barcode.tsv') as f:
+        rows = list(csv.DictReader((line for line in f if not line.startswith('#')), delimiter='\t'))
+    sequences = {}
+    for row in rows:
+        p = int(row['position']) - 1
+        window = ref[p - 30:p + 31]
+        if window[30] != row['ancestral']:
+            raise SystemExit('H37Rv allele is not the ancestral allele for {} {}'.format(row['group'], row['position']))
+        for allele in ('ancestral', 'derived'):
+            name = '{}|{}|{}'.format(row['group'], row['position'], allele)
+            sequences[name] = window[:30] + row[allele] + window[31:]
+    for accession in NTM:
+        genome(accession, cache)
+    hits = seal_hits(sequences, NTM, cache, k=31, hdist=0)
+    with open(DATA / 'livestock_snps.fasta', 'w') as f:
+        for name, seq in sequences.items():
+            ntm = sorted(NTM_NAMES[a] for a in NTM if hits[name][a])
+            f.write('>{}{}\n{}\n'.format(name, ' ntm={}'.format(','.join(ntm)) if ntm else '', seq))
+            if ntm:
+                print('{} also in {}'.format(name, ', '.join(ntm)), file=sys.stderr)
+    print('{} livestock lineage SNPs'.format(len(rows)), file=sys.stderr)
+
+
 if __name__ == '__main__':
     cache_dir = Path(sys.argv[1] if len(sys.argv) > 1 else 'genomes')
     cache_dir.mkdir(parents=True, exist_ok=True)
     make_markers(cache_dir)
     make_lineage_snps(cache_dir)
+    make_livestock_snps(cache_dir)

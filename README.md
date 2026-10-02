@@ -36,13 +36,14 @@ the species and the lineage, and flags contaminated or mixed samples.
 * **Batch mode**: point it at a folder; fastq and fasta files are detected and R1/R2 files paired automatically.
 * **All the standard codes**: binary, octal, hexadecimal, SB number (*M. bovis* and other animal-adapted lineages), and
   SIT and SITVIT2 family with the optional [SIT database](https://github.com/duceppemo/spoligotyper/wiki/Installation#sit-database).
-* **Species and lineage**: *M. tuberculosis*, *M. africanum*, *M. bovis*, BCG, ... from regions of difference, and
-  the lineage (1 to 7 and sublineages) from a 62-SNP barcode.
+* **Species and lineage**: *M. tuberculosis*, *M. africanum*, *M. bovis*, BCG, *M. caprae*, *M. orygis*, ... from
+  regions of difference, the lineage (1 to 7 and sublineages) from a 62-SNP barcode, and the lineage of the
+  livestock-associated complex (La1 to La3, and the *M. bovis* sublineages La1.1 to La1.8, e.g. La1.8.1 = Eu1).
 * **Quality checks**: fraction of MTBC reads (contamination), mixed samples, consistency between the spoligotype,
   species and lineage, and the closest known patterns for new spoligotypes.
 * **PDF report for QA**: results, reads supporting each spacer, input files with checksums, software versions,
   parameters, operator, date, and a review box. Plus a table, JSON and a MultiQC section for pipelines.
-* **Validated** on 31 reference genomes, 7 public and 7 simulated read sets of known species, lineage and spoligotype
+* **Validated** on 31 reference genomes, 21 public and 7 simulated read sets of known species, lineage and spoligotype
   ([Validation](https://github.com/duceppemo/spoligotyper/wiki/Validation)).
 * **Workflow ready**: nf-core module and Galaxy tool in [`integrations/`](integrations/).
 * **Transparent**: borderline calls, low depth and failed samples are flagged, never hidden.
@@ -92,6 +93,11 @@ For the lineage, please also cite the SNP barcode:
 
 > Coll F *et al.* A robust SNP barcode for typing *Mycobacterium tuberculosis* complex strains. *Nat Commun* 5, 4812
 > (2014). https://doi.org/10.1038/ncomms5812
+
+and, for the livestock lineages (La1 to La3):
+
+> Zwyer M *et al.* A new nomenclature for the livestock-associated *Mycobacterium tuberculosis* complex based on
+> phylogenomics. *Open Research Europe* 1, 100 (2021). https://doi.org/10.12688/openreseurope.14029.2
 
 ## Contributing
 Bug reports, questions and pull requests are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).

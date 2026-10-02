@@ -7,12 +7,14 @@
 * public reads (ENA) of *M. bovis* AF2122/97, *M. tuberculosis* H37Rv, *M. microti*, *M. orygis*, *M. africanum*
   (lineage 6) and *M. canettii* (Illumina, and nanopore for *M. canettii*), most of them from the strains of the
   reference genomes; large runs are limited to their first reads;
+* public reads of one strain of each lineage and sublineage of the livestock-associated complex (La1.1 to La1.8, La2,
+  La3), from the genomes of Zwyer *et al.* 2021 (`livestock_reads.tsv`), with the sublineage and SB number of the paper;
 * simulated reads: pure samples at 10x and 30x, single-end and paired-end, a mix of two strains (70% H37Rv, 30%
   *M. bovis*), and a culture contaminated with *M. marinum* (equal depth, so 40% of the reads are MTBC: its genome is larger).
 
 ```
 bash run_validation.sh 8   # 8 threads
 ```
-It downloads about 1.4 GB into `data/`, writes the reports in `results/`, and prints `results/validation.md`. The
+It downloads about 3.5 GB into `data/`, writes the reports in `results/`, and prints `results/validation.md`. The
 results of the latest release are on the [Validation](https://github.com/duceppemo/spoligotyper/wiki/Validation)
 page of the wiki.

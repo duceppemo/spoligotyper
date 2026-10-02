@@ -20,7 +20,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from . import DOI, __version__, sitdb, species
+from . import DOI, __version__, livestock, sitdb, species
 from .seal import KMER_SIZE
 from .spoligotype import N_SPACERS, data_file, describe_closest
 
@@ -299,6 +299,16 @@ DELETED_IN = {'RD1': 'BCG, Dassie bacillus', 'RD4': 'M. bovis, BCG (some M. cane
               'RD12': 'M. bovis, BCG, M. caprae, M. orygis (some M. canettii)'}
 
 
+def livestock_support(la):
+    """e.g. " · SNPs with the derived allele: La1 4 of 4, La1.8 4 of 4", for the groups with derived alleles."""
+    groups = {}
+    for s in la.snps:
+        groups.setdefault(s.lineage, []).append(s)
+    support = ['{} {} of {}'.format(g.replace('_', '/'), sum(s.fraction >= 0.8 for s in groups[g]), len(groups[g]))
+               for g in livestock.GROUPS if any(s.fraction >= 0.1 for s in groups.get(g, []))]
+    return ' · SNPs with the derived allele: ' + ', '.join(support) if support else ''
+
+
 def species_block(result):
     check, call = result.species, result.lineage
     rows = [('Species', Paragraph('<b>{}</b>'.format(escape(check.species)), BODY))]
@@ -308,6 +318,10 @@ def species_block(result):
                                               if call.spoligotypes else '')))
     elif check.mtbc:
         rows.append(('Lineage', 'no lineage SNP found (lineages 1 to 7 and animal lineages are not detected)'))
+    la = result.livestock
+    if la and la.lineage:
+        rows.append(('Livestock lineage', '{}{} (Zwyer et al. 2021){}'.format(
+            la.lineage, ' · {}'.format(la.name) if la.name else '', livestock_support(la))))
     unit = result.unit
     fraction = check.mtbc_fraction
     rows.append(('MTBC DNA', 'median {:g} {} per control region, {:.0f}% of the control regions found{}'.format(
@@ -392,6 +406,12 @@ def definitions_section(run):
          'From the 62 SNPs of the barcode of Coll et al. (2014): the reads carrying each allele are counted with '
          'exact 31-mers; a lineage is called when at least 80% of the reads (at least 3, or 1 contig) carry its '
          'allele.'),
+        ('Livestock lineage',
+         'Lineage of the livestock-associated MTBC after Zwyer et al. (2021): La1 (M. bovis), La2 (M. caprae), La3 '
+         '(M. orygis), and the La1 sublineages La1.1 to La1.8, with their former names (e.g. La1.8.1: clonal complex '
+         'Eu1; BCG belongs to La1.2). From the {} SNPs of the barcode of the paper (4 or 5 per group), counted as '
+         'above; a group is called when at least 2 of its SNPs carry the derived allele, as in the paper. La2 and '
+         'La3 tell M. caprae from M. orygis, which have the same RD profile.'.format(len(livestock.read_barcode()))),
     ]
     rd_method = (
         'Regions of difference (RD) are determined in silico, from the sequencing data, without PCR. Each region is '
@@ -469,6 +489,8 @@ def run_section(run):
              '2020:baaa108. doi:10.1093/database/baaa108 (SIT database, from SITVIT2)', SMALL),
         text('Coll F et al. A robust SNP barcode for typing Mycobacterium tuberculosis complex strains. Nat Commun '
              '5:4812 (2014). doi:10.1038/ncomms5812', SMALL),
+        text('Zwyer M et al. A new nomenclature for the livestock-associated Mycobacterium tuberculosis complex based '
+             'on phylogenomics. Open Res Eur 1:100 (2021). doi:10.12688/openreseurope.14029.2', SMALL),
         text('Bushnell B. BBTools. https://sourceforge.net/projects/bbmap/', SMALL),
         text('Duceppe M-O. spoligotyper {}: in silico spoligotyping of Mycobacterium tuberculosis complex genomes. '
              'Zenodo. https://doi.org/{}'.format(__version__, DOI), SMALL),

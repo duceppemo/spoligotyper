@@ -1,0 +1,19 @@
+# Public reads of the livestock-associated MTBC from Zwyer et al. 2021 (extended data Table 1,
+# https://doi.org/10.5281/zenodo.5730685): one run per lineage and sublineage, with the sublineage and the SB number
+# (in silico spoligotype) given in the paper. first_reads: the read pairs downloaded, "all" for the runs whose
+# reads are sorted by position (converted from alignments), whose first reads cover only part of the genome.
+run	expected_la	expected_sb	country	host	first_reads	fastq
+SRR8065072	La1.1	SB1405	Uganda	cattle	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR806/002/SRR8065072/SRR8065072_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR806/002/SRR8065072/SRR8065072_2.fastq.gz
+SRR7851302	La1.2	SB0134	France	cattle	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR785/002/SRR7851302/SRR7851302_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR785/002/SRR7851302/SRR7851302_2.fastq.gz
+SRR1173570	La1.3	SB0133	Uganda	chimpanzee	all	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR117/000/SRR1173570/SRR1173570_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR117/000/SRR1173570/SRR1173570_2.fastq.gz
+ERR229952	La1.4	SB1919	Russia	-	all	https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR229/ERR229952/ERR229952_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR229/ERR229952/ERR229952_2.fastq.gz
+ERR2212116	La1.5	SB0989	Germany	red deer	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR221/006/ERR2212116/ERR2212116_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR221/006/ERR2212116/ERR2212116_2.fastq.gz
+ERR1203064	La1.6	SB0944	Ghana	human	all	https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR120/004/ERR1203064/ERR1203064_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR120/004/ERR1203064/ERR1203064_2.fastq.gz
+ERR550954	La1.7.1	SB0339	Germany	-	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR550/ERR550954/ERR550954_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR550/ERR550954/ERR550954_2.fastq.gz
+ERR2815520	La1.7.X	SB0120	Germany	cattle	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR281/000/ERR2815520/ERR2815520_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR281/000/ERR2815520/ERR2815520_2.fastq.gz
+SRR8064859	La1.7.X	SB0120	Zambia	cattle	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR806/009/SRR8064859/SRR8064859_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR806/009/SRR8064859/SRR8064859_2.fastq.gz
+ERR841810	La1.8.1	SB0140	United Kingdom	cattle	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR841/ERR841810/ERR841810_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR841/ERR841810/ERR841810_2.fastq.gz
+SRR7851304	La1.8.2	SB0134	France	cattle	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR785/004/SRR7851304/SRR7851304_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR785/004/SRR7851304/SRR7851304_2.fastq.gz
+SRR1792479	La1.8.X	SB1069	USA	cervid	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR179/009/SRR1792479/SRR1792479_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR179/009/SRR1792479/SRR1792479_2.fastq.gz
+SRR13888769	La2	SB0415	Spain	goat	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR138/069/SRR13888769/SRR13888769_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR138/069/SRR13888769/SRR13888769_2.fastq.gz
+ERR2659154	La3	SB0422	Australia	human	600000	https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR265/004/ERR2659154/ERR2659154_1.fastq.gz;https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR265/004/ERR2659154/ERR2659154_2.fastq.gz

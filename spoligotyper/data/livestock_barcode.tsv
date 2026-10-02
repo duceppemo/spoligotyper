@@ -1,0 +1,97 @@
+# SNP barcode of the livestock-associated M. tuberculosis complex (La1: M. bovis, La2: M. caprae, La3: M. orygis)
+# and of the La1 sublineages, from Zwyer M et al. A new nomenclature for the livestock-associated Mycobacterium
+# tuberculosis complex based on phylogenomics. Open Research Europe 1:100 (2021).
+# https://doi.org/10.12688/openreseurope.14029.2. Extended data Table 4 (https://doi.org/10.5281/zenodo.5730685),
+# the SNPs marked "KvarQ_informative". Creative Commons Attribution 4.0 license.
+# Positions on the H37Rv reference genome NC_000962.3 (and on the MTBC ancestor of the paper, which has the same
+# coordinates). group: the lineage or sublineage defined by the derived allele; La1_La2: shared by La1 and La2;
+# La1.2_BCG: the BCG strains, within La1.2. Left out: La1.1 2339255 (G>A), whose derived allele H37Rv also carries.
+group	position	ancestral	derived	gene
+La1_La2	181672	T	C	Rv0153c
+La1_La2	195566	T	G	Rv0166
+La1_La2	2932890	A	G	Rv2605c
+La1_La2	3301252	C	T	Rv2950c
+La1_La2	4265726	G	C	Rv3804c
+La1	2475888	T	G	Rv2210c
+La1	2612300	G	T	Rv2337c
+La1	2912516	G	A	Rv2585c
+La1	3877256	C	T	Rv3456c
+La2	533328	C	A	Rv0444c
+La2	2194204	A	G	Rv1941
+La2	2382830	C	A	Rv2124c
+La2	2701538	G	A	Rv2404c
+La2	2731555	A	C	Rv2435c
+La3	327232	A	C	Rv0271c
+La3	3396569	G	A	Rv3036c
+La3	3577779	G	A	Rv3202c
+La3	3770449	G	A	Rv3356c
+La3	3830348	G	C	Rv3411c
+La1.1	2271555	G	A	Rv2025c
+La1.1	3581187	G	A	Rv3203
+La1.1	4155799	C	A	Rv3711c
+La1.1	4357503	A	G	Rv3878
+La1.2	318068	C	T	Rv0266c
+La1.2	1985034	T	C	Rv1754c
+La1.2	3033644	T	C	Rv2721c
+La1.2	4309281	A	T	Rv3835
+La1.2_BCG	128264	A	G	Rv0107c
+La1.2_BCG	2027617	G	A	Rv1789
+La1.2_BCG	2834424	G	A	Rv2518c
+La1.2_BCG	3095342	A	C	Rv2787
+La1.2_BCG	3423939	T	A	Rv3061c
+La1.3	23297	G	T	Rv0019c
+La1.3	67076	C	T	Rv0063
+La1.3	3244324	A	G	Rv2930
+La1.3	4193069	G	A	Rv3742c
+La1.4	471576	T	C	Rv0392c
+La1.4	1065611	C	A	Rv0954
+La1.4	2183681	G	A	Rv1932
+La1.4	2428078	C	G	Rv2164c
+La1.4	3849394	G	A	Rv3431c
+La1.5	51459	T	C	Rv0047c
+La1.5	594057	G	A	Rv0503c
+La1.5	1552837	C	T	Rv1379
+La1.5	2669115	G	A	Rv2381c
+La1.5	3038566	G	A	Rv2725c
+La1.6	438444	T	C	Rv0360c
+La1.6	2655824	T	C	Rv2376c
+La1.6	2848135	G	A	Rv2524c
+La1.6	3072872	G	A	Rv2762c
+La1.7	118468	C	T	Rv0102
+La1.7	540940	T	C	Rv0450c
+La1.7	772740	C	T	Rv0672
+La1.7	2963597	G	A	Rv2637
+La1.7.1	313605	C	A	Rv0261c
+La1.7.1	2553395	G	A	Rv2281
+La1.7.1	2702178	G	A	Rv2404c
+La1.7.1	3720207	C	T	Rv3333c
+La1.7.1	4114819	G	C	Rv3673c
+La1.7.X-unk4	636624	C	T	Rv0545c
+La1.7.X-unk4	1158434	G	A	Rv1033c
+La1.7.X-unk4	1401050	C	T	Rv1253
+La1.7.X-unk4	1765767	T	C	Rv1562c
+La1.7.X-unk4	2807764	G	A	Rv2492
+La1.7.X-unk5	1020732	T	C	Rv0915c
+La1.7.X-unk5	1427067	C	G	Rv1277
+La1.7.X-unk5	1978431	G	T	Rv1750c
+La1.7.X-unk5	2291557	A	G	Rv2046
+La1.7.X-unk5	2948297	T	C	Rv2621c
+La1.8	10727	A	G	Rv0007
+La1.8	288952	C	T	Rv0238
+La1.8	2715125	T	C	Rv2416c
+La1.8	2853155	G	A	Rv2529
+La1.8.1	25306	C	G	Rv0020c
+La1.8.1	1534929	G	T	Rv1363c
+La1.8.1	2890668	C	T	Rv2567
+La1.8.1	3347070	G	T	Rv2990c
+La1.8.1	4030259	A	G	Rv3588c
+La1.8.2	1358422	C	T	Rv1215c
+La1.8.2	2594632	C	A	Rv2321c
+La1.8.2	2989191	T	C	Rv2672
+La1.8.2	4204696	G	A	Rv3759c
+La1.8.2	4297210	A	G	Rv3825c
+La1.8.X-unk6	220104	C	T	Rv0189c
+La1.8.X-unk6	545403	C	T	Rv0455c
+La1.8.X-unk6	1288126	G	C	Rv1161
+La1.8.X-unk6	2243435	G	A	Rv1998c
+La1.8.X-unk6	3676093	C	T	Rv3295

@@ -200,10 +200,10 @@ def check_species(counts, file_type, depth=None, read_length=None, paired=False,
     return check
 
 
-def name_species(check, lineages=(), mixed=False, spacers=True):
+def name_species(check, lineages=(), mixed=False, spacers=True, livestock=''):
     """Name the species once the lineage is known (check_species runs before the lineage call)."""
     if check.mtbc:
-        check.species = 'MTBC, mixed sample?' if mixed else call_species(check, lineages, spacers)
+        check.species = 'MTBC, mixed sample?' if mixed else call_species(check, lineages, spacers, livestock)
 
 
 # Species from the RD profile (RD1, RD4, RD7, RD9, RD12; + present, - deleted), after the classical RD PCR scheme.
@@ -227,10 +227,11 @@ def rd_profile(check):
     return ''.join(check.regions[r].sign if r in check.regions else '?' for r in REGIONS)
 
 
-def call_species(check, lineages=(), spacers=True):
+def call_species(check, lineages=(), spacers=True, livestock=''):
     """
     :param lineages: lineages called by the SNP barcode
     :param spacers: whether any of the 43 standard spacers was found (M. canettii usually has none)
+    :param livestock: La1, La2 or La3 (Zwyer et al. 2021), which tells M. caprae (La2) from M. orygis (La3)
     """
     main = {lineage.split('.')[0] for lineage in lineages}
     if any(check.state(r) == REDUCED for r in REGIONS):
@@ -256,6 +257,8 @@ def call_species(check, lineages=(), spacers=True):
         if not main:  # Outside lineages 1 to 7 and the animal lineages
             return 'MTBC, RD9 intact, no lineage (e.g. M. canettii)'
         return 'MTBC (RD9 intact, unexpected for lineage {})'.format('/'.join(sorted(main)))
+    if profile == '++---':
+        return {'La2': 'M. caprae', 'La3': 'M. orygis'}.get(livestock, species)
     if profile == '++--+':
         if '6' in main:
             return 'M. africanum (lineage 6)'
@@ -266,8 +269,8 @@ def call_species(check, lineages=(), spacers=True):
     return species
 
 
-def consistency_warnings(check, lineages):
-    """Contradictions between the RD profile and the lineage SNPs."""
+def consistency_warnings(check, lineages, livestock=''):
+    """Contradictions between the RD profile and the lineage SNPs (livestock: La1, La2 or La3)."""
     warnings = []
     main = {lineage.split('.')[0] for lineage in lineages}
     lineage_text = '/'.join(sorted(main))
@@ -287,4 +290,13 @@ def consistency_warnings(check, lineages):
     expected_rd7 = PRESENT if '5' in main else DELETED if main & {'6', 'BOV', 'BOV_AFRI'} else ''
     if expected_rd7 and rd7 in (PRESENT, DELETED) and rd7 != expected_rd7:
         warnings.append('RD7 is {} but the lineage SNPs indicate lineage {}'.format(rd7, lineage_text))
+    # La1 (M. bovis) lost RD4; La2 (M. caprae) and La3 (M. orygis) kept it. All lost RD9
+    names = {'La1': 'M. bovis', 'La2': 'M. caprae', 'La3': 'M. orygis'}
+    if livestock and rd9 == PRESENT:
+        warnings.append('RD9 is present but the livestock lineage SNPs indicate {} ({})'.format(
+            livestock, names[livestock]))
+    expected_rd4 = DELETED if livestock == 'La1' else PRESENT if livestock else ''
+    if expected_rd4 and rd4 in (PRESENT, DELETED) and rd4 != expected_rd4:
+        warnings.append('RD4 is {} but the livestock lineage SNPs indicate {} ({})'.format(
+            rd4, livestock, names[livestock]))
     return warnings

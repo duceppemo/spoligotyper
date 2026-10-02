@@ -51,7 +51,7 @@ def test_assembly(data, tmp_path, capsys):
     assert data_json['run']['software']['spoligotyper'] == __version__
     mqc = json.loads((tmp_path / 'AF2122_spoligotyping_mqc.json').read_text())
     assert mqc['data']['AF2122'] == {'SB': 'SB0140', 'SIT': '-', 'Octal': '664073777777600',
-                                     'Species': 'M. bovis', 'Lineage': 'BOV', 'Status': 'ok'}
+                                     'Species': 'M. bovis', 'Lineage': 'BOV', 'La lineage': '-', 'Status': 'ok'}
 
 
 def test_not_in_database(data, tmp_path, capsys):

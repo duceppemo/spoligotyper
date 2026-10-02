@@ -5,7 +5,7 @@ spoligotype. Everything below is reproducible with
 [`validation/run_validation.sh`](https://github.com/duceppemo/spoligotyper/tree/main/validation), which downloads
 the data, simulates the read sets (BBTools `randomreads.sh`, fixed seeds) and checks each result.
 
-**Result: 45 of 45 checks passed.**
+**Result: 59 of 59 checks passed.**
 
 ## Reference genomes
 * *M. tuberculosis*, *M. bovis*, BCG, *M. africanum* GM041182: the expected lineages are the predictions of
@@ -19,44 +19,47 @@ the data, simulates the read sets (BBTools `randomreads.sh`, fixed seeds) and ch
   BOV_AFRI: animal lineages and lineage 6). These genomes were not used to choose the RD segments: they are an
   independent test. The *M. africanum* RB30001 genome has the spoligotype of GM041182 (AFRI_1, lineage 6); the
   lineage of RB30065 is not documented.
+* La lineage: the lineage of the livestock-associated complex
+  ([Zwyer *et al.* 2021](https://doi.org/10.12688/openreseurope.14029.2)): AF2122/97 belongs to clonal complex Eu1
+  (La1.8.1), BCG to La1.2, *M. caprae* to La2 and *M. orygis* to La3; the other genomes have none.
 * The RD profile is shown after the species: RD1, RD4, RD7, RD9 and RD12, + present, - deleted, p partially
   deleted (see [Species and lineage](Species-and-lineage#species-regions-of-difference)), r present at reduced depth.
 * SIT and SITVIT2 family: from the SITVIT2 patterns published with SpolLineages (`spoligotyper-download-sit`).
   The documented SITs are checked: H37Rv SIT451, BCG SIT482, and SIT1 for the Beijing strain CCDC5079.
 
-| Sample | Organism | SB | SIT (family) | Octal | Species (RD1 RD4 RD7 RD9 RD12) | Lineage | Expected lineage | Result |
-|---|---|---|---|---|---|---|---|---|
-| H37Rv | M. tuberculosis H37Rv | Not in Mbovis.org | SIT451 (T-H37Rv) | 777777477760771 | M. tuberculosis (+ + + + +) | 4.9 | 4.9 | OK |
-| CDC1551 | M. tuberculosis CDC1551 | Not in Mbovis.org | SIT549 (X3) | 700076757760771 | M. tuberculosis (+ + + + +) | 4.1.1.3 | 4.1.1.3 | OK |
-| Erdman | M. tuberculosis Erdman ATCC 35801 | Not in Mbovis.org | SIT1230 (H1) | 777757774020771 | M. tuberculosis (+ + + + +) | 4.1.2.1 | 4.1.2.1 | OK |
-| F11 | M. tuberculosis F11 | Not in Mbovis.org | SIT33 (LAM3) | 776177607760771 | M. tuberculosis (+ + + + +) | 4.3.2.1 | 4.3.2.1 | OK |
-| KZN1435 | M. tuberculosis KZN 1435 | Not in Mbovis.org | SIT60 (LAM4) | 777777607760731 | M. tuberculosis (+ + + + +) | 4.3.3 | 4.3.3 | OK |
-| CCDC5079 | M. tuberculosis CCDC5079 (Beijing) | Not in Mbovis.org | SIT1 (Beijing) | 000000000003771 | M. tuberculosis (+ + + + +) | 2.2.1 | 2.2.1 | OK |
-| CAS_NITR204 | M. tuberculosis CAS/NITR204 | Not in Mbovis.org | Not in SITVIT2 list | 677777441741771 | M. tuberculosis (+ + + + +) | 3 | 3 | OK |
-| EAI5_NITR206 | M. tuberculosis EAI5/NITR206 | Not in Mbovis.org | Not in SITVIT2 list | 667777467740071 | M. tuberculosis (+ + + + +) | 1.1.2 | 1.1 | OK |
-| RGTB423 | M. tuberculosis RGTB423 | Not in Mbovis.org | Not in SITVIT2 list | 777736033740711 | M. tuberculosis (+ + + + +) | 1.2.2 | 1.2.2 | OK |
-| GM041182 | M. africanum GM041182 (lineage 6) | SB0147 | SIT181 (AFRI_1) | 770777777777671 | M. africanum (lineage 6) (+ + - - +) | 6 | 6 | OK |
-| AF2122_97 | M. bovis AF2122/97 | SB0140 | SIT683 (BOV_2) | 664073777777600 | M. bovis (+ - - - -) | BOV | BOV | OK |
-| BCG_Pasteur | M. bovis BCG Pasteur 1173P2 | SB0120 | SIT482 (BOV_1) | 676773777777600 | M. bovis BCG (- - - - -) | BOV | BOV | OK |
-| M_canettii | M. canettii CIPT 140010059 | SB2277 | SIT2669 (ATYPIC) | 000000000000000 | M. canettii (+ + + + -) | - | - | OK |
-| M_marinum | M. marinum M | SB2277 | SIT2669 (ATYPIC) | 000000000000000 | MTBC not detected (? ? ? ? ?) | - | - | OK |
-| M_kansasii | M. kansasii ATCC 12478 | SB2277 | SIT2669 (ATYPIC) | 000000000000000 | MTBC not detected (? ? ? ? ?) | - | - | OK |
-| M_avium | M. avium 104 | SB2277 | SIT2669 (ATYPIC) | 000000000000000 | MTBC not detected (? ? ? ? ?) | - | - | OK |
-| M_africanum_RB30001 | M. africanum RB30001 (same spoligotype as GM041182, AFRI_1) | SB0147 | SIT181 (AFRI_1) | 770777777777671 | M. africanum (lineage 6) (+ + - - +) | 6 | 6 | OK |
-| M_africanum_RB30065 | M. africanum RB30065 (lineage not documented) | Not in Mbovis.org | Orphan (AFRI_2) | 474077607177071 | M. africanum (lineage 5) (+ + p - +) | 5 | not documented | OK |
-| M_caprae_Allgaeu | M. caprae Allgaeu | SB0418 | SIT647 (BOV_4-CAPRAE) | 200003777377600 | M. orygis or M. caprae (+ + - - -) | BOV | BOV | OK |
-| M_caprae_SY-1 | M. caprae SY-1 | SB0418 | SIT647 (BOV_4-CAPRAE) | 200003777377600 | M. orygis or M. caprae (+ + - - -) | BOV | BOV | OK |
-| M_orygis_51145 | M. orygis 51145 | Not in Mbovis.org | Not in SITVIT2 list | 600000000000271 | M. orygis or M. caprae (+ + - - -) | BOV | BOV | OK |
-| M_orygis_NIAB | M. orygis NIAB_BDWBCSHFL_1 | Not in Mbovis.org | Not in SITVIT2 list | 600740007774671 | M. orygis or M. caprae (+ + - - -) | BOV | BOV | OK |
-| M_microti_OV254 | M. microti OV254 | SB0118 | SIT539 (microti) | 000000000000600 | M. microti (p + - - +) | BOV_AFRI | BOV_AFRI | OK |
-| M_microti_MausIV | M. microti Maus IV | SB0118 | SIT539 (microti) | 000000000000600 | M. microti (p + - - +) | BOV_AFRI | BOV_AFRI | OK |
-| M_microti_94-2272 | M. microti 94-2272 | SB0118 | SIT539 (microti) | 000000000000600 | M. microti (p + - - +) | BOV_AFRI | BOV_AFRI | OK |
-| M_pinnipedii_MP1 | M. pinnipedii MP1 (draft) | SB0155 | SIT593 (PINI1) | 074000037777600 | M. microti, M. pinnipedii or M. mungi (+ + - - +) | BOV_AFRI | BOV_AFRI | OK |
-| M_pinnipedii_BAA-688 | M. pinnipedii ATCC BAA-688 (draft) | Not in Mbovis.org | Not in SITVIT2 list | 074000033747400 | M. microti, M. pinnipedii or M. mungi (+ + - - +) | BOV_AFRI | BOV_AFRI | OK |
-| M_mungi_BM22813 | M. mungi BM22813 (draft) | SB1960 | SIT3151 (mungi) | 672600000000671 | M. microti, M. pinnipedii or M. mungi (p + - - +) | BOV_AFRI | BOV_AFRI | OK |
-| M_canettii_ET1291 | M. canettii ET1291 | SB2277 | SIT2669 (ATYPIC) | 000000000000000 | M. canettii (+ p + + +) | - | - | OK |
-| M_canettii_CIPT140070010 | M. canettii CIPT 140070010 | SB2277 | SIT2669 (ATYPIC) | 000000000000000 | M. canettii (+ + + + +) | - | - | OK |
-| M_canettii_CIPT140070017 | M. canettii CIPT 140070017 | SB2277 | SIT2669 (ATYPIC) | 000000000000000 | M. canettii (+ + + + +) | 4 | not documented | OK |
+| Sample | Organism | SB | SIT (family) | Octal | Species (RD1 RD4 RD7 RD9 RD12) | Lineage | Expected lineage | La lineage | Result |
+|---|---|---|---|---|---|---|---|---|---|
+| H37Rv | M. tuberculosis H37Rv | Not in Mbovis.org | SIT451 (T-H37Rv) | 777777477760771 | M. tuberculosis (+ + + + +) | 4.9 | 4.9 | - | OK |
+| CDC1551 | M. tuberculosis CDC1551 | Not in Mbovis.org | SIT549 (X3) | 700076757760771 | M. tuberculosis (+ + + + +) | 4.1.1.3 | 4.1.1.3 | - | OK |
+| Erdman | M. tuberculosis Erdman ATCC 35801 | Not in Mbovis.org | SIT1230 (H1) | 777757774020771 | M. tuberculosis (+ + + + +) | 4.1.2.1 | 4.1.2.1 | - | OK |
+| F11 | M. tuberculosis F11 | Not in Mbovis.org | SIT33 (LAM3) | 776177607760771 | M. tuberculosis (+ + + + +) | 4.3.2.1 | 4.3.2.1 | - | OK |
+| KZN1435 | M. tuberculosis KZN 1435 | Not in Mbovis.org | SIT60 (LAM4) | 777777607760731 | M. tuberculosis (+ + + + +) | 4.3.3 | 4.3.3 | - | OK |
+| CCDC5079 | M. tuberculosis CCDC5079 (Beijing) | Not in Mbovis.org | SIT1 (Beijing) | 000000000003771 | M. tuberculosis (+ + + + +) | 2.2.1 | 2.2.1 | - | OK |
+| CAS_NITR204 | M. tuberculosis CAS/NITR204 | Not in Mbovis.org | Not in SITVIT2 list | 677777441741771 | M. tuberculosis (+ + + + +) | 3 | 3 | - | OK |
+| EAI5_NITR206 | M. tuberculosis EAI5/NITR206 | Not in Mbovis.org | Not in SITVIT2 list | 667777467740071 | M. tuberculosis (+ + + + +) | 1.1.2 | 1.1 | - | OK |
+| RGTB423 | M. tuberculosis RGTB423 | Not in Mbovis.org | Not in SITVIT2 list | 777736033740711 | M. tuberculosis (+ + + + +) | 1.2.2 | 1.2.2 | - | OK |
+| GM041182 | M. africanum GM041182 (lineage 6) | SB0147 | SIT181 (AFRI_1) | 770777777777671 | M. africanum (lineage 6) (+ + - - +) | 6 | 6 | - | OK |
+| AF2122_97 | M. bovis AF2122/97 | SB0140 | SIT683 (BOV_2) | 664073777777600 | M. bovis (+ - - - -) | BOV | BOV | La1.8.1 | OK |
+| BCG_Pasteur | M. bovis BCG Pasteur 1173P2 | SB0120 | SIT482 (BOV_1) | 676773777777600 | M. bovis BCG (- - - - -) | BOV | BOV | La1.2 | OK |
+| M_canettii | M. canettii CIPT 140010059 | SB2277 | SIT2669 (ATYPIC) | 000000000000000 | M. canettii (+ + + + -) | - | - | - | OK |
+| M_marinum | M. marinum M | SB2277 | SIT2669 (ATYPIC) | 000000000000000 | MTBC not detected (? ? ? ? ?) | - | - | - | OK |
+| M_kansasii | M. kansasii ATCC 12478 | SB2277 | SIT2669 (ATYPIC) | 000000000000000 | MTBC not detected (? ? ? ? ?) | - | - | - | OK |
+| M_avium | M. avium 104 | SB2277 | SIT2669 (ATYPIC) | 000000000000000 | MTBC not detected (? ? ? ? ?) | - | - | - | OK |
+| M_africanum_RB30001 | M. africanum RB30001 (same spoligotype as GM041182, AFRI_1) | SB0147 | SIT181 (AFRI_1) | 770777777777671 | M. africanum (lineage 6) (+ + - - +) | 6 | 6 | - | OK |
+| M_africanum_RB30065 | M. africanum RB30065 (lineage not documented) | Not in Mbovis.org | Orphan (AFRI_2) | 474077607177071 | M. africanum (lineage 5) (+ + p - +) | 5 | not documented | - | OK |
+| M_caprae_Allgaeu | M. caprae Allgaeu | SB0418 | SIT647 (BOV_4-CAPRAE) | 200003777377600 | M. caprae (+ + - - -) | BOV | BOV | La2 | OK |
+| M_caprae_SY-1 | M. caprae SY-1 | SB0418 | SIT647 (BOV_4-CAPRAE) | 200003777377600 | M. caprae (+ + - - -) | BOV | BOV | La2 | OK |
+| M_orygis_51145 | M. orygis 51145 | Not in Mbovis.org | Not in SITVIT2 list | 600000000000271 | M. orygis (+ + - - -) | BOV | BOV | La3 | OK |
+| M_orygis_NIAB | M. orygis NIAB_BDWBCSHFL_1 | Not in Mbovis.org | Not in SITVIT2 list | 600740007774671 | M. orygis (+ + - - -) | BOV | BOV | La3 | OK |
+| M_microti_OV254 | M. microti OV254 | SB0118 | SIT539 (microti) | 000000000000600 | M. microti (p + - - +) | BOV_AFRI | BOV_AFRI | - | OK |
+| M_microti_MausIV | M. microti Maus IV | SB0118 | SIT539 (microti) | 000000000000600 | M. microti (p + - - +) | BOV_AFRI | BOV_AFRI | - | OK |
+| M_microti_94-2272 | M. microti 94-2272 | SB0118 | SIT539 (microti) | 000000000000600 | M. microti (p + - - +) | BOV_AFRI | BOV_AFRI | - | OK |
+| M_pinnipedii_MP1 | M. pinnipedii MP1 (draft) | SB0155 | SIT593 (PINI1) | 074000037777600 | M. microti, M. pinnipedii or M. mungi (+ + - - +) | BOV_AFRI | BOV_AFRI | - | OK |
+| M_pinnipedii_BAA-688 | M. pinnipedii ATCC BAA-688 (draft) | Not in Mbovis.org | Not in SITVIT2 list | 074000033747400 | M. microti, M. pinnipedii or M. mungi (+ + - - +) | BOV_AFRI | BOV_AFRI | - | OK |
+| M_mungi_BM22813 | M. mungi BM22813 (draft) | SB1960 | SIT3151 (mungi) | 672600000000671 | M. microti, M. pinnipedii or M. mungi (p + - - +) | BOV_AFRI | BOV_AFRI | - | OK |
+| M_canettii_ET1291 | M. canettii ET1291 | SB2277 | SIT2669 (ATYPIC) | 000000000000000 | M. canettii (+ p + + +) | - | - | - | OK |
+| M_canettii_CIPT140070010 | M. canettii CIPT 140070010 | SB2277 | SIT2669 (ATYPIC) | 000000000000000 | M. canettii (+ + + + +) | - | - | - | OK |
+| M_canettii_CIPT140070017 | M. canettii CIPT 140070017 | SB2277 | SIT2669 (ATYPIC) | 000000000000000 | M. canettii (+ + + + +) | 4 | not documented | - | OK |
 
 The non-tuberculous mycobacteria and the *M. canettii* genomes have none of the 43 standard spacers: their pattern
 is SB2277, the pattern with no spacer, flagged with a warning (see the [FAQ](FAQ#a-sample-with-no-spacer-is-sb2277)).
@@ -89,22 +92,53 @@ Simulated reads:
 * **sim_contaminated_H37Rv15x_marinum15x**: H37Rv and *M. marinum* reads at the same depth. The *M. marinum* genome
   is larger (6.6 Mb), so 40% of the reads are MTBC: the estimated MTBC fraction, 0.40, is right.
 
-| Sample | SB | Octal | Species | Lineage | MTBC fraction | Warnings | Result |
-|---|---|---|---|---|---|---|---|
-| ERR1744454 | SB0140 | 664073777777600 | M. bovis | BOV | 1.00 | - | OK |
-| SRR12006063 | Not in Mbovis.org | 777777477760731 | M. tuberculosis | 4.9 | 0.69 | spacers with few reads, mixed sample | OK |
-| ERR027297 | SB0118 | 000000000000600 | M. microti | BOV_AFRI | 0.70 | - | OK |
-| SRR16643349 | Not in Mbovis.org | 700000000000271 | M. orygis or M. caprae | BOV | 0.87 | mixed sample | OK |
-| ERR2383628 | SB0147 | 770777777777671 | M. africanum (lineage 6) | 6 | 1.00 | - | OK |
-| SRR18636082 | SB2277 | 000000000000000 | M. canettii | - | 0.86 | RD4 partially deleted, no spacer (M. canettii) | OK |
-| SRR23035463 | SB2277 | 000000000000000 | M. canettii | - | 0.95 | long reads, RD4 partially deleted, no spacer (M. canettii) | OK |
-| sim_H37Rv_30x | Not in Mbovis.org | 777777477760771 | M. tuberculosis | 4.9 | 1.00 | - | OK |
-| sim_H37Rv_30x_PE | Not in Mbovis.org | 777777477760771 | M. tuberculosis | 4.9 | 0.97 | - | OK |
-| sim_H37Rv_10x | Not in Mbovis.org | 777677475760761 | M. tuberculosis | 4.9 | 1.00 | low depth, spacers with few reads | OK |
-| sim_Beijing_30x | Not in Mbovis.org | 000000000003771 | M. tuberculosis | 2.2.1 | 1.00 | - | OK |
-| sim_AF2122_97_30x | SB0140 | 664073777777600 | M. bovis | BOV | 1.00 | - | OK |
-| sim_mixed_H37Rv70_AF2122_30 | Not in Mbovis.org | 777777777767771 | MTBC, mixed sample? | mixed: 4 68%, BOV 35%, BOV_AFRI 26% | 1.00 | mixed sample, spacers with few reads | OK |
-| sim_contaminated_H37Rv15x_marinum15x | Not in Mbovis.org | 777777477760771 | M. tuberculosis | 4.9 | 0.40 | contamination, low MTBC depth | OK |
+| Sample | SB | Octal | Species | Lineage | La lineage | MTBC fraction | Warnings | Result |
+|---|---|---|---|---|---|---|---|---|
+| ERR1744454 | SB0140 | 664073777777600 | M. bovis | BOV | La1.8.1 | 1.00 | - | OK |
+| SRR12006063 | Not in Mbovis.org | 777777477760731 | M. tuberculosis | 4.9 | - | 0.69 | spacers with few reads, mixed sample | OK |
+| ERR027297 | SB0118 | 000000000000600 | M. microti | BOV_AFRI | - | 0.70 | - | OK |
+| SRR16643349 | Not in Mbovis.org | 700000000000271 | M. orygis | BOV | La3 | 0.87 | mixed sample | OK |
+| ERR2383628 | SB0147 | 770777777777671 | M. africanum (lineage 6) | 6 | - | 1.00 | - | OK |
+| SRR18636082 | SB2277 | 000000000000000 | M. canettii | - | - | 0.86 | RD4 partially deleted, no spacer (M. canettii) | OK |
+| SRR23035463 | SB2277 | 000000000000000 | M. canettii | - | - | 0.95 | long reads, RD4 partially deleted, no spacer (M. canettii) | OK |
+| sim_H37Rv_30x | Not in Mbovis.org | 777777477760771 | M. tuberculosis | 4.9 | - | 1.00 | - | OK |
+| sim_H37Rv_30x_PE | Not in Mbovis.org | 777777477760771 | M. tuberculosis | 4.9 | - | 0.97 | - | OK |
+| sim_H37Rv_10x | Not in Mbovis.org | 777677475760761 | M. tuberculosis | 4.9 | - | 1.00 | low depth, spacers with few reads | OK |
+| sim_Beijing_30x | Not in Mbovis.org | 000000000003771 | M. tuberculosis | 2.2.1 | - | 1.00 | - | OK |
+| sim_AF2122_97_30x | SB0140 | 664073777777600 | M. bovis | BOV | La1.8.1 | 1.00 | - | OK |
+| sim_mixed_H37Rv70_AF2122_30 | Not in Mbovis.org | 777777777767771 | MTBC, mixed sample? | mixed: 4 68%, BOV 35%, BOV_AFRI 26% | mixed: La1/La2 26%, La1 28%, La1.8 31%, La1.8.1 28% | 1.00 | mixed sample, mixed sample, spacers with few reads | OK |
+| sim_contaminated_H37Rv15x_marinum15x | Not in Mbovis.org | 777777477760771 | M. tuberculosis | 4.9 | - | 0.40 | contamination, low MTBC depth | OK |
+
+## Livestock lineages
+One run per lineage and sublineage of the livestock-associated complex, from the genomes of
+[Zwyer *et al.* 2021](https://doi.org/10.12688/openreseurope.14029.2) (extended data Table 1), with the sublineage
+and the SB number given in the paper (first 600,000 read pairs; all the reads for the three runs whose reads are
+sorted by position: their first reads cover only part of the genome). The check is the livestock lineage and the
+species; "SNPs" gives, for each group called, the SNPs with the derived allele out of those covered.
+spoligotyper finds the SB number of the paper for 13 of the 14 runs. The *M. orygis* run (ERR2659154) differs from
+the paper's SB0422 at spacer 3 only: 140 of its reads carry a variant of spacer 3 with 2 mismatches
+(CCGTGCTTCCAGTGATC**A**CCTT**G**TA), which spoligotyper, allowing 1 mismatch per spacer, does not count, while the
+paper's in silico typing (KvarQ) does. The *M. orygis* NIAB genome above also differs from SB0422 at spacer 3 only.
+SRR1173570 (from a chimpanzee) has only about 50% of MTBC reads, which spoligotyper flags.
+
+| Run | Origin | Expected | La lineage | SNPs | Species | SB (paper) | SB | Result |
+|---|---|---|---|---|---|---|---|---|
+| SRR8065072 | Uganda, cattle | La1.1 | La1.1 | La1 4/4, La1.1 4/4 | M. bovis | SB1405 | SB1405 | OK |
+| SRR7851302 | France, cattle | La1.2 | La1.2 | La1 4/4, La1.2 4/4 | M. bovis | SB0134 | SB0134 | OK |
+| SRR1173570 | Uganda, chimpanzee | La1.3 | La1.3 | La1 4/4, La1.3 4/4 | M. bovis | SB0133 | SB0133 | OK |
+| ERR229952 | Russia, - | La1.4 | La1.4 | La1 4/4, La1.4 5/5 | M. bovis | SB1919 | SB1919 | OK |
+| ERR2212116 | Germany, red deer | La1.5 | La1.5 | La1 4/4, La1.5 5/5 | M. bovis | SB0989 | SB0989 | OK |
+| ERR1203064 | Ghana, human | La1.6 | La1.6 | La1 4/4, La1.6 4/4 | M. bovis | SB0944 | SB0944 | OK |
+| ERR550954 | Germany, - | La1.7.1 | La1.7.1 | La1 4/4, La1.7 4/4, La1.7.1 5/5 | M. bovis | SB0339 | SB0339 | OK |
+| ERR2815520 | Germany, cattle | La1.7.X | La1.7.X | La1 4/4, La1.7 4/4, La1.7.X-unk4 5/5 | M. bovis | SB0120 | SB0120 | OK |
+| SRR8064859 | Zambia, cattle | La1.7.X | La1.7.X | La1 4/4, La1.7 4/4, La1.7.X-unk5 5/5 | M. bovis | SB0120 | SB0120 | OK |
+| ERR841810 | United Kingdom, cattle | La1.8.1 | La1.8.1 | La1 4/4, La1.8 4/4, La1.8.1 5/5 | M. bovis | SB0140 | SB0140 | OK |
+| SRR7851304 | France, cattle | La1.8.2 | La1.8.2 | La1 4/4, La1.8 4/4, La1.8.2 5/5 | M. bovis | SB0134 | SB0134 | OK |
+| SRR1792479 | USA, cervid | La1.8.X | La1.8.X | La1 4/4, La1.8 4/4, La1.8.X-unk6 5/5 | M. bovis | SB1069 | SB1069 | OK |
+| SRR13888769 | Spain, goat | La2 | La2 | La2 5/5 | M. caprae | SB0415 | SB0415 | OK |
+| ERR2659154 | Australia, human | La3 | La3 | La3 5/5 | M. orygis | SB0422 | Not in Mbovis.org | OK |
+
+**59 of 59 checks passed.
 
 * At 10x, three present spacers get fewer than 5 reads and are called absent: the pattern is wrong, but flagged
   ("low depth", "spacers with few reads"). Use `--min-count 2` or `3` for low depth data, see

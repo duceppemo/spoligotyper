@@ -80,6 +80,33 @@ def on_one_path(lineages):
     return len(groups) <= 1
 
 
+def parents(lineage):
+    """Lineages containing a human sublineage, e.g. 4.1 and 4 for 4.1.1. The other lineages have none."""
+    if lineage[0] not in '1234':
+        return []
+    parts = lineage.split('.')
+    return ['.'.join(parts[:i]) for i in range(len(parts) - 1, 0, -1)]
+
+
+def confirmed_mixed(mixed, snps, parents_of):
+    """
+    Mixed SNPs whose parent lineages also have both alleles. A strain of another lineage has the alleles of all the
+    lineages that contain it: a sublineage SNP with both alleles but a parent SNP without the minority allele is a
+    variant of the strain at that site (or a sequencing artefact), not a mix. Parents with too few reads are not used.
+    """
+    pooled = {}  # Lineage: SnpCall with the reads of all its SNPs (several per group in some barcodes)
+    for s in snps:
+        p = pooled.setdefault(s.lineage, SnpCall(s.lineage, s.position, s.locus, 0, 0))
+        p.lineage_reads += s.lineage_reads
+        p.other_reads += s.other_reads
+    confirmed = []
+    for snp in mixed:
+        checked = [pooled[p] for p in parents_of(snp.lineage) if p in pooled and pooled[p].reads >= MIXED_MIN_READS]
+        if all(MIXED_FRACTION[0] <= p.fraction for p in checked):
+            confirmed.append(snp)
+    return confirmed
+
+
 def call_lineage(counts, file_type, barcode=None, contaminated=False):
     """
     :param counts: {"<lineage>|<position>|ref" or "...|alt": reads} from Seal
@@ -105,6 +132,7 @@ def call_lineage(counts, file_type, barcode=None, contaminated=False):
         if file_type == 'fastq' and snp.lineage not in conserved and snp.reads >= MIXED_MIN_READS and \
                 MIXED_FRACTION[0] <= snp.fraction <= MIXED_FRACTION[1]:
             result.mixed.append(snp)
+    result.mixed = confirmed_mixed(result.mixed, result.snps, parents)
     if result.mixed:  # e.g. "mixed: 4.9 58%, BOV 31%": the lineage allele fraction of each mixed SNP
         result.lineage = 'mixed: ' + ', '.join('{} {:.0f}%'.format(s.lineage, s.fraction * 100)
                                                for s in sorted(result.mixed, key=lambda s: -s.fraction))

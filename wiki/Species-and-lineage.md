@@ -3,6 +3,8 @@
 Besides the spoligotype, spoligotyper checks every sample for:
 * **the species**, from regions of difference (RD) deleted in some members of the complex;
 * **the lineage**, from the SNP barcode of [Coll *et al.* 2014](https://doi.org/10.1038/ncomms5812);
+* **the livestock lineage** (La1 to La3 and the *M. bovis* sublineages), from the SNP barcode of
+  [Zwyer *et al.* 2021](https://doi.org/10.12688/openreseurope.14029.2);
 * **how much of the sample is MTBC**, to detect contaminated samples;
 * **mixed samples**, containing several strains.
 
@@ -50,7 +52,7 @@ The regions are usually deleted in:
 | + | + | + | − | + | *M. africanum* (lineage 5, West African 1) |
 | + | + | − | − | + | *M. africanum* (lineage 6, West African 2), *M. microti*, *M. pinnipedii* or *M. mungi*: lineage 6 with its SNP; *M. microti* when RD1 is partially deleted by RD1<sup>mic</sup>; otherwise the three, with the BOV_AFRI SNP |
 | + | − or + | + | + or − | − or + | *M. canettii*, when RD7 is present but RD4 or RD12 is deleted |
-| + | + | − | − | − | *M. orygis* or *M. caprae* |
+| + | + | − | − | − | *M. caprae* (La2) or *M. orygis* (La3), from the livestock lineage SNPs; *M. orygis* or *M. caprae* without them |
 | + | − | − | − | − | *M. bovis* |
 | − | − | − | − | − | *M. bovis* BCG |
 | − | + | − | − | + | Dassie bacillus |
@@ -98,6 +100,34 @@ lineage by Coll *et al.*: spoligotype families are not always monophyletic, whil
 A few SNP sequences are also found in non-tuberculous mycobacteria. These SNPs are not used to detect mixed samples,
 and are ignored when the sample looks contaminated (less than 80% of MTBC reads).
 
+## Livestock lineages: La1 to La3
+[Zwyer *et al.* 2021](https://doi.org/10.12688/openreseurope.14029.2) named the three lineages of the
+livestock-associated *M. tuberculosis* complex after their phylogeny, as for the human lineages, and divided La1 into
+eight sublineages. spoligotyper uses the SNP barcode of the paper (88 SNPs, 4 or 5 per group, from its extended data
+Table 4), counted like the SNPs of Coll *et al.* (exact 31-mers). As in the paper, a group is called when at least 2
+of its SNPs carry the derived allele (in at least 80% of at least 3 reads, or in 1 contig). The most specific group
+is reported in the `LaLineage` column:
+
+| Lineage | Species or former name |
+|---|---|
+| La1 | *M. bovis* |
+| La1.1 | pyrazinamide-susceptible *M. bovis* |
+| La1.2 | Eu3 (unknown2); BCG belongs to La1.2 (reported as La1.2, BCG) |
+| La1.3 | Af2 |
+| La1.4 | unknown3 |
+| La1.5 | unknown9 |
+| La1.6 | Af1 |
+| La1.7 | Eu2 (La1.7.1), unknown4 and unknown5 (La1.7.X) |
+| La1.8 | Eu1 (La1.8.1), unknown7 (La1.8.2) and unknown6 (La1.8.X) |
+| La2 | *M. caprae* |
+| La3 | *M. orygis* |
+
+La2 and La3 tell *M. caprae* from *M. orygis*, which have the same RD profile and the same SNP in the barcode of Coll
+*et al.* spoligotyper warns when the livestock lineage contradicts the regions of difference (La1 with RD4 present,
+La2 or La3 with RD4 deleted, any of them with RD9 present), and flags SNPs of incompatible groups, or with both
+alleles, as a mixed sample. The barcode was designed from 829 genomes (2021): a strain of a newer clade may only get
+La1. One SNP of the paper (La1.1, position 2,339,255) is left out: H37Rv has its derived allele.
+
 ## Contamination: fraction of MTBC reads
 For reads, the depth of the MTBC control regions is compared with the depth expected from the number of bases
 sequenced. A pure culture gives about 100% with simulated reads, and 69% to 100% with the real reads of pure cultures
@@ -108,7 +138,10 @@ organism gives about 50%. spoligotyper warns below 60%. The estimate assumes a 4
 A mix of strains is flagged when:
 * both alleles of a lineage SNP are each carried by at least 15% of 10 or more reads: the lineage is then reported as,
   e.g., `mixed: 4 68%, BOV 35%` (percentage of reads with each lineage's allele), and the species as
-  "MTBC, mixed sample?";
+  "MTBC, mixed sample?". For a sublineage, the SNP of its parent lineage must also have both alleles (when it has 10
+  reads or more): a strain of another lineage carries the alleles of all the lineages that contain it, so a
+  sublineage SNP alone with both alleles is a variant of the strain at that site, not a mix. The same applies to the
+  livestock lineages (e.g. `mixed: La1 28%, La1.8 31%`);
 * SNPs of incompatible lineages are present (e.g. lineage 2 and lineage 4);
 * a region of difference is present at reduced depth (all its segments found, at less than half the depth of the
   control regions);
