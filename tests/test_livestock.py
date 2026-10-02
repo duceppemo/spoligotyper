@@ -1,6 +1,6 @@
 """Lineages of the livestock-associated MTBC (Zwyer et al. 2021)."""
 
-from spoligotyper import livestock, species
+from spoligotyper import livestock, snp_groups, species
 
 from .test_species_lineage import profile_counts
 
@@ -128,3 +128,10 @@ def test_parent_without_its_snps():
     call = livestock.call_livestock(counts, 'fastq')
     assert call.lineage == 'La1.8.1' and call.unsupported == ['La1']
     assert livestock.call_livestock(counts_for({'La1', 'La1.8', 'La1.8.1'}), 'fastq').unsupported == []
+
+
+def test_several_shared_groups():
+    """Two shared groups, each with its roots: no spurious conflict (Scheme.on_one_path)."""
+    scheme = snp_groups.Scheme(None, None, (('A', (None, 'A', '')), ('B', (None, 'B', '')), ('AB', (None, '', '')),
+                                            ('A2', (None, '', ''))), shared=(('AB', ('A', 'B')), ('A2', ('A',))))
+    assert scheme.on_one_path(['AB', 'A2', 'A']) and not scheme.on_one_path(['A2', 'B'])

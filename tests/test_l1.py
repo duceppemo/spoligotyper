@@ -37,9 +37,29 @@ def test_call():
 
 def test_half_of_the_snps():
     """L1.1.3.2 has 224 SNPs: a strain sharing 2 of them (M. canettii) is not called; a real one carries most."""
-    assert l1.call_l1(counts_for({'L1.1.3.2'}, n=2), 'fastq').called == []
-    assert l1.call_l1(counts_for({'L1.1.3.2'}, n=150), 'fastq').called == ['L1.1.3.2']
-    assert l1.call_l1(counts_for({'L1.2.1'}, n=2), 'fastq').called == ['L1.2.1']  # 4 SNPs: 2 is half
+    parents = {'L1.1', 'L1.1.3'}
+    assert l1.call_l1(counts_for(parents | {'L1.1.3.2'}, n=2), 'fastq').called == []
+    counts = counts_for(parents)
+    counts.update({k: v for k, v in counts_for({'L1.1.3.2'}, n=150).items() if k.startswith('L1.1.3.2|')})
+    assert l1.call_l1(counts, 'fastq').lineage == 'L1.1.3.2'
+
+
+def test_parent_required():
+    """L1.2.1 has 4 SNPs: 2 stray derived alleles would be enough, but L1.2 must be called too."""
+    assert l1.call_l1(counts_for({'L1.2.1'}, n=2), 'fastq').called == []
+    assert l1.call_l1(counts_for({'L1.2', 'L1.2.1'}), 'fastq').lineage == 'L1.2.1'
+
+
+def test_mix_of_sublineages():
+    """L1.1.1.2 + L1.3.1 reads: a few SNPs with both alleles in each group (minority strain at low depth)."""
+    counts = counts_for({'L1.3', 'L1.3.1'})
+    for group, n in (('L1.1', 8), ('L1.1.1', 8), ('L1.1.1.2', 8)):
+        rows = [r for r in BARCODE if r['group'] == group][:n]
+        for row in rows:
+            key = '{}|{}|'.format(row['group'], row['position'])
+            counts[key + 'derived'], counts[key + 'ancestral'] = 4, 16
+    call = l1.call_l1(counts, 'fastq')
+    assert call.mixed and call.lineage.startswith('mixed: L1.1 20%')
 
 
 def test_coll_lineage_conflict_warning():
@@ -49,3 +69,6 @@ def test_coll_lineage_conflict_warning():
                l1=l1.call_l1(counts_for({'L1.3', 'L1.3.2'}, reads=1), 'fasta'))
     check_species(r)
     assert any('lineage 1 sublineage SNPs (L1.3.2) but the lineage SNPs indicate lineage 4' in w for w in r.warnings)
+    r.warnings, r.lineage = [], LineageCall()  # No lineage SNP at all
+    check_species(r)
+    assert any('L1.3.2) but no lineage 1 SNP of the lineage barcode' in w for w in r.warnings)

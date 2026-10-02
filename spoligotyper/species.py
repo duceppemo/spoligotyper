@@ -233,6 +233,20 @@ def rd_profile(check):
     return ''.join(check.regions[r].sign if r in check.regions else '?' for r in REGIONS)
 
 
+def promoted_regions(check):
+    """
+    Partially deleted regions counted as present for the species, when the RD profile matches no species but would
+    with them present: a region partially deleted in one strain (e.g. 9 kb of RD7 in a lineage 1 strain) does not
+    make a species. Empty when the profile is known as it is.
+    """
+    profile = rd_profile(check)
+    if profile in RD_PROFILES:
+        return []
+    partial = [r for r, sign in zip(REGIONS, profile, strict=True) if check.state(r) == PARTIAL and sign == '-']
+    present = ''.join('+' if r in partial else s for r, s in zip(REGIONS, profile, strict=True))
+    return partial if present in RD_PROFILES else []
+
+
 def call_species(check, lineages=(), spacers=True, livestock=''):
     """
     :param lineages: lineages called by the SNP barcode
@@ -247,12 +261,9 @@ def call_species(check, lineages=(), spacers=True, livestock=''):
     if rd7 == '+' and (rd4 == '-' or rd12 == '-'):  # RD4 or RD12 lost independently of the M. bovis lineage
         return 'M. canettii'
     species = RD_PROFILES.get(profile)
-    if species is None:
-        # A region partially deleted in one strain (e.g. 9 kb of RD7 in a lineage 1 strain) does not make a species:
-        # count it as present when that gives a known profile (the partial deletion is reported as a warning)
-        present = ''.join('+' if check.state(r) == PARTIAL else sign for r, sign in zip(REGIONS, profile, strict=True))
-        if present in RD_PROFILES:
-            profile, species = present, RD_PROFILES[present]
+    if species is None and promoted_regions(check):
+        profile = ''.join('+' if r in promoted_regions(check) else s for r, s in zip(REGIONS, profile, strict=True))
+        species = RD_PROFILES[profile]
     if species is None:
         return 'MTBC (unusual RD profile: {})'.format(', '.join(
             '{}{}'.format(r, s) for r, s in zip(REGIONS, profile, strict=True)))

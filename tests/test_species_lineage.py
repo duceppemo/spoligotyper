@@ -286,4 +286,4 @@ def test_strain_specific_partial_deletion():
     check = species.check_species(counts, 'fastq')
     assert check.regions['RD7'].state == species.PARTIAL and check.regions['RD7'].sign == '-'
     species.name_species(check, ['1', '1.2', '1.2.1'])
-    assert check.species == 'M. tuberculosis'
+    assert check.species == 'M. tuberculosis' and species.promoted_regions(check) == ['RD7']

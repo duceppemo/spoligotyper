@@ -5,8 +5,10 @@
   L1.3 and their sublineages down to the fourth level (32 in all), from the 1,835 sublineage-specific SNPs of the
   paper, in the same pass as the other SNPs. New `L1Sublineage` column (at the end), MultiQC column, JSON `l1`, and a
   line in the PDF report with the typical spoligotype families. The names are those of the revised lineage 1
-  nomenclature, kept apart from those of Coll *et al.* in the `Lineage` column (Coll 1.2.1 = L1.2.2, Coll 1.2.2 =
-  L1.3). Warning when lineage 1 sublineage SNPs are found in a sample of another lineage.
+  nomenclature, kept apart from those of Coll *et al.* in the `Lineage` column (Coll 1.2.1 = L1.2, Coll 1.2.2 = L1.3,
+  Coll 1.1.2 = L1.1.2.2). A sublineage is called when at least 2 of its SNPs and half of those covered carry the
+  derived allele, and its parent group is called; mixed when 2 of its SNPs and 10% of those covered have both
+  alleles. Warning when lineage 1 sublineage SNPs are found in a sample without lineage 1 SNPs of Coll *et al.*
 * A region partially deleted in one strain no longer makes the RD profile "unusual": when the profile is unknown, a
   partially deleted region counts as present if that gives a known profile (e.g. a lineage 1 strain lacking 9 kb of
   RD7 stays *M. tuberculosis*; the partial deletion is still reported).
@@ -14,7 +16,9 @@
   so that each sample, with its warnings, fits on one page: checked on the 84 samples of the validation.
 * Validation (84 of 84 checks): one public run of each of the 25 terminal lineage 1 sublineages, from the genomes of
   the paper.
-* The livestock lineages and the lineage 1 sublineages share one implementation (`snp_groups`).
+* The livestock lineages and the lineage 1 sublineages share one implementation (`snp_groups`). JSON: `livestock`
+  and `l1` have two new keys, `main` and `mixed_within`, and only the SNPs of the groups with a derived allele (not
+  all 1,835 for every sample). Mixed texts list at most 6 groups.
 
 ## 0.8.0 (2026-10-02)
 * **Livestock lineages** after [Zwyer *et al.* 2021](https://doi.org/10.12688/openreseurope.14029.2): La1

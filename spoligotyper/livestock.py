@@ -57,6 +57,6 @@ def ntm_conserved_snps(path=SNPS_FASTA):
     return snp_groups.ntm_conserved_snps(str(path))
 
 
-def call_livestock(counts, file_type, contaminated=False):
+def call_livestock(counts, file_type, barcode=None, contaminated=False):
     """La1 to La3 and the La1 sublineages: see snp_groups.Scheme.call."""
-    return SCHEME.call(counts, file_type, contaminated)
+    return SCHEME.call(counts, file_type, contaminated, barcode)

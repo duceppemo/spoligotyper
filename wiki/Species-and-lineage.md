@@ -37,6 +37,9 @@ The + and − of the RD profile below mean that the DNA of the region is present
 inside the region (amplification = present). spoligotyper does not measure amplicon sizes or deletion junctions:
 assays that distinguish RDs by the size of an amplicon spanning the region may report partial or strain-specific
 deletions differently. A partially deleted region counts as + when at least half of its segments are found, − otherwise.
+When the RD profile then matches no species, but would with a partially deleted region present, that region counts as
+present for the species, and the warning says so: a region partially deleted in one strain (e.g. 9 kb of RD7 in a
+lineage 1 strain) does not make a species.
 
 The regions are usually deleted in:
 
@@ -143,18 +146,19 @@ with up to 224 SNPs per sublineage, a distant strain can share 2 by chance (*M. 
 sublineage is reported in the `L1Sublineage` column, with its typical spoligotype families in the paper (e.g. L1.2.2.2:
 EAI2-nonthaburi).
 
-The names differ from those of Coll *et al.* (the `Lineage` column) for lineage 1.2, which the revised nomenclature
-split:
+The names of Coll *et al.* (the `Lineage` column) correspond to these groups, from the SNPs of Coll *et al.* that are
+among those of the paper (and, for 1.2.2, from the validation):
 
 | Coll *et al.* 2014 (`Lineage`) | Netikul *et al.* 2022 (`L1Sublineage`) |
 |---|---|
-| 1.1, 1.1.1, 1.1.2, 1.1.3 | L1.1, L1.1.1, L1.1.2, L1.1.3 (and their sublineages) |
-| 1.2.1 | L1.2.2 |
+| 1.1, 1.1.1, 1.1.1.1, 1.1.3 | L1.1, L1.1.1, L1.1.1.1, L1.1.3 |
+| 1.1.2 | L1.1.2.2 only: L1.1.2.1 strains are 1.1 |
+| 1.2.1 | L1.2 (L1.2.1 and L1.2.2) |
 | 1.2.2 | L1.3 |
-| - | L1.2.1 (not in the barcode of Coll *et al.*) |
 
-The two columns are kept apart, so that each name has one meaning. spoligotyper warns when lineage 1 sublineage SNPs
-are found in a sample of another lineage, and flags mixes as for the livestock lineages.
+The two columns are kept apart, so that each name has one meaning. A sublineage is only called when its parent group
+is called too, and a group is mixed when at least 2 of its SNPs, and 10% of those covered, have both alleles.
+spoligotyper warns when lineage 1 sublineage SNPs are found in a sample without lineage 1 SNPs of Coll *et al.*
 
 ## Contamination: fraction of MTBC reads
 For reads, the depth of the MTBC control regions is compared with the depth expected from the number of bases

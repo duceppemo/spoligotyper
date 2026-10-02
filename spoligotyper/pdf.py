@@ -427,7 +427,7 @@ def definitions_section(run):
         ('Livestock lineage',
          'Lineage of the livestock-associated MTBC after Zwyer et al. (2021): La1 (M. bovis), La2 (M. caprae), La3 '
          '(M. orygis), and the La1 sublineages La1.1 to La1.8, with their former names (e.g. La1.8.1: clonal complex '
-         'Eu1; BCG belongs to La1.2). From {} of the marker SNPs of the extended data of the paper (4 or 5 '
+         'Eu1; BCG belongs to La1.2). From {} of the 89 marker SNPs of the extended data of the paper (4 or 5 '
          'per group), counted as above; a group is called when at least 2 of its SNPs carry the derived allele, as in '
          'the KvarQ test suite of the paper. La2 and La3 tell M. caprae from M. orygis, which have the same RD '
          'profile.'.format(len(livestock.read_barcode()))),
@@ -435,8 +435,9 @@ def definitions_section(run):
          'Sublineage of lineage 1 (East-African-Indian) after Netikul et al. (2022), in the revised nomenclature of '
          'lineage 1 (L1.1 to L1.3, down to e.g. L1.1.1.10), from the {:,} sublineage-specific SNPs of the paper (4 to '
          '224 per sublineage), counted as above; a sublineage is called when at least 2 of its SNPs, and at least '
-         'half of those covered, carry the derived allele. Its names differ from those of Coll et al. for lineage 1.2: '
-         'Coll 1.2.1 is L1.2.2 and Coll 1.2.2 is L1.3.'.format(len(snp_groups.read_barcode(str(l1.BARCODE))))),
+         'half of those covered, carry the derived allele, and its parent group is called. The names of Coll et al. '
+         'correspond to these groups: 1.2.1 is L1.2 (L1.2.1 and L1.2.2), 1.2.2 is L1.3, and 1.1.2 is L1.1.2.2 '
+         '(L1.1.2.1 strains are 1.1).'.format(len(snp_groups.read_barcode(str(l1.BARCODE))))),
     ]
     rd_method = (
         'Regions of difference (RD) are determined in silico, from the sequencing data, without PCR. Each region is '
@@ -456,6 +457,8 @@ def definitions_section(run):
         'report partial or strain-specific deletions differently. A partially deleted region counts as + when at '
         'least half of its segments are found: for example, M. microti lacks the part of RD1 inside its own RD1mic '
         'deletion (reported as partially deleted) and is RD1 + in the RD profile, as in the classical RD PCR scheme. '
+        'When the profile then matches no species, but would with a partially deleted region present, that region '
+        'counts as present for the species (a deletion of one strain), as the warning says. '
         'The species is read from the RD profile, refined with the lineage SNPs and the spacers.')
     spacers = (
         'Spacers are counted with Seal (BBTools): each of the {n} spacers is searched as a single {k}-mer on both '

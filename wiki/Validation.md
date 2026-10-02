@@ -159,7 +159,7 @@ The check is the lineage 1 sublineage and the species; "SNPs" gives, for each su
 derived allele out of those covered. The `Lineage` column (Coll *et al.*) uses the older names: 1.2.1 for L1.2.2 and
 1.2.2 for L1.3. The octal code of the paper (SpoTyping) is shown for comparison, not checked. It differs for 4 runs, all of one
 study (SRR5709758, SRR5709913, SRR5709920, SRR5709924): each spacer that differs is absent in the paper and present
-here with 14 to 34 reads, like the other present spacers of these runs (median 26 to 34 reads).
+here with 14 to 34 reads, like the other present spacers of these runs (about 30 reads).
 
 SRR12882106 (L1.2.2.1) lacks 9 kb inside RD7 (H37Rv 2,210,001-2,219,200), a deletion of this strain: it is reported
 as a partial deletion, and the species stays *M. tuberculosis*. EBI refused the first file of ERR718554, the run

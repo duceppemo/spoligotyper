@@ -194,6 +194,11 @@ class Result:
                     'missing_h37rv': [list(m) for m in c.missing], 'profile': c.sign,
                     'h37rv_region': list(species.REGION_EXTENTS.get(r, ()))}
                 for r, c in self.species.regions.items()}
+        for key in ('livestock', 'l1'):  # Only the SNPs of the groups with a derived allele: not 1,835 per sample
+            if data.get(key):
+                groups = {s['lineage'] for s in data[key]['snps'] if s['lineage_reads'] >= 0.1 * (
+                    s['lineage_reads'] + s['other_reads'])}
+                data[key]['snps'] = [s for s in data[key]['snps'] if s['lineage'] in groups]
         return data
 
 
@@ -438,15 +443,19 @@ def check_species(result):
         if region_call.state == species.REDUCED:
             result.warn('%s %s', region, region_call.describe())
         elif region_call.state == species.PARTIAL and not (region == 'RD1' and check.species == 'M. microti'):
-            result.warn('%s %s (counted as %s in the RD profile).', region, region_call.describe(),
-                        'present' if region_call.sign == '+' else 'deleted')
+            result.warn('%s %s (%s).', region, region_call.describe(),
+                        'counted as present for the species: no species has this RD profile with {} deleted'.format(
+                            region) if region in species.promoted_regions(check) else
+                        'counted as {} in the RD profile'.format('present' if region_call.sign == '+' else 'deleted'))
     la = result.livestock or LivestockCall()
     for warning in species.consistency_warnings(check, call.called, la.main):
         result.warn(warning)
     sub = result.l1 or LivestockCall()
-    if sub.called and not sub.conflict and {lin.split('.')[0] for lin in call.called} - {'1'}:
-        result.warn('lineage 1 sublineage SNPs (%s) but the lineage SNPs indicate lineage %s', sub.lineage or
-                    ', '.join(sub.called), '/'.join(sorted({lin.split('.')[0] for lin in call.called})))
+    coll_main = {lin.split('.')[0] for lin in call.called}
+    if sub.called and not sub.conflict and '1' not in coll_main:
+        result.warn('lineage 1 sublineage SNPs (%s) but %s', sub.lineage or ', '.join(sub.called),
+                    'the lineage SNPs indicate lineage {}'.format('/'.join(sorted(coll_main))) if coll_main else
+                    'no lineage 1 SNP of the lineage barcode')
     for kind, scheme, group_call in (('livestock lineage', livestock.SCHEME, la),
                                      ('lineage 1 sublineage', l1.SCHEME, sub)):
         if group_call.conflict:

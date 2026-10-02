@@ -82,10 +82,12 @@ for mate in 1 2; do
 done
 reads_head $ena/SRR230/063/SRR23035463/SRR23035463_1.fastq.gz data/reads/SRR23035463.fastq.gz 30000
 
-runs() {  # list folder: download the runs of a list (first_reads and fastq: the last two columns)
+runs() {  # list folder: download the runs of a list, from its columns run, first_reads and fastq
     mkdir -p "$2"
-    grep -v '^#' "$1" | tail -n +2 | while IFS=$'\t' read -r -a fields; do
-        local run=${fields[0]} first=${fields[-2]} fastq=${fields[-1]} mate=1
+    awk -F'\t' '/^#/ {next} !header {for (i = 1; i <= NF; i++) column[$i] = i; header = 1; next}
+                {print $column["run"] "\t" $column["first_reads"] "\t" $column["fastq"]}' "$1" |
+    while IFS=$'\t' read -r run first fastq; do
+        local mate=1
         for url in ${fastq//;/ }; do
             if [ "$first" = all ]; then
                 download "$url" "$2/${run}_$mate.fastq.gz"

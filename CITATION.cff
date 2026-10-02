@@ -71,6 +71,28 @@ references:
     start: 4812
     year: 2014
     doi: 10.1038/ncomms5812
+  - type: article
+    title: "A new nomenclature for the livestock-associated Mycobacterium tuberculosis complex based on phylogenomics"
+    authors:
+      - family-names: Zwyer
+        given-names: Michaela
+      - name: "et al."
+    journal: Open Research Europe
+    volume: 1
+    start: 100
+    year: 2021
+    doi: 10.12688/openreseurope.14029.2
+  - type: article
+    title: "Whole-genome single nucleotide variant phylogenetic analysis of Mycobacterium tuberculosis Lineage 1 in endemic regions of Asia and Africa"
+    authors:
+      - family-names: Netikul
+        given-names: Thidarat
+      - name: "et al."
+    journal: Scientific Reports
+    volume: 12
+    start: 1565
+    year: 2022
+    doi: 10.1038/s41598-022-05524-0
   - type: software
     title: "BBTools"
     authors:

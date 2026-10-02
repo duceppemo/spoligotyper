@@ -10,12 +10,14 @@ SNPs carry the derived allele, and is mixed when at least 2 of its SNPs have bot
 """
 
 import csv
+from collections import Counter
 from dataclasses import dataclass, field
 from functools import cache
 
 from .lineage import CALL_FRACTION, MIN_READS, MIXED_FRACTION, MIXED_MIN_READS, SnpCall, confirmed_mixed
 
 MIN_SNPS = 2  # SNPs with the derived allele to call a group, or with both alleles to call it mixed
+MAX_MIXED_GROUPS = 6  # Groups listed in the text of a mix
 
 
 @dataclass
@@ -39,9 +41,11 @@ class Scheme:
         (e.g. La1_La2, shared by La1 and La2) is only used to check the others.
     :param shared: {unreported group: roots it goes with}, e.g. {"La1_La2": ("La1", "La2")}
     :param labels: names of groups in mixed and conflict texts, e.g. {"La1_La2": "La1/La2"}
-    :param min_fraction: fraction of the covered SNPs of a group that must carry the derived allele (or both alleles,
-        for a mix), besides MIN_SNPS: for barcodes with many SNPs per group, which a distant strain can share by
-        chance (homoplasy)
+    :param min_fraction: fraction of the covered SNPs of a group that must carry the derived allele, besides MIN_SNPS:
+        for barcodes with many SNPs per group, which a distant strain can share by chance (homoplasy)
+    :param mixed_fraction: the same for a mix (SNPs with both alleles): lower, as the minority strain of a mix has
+        fewer reads, some SNPs with too few of them to count; homoplasy gives one allele, not both
+    :param require_parent: a group is only called when its parent group is called too
     """
     barcode: object
     fasta: object
@@ -49,6 +53,8 @@ class Scheme:
     shared: tuple = ()
     labels: tuple = ()
     min_fraction: float = 0.0
+    mixed_fraction: float = 0.0
+    require_parent: bool = False
 
     @property
     def group_info(self):
@@ -72,11 +78,10 @@ class Scheme:
         """True when the groups can occur in one strain: each is an ancestor of the most specific one (a shared
         group goes with its roots)."""
         groups = set(groups)
-        for shared, roots in self.shared:
-            if shared in groups:
-                groups.discard(shared)
-                if {self.root(g) for g in groups} - set(roots):
-                    return False
+        shared = [(group, roots) for group, roots in self.shared if group in groups]
+        groups -= {group for group, _ in shared}
+        if any({self.root(g) for g in groups} - set(roots) for _, roots in shared):
+            return False
         if not groups:
             return True
         deepest = max(groups, key=lambda g: len(self.ancestors(g)))
@@ -87,13 +92,15 @@ class Scheme:
         pooled = {}
         for s in mixed:
             pooled.setdefault(self.label(s.lineage), []).append(s)
-        return ', '.join('{} {:.0f}%'.format(name, 100 * sum(s.lineage_reads for s in snps) /
-                                             sum(s.reads for s in snps)) for name, snps in pooled.items())
+        text = ['{} {:.0f}%'.format(name, 100 * sum(s.lineage_reads for s in snps) / sum(s.reads for s in snps))
+                for name, snps in pooled.items()]
+        return ', '.join(text[:MAX_MIXED_GROUPS]) + (', ...' if len(text) > MAX_MIXED_GROUPS else '')
 
-    def call(self, counts, file_type, contaminated=False):
+    def call(self, counts, file_type, contaminated=False, barcode=None):
         """
         :param counts: {"<group>|<position>|ancestral" or "...|derived": reads} from Seal
         :param contaminated: the sample contains non-MTBC DNA: SNPs conserved in NTM are not used
+        :param barcode: rows of the barcode (group, position, gene), by default those of the scheme's tsv
         :return: GroupCall
         """
         info = self.group_info
@@ -101,7 +108,7 @@ class Scheme:
         minimum = 1 if file_type == 'fasta' else MIN_READS
         result = GroupCall()
         positives, covered = {}, {}
-        for row in read_barcode(str(self.barcode)):
+        for row in barcode or read_barcode(str(self.barcode)):
             key = '{}|{}'.format(row['group'], row['position'])
             snp = SnpCall(row['group'], int(row['position']), row['gene'], counts.get(key + '|derived', 0),
                           counts.get(key + '|ancestral', 0))
@@ -117,12 +124,15 @@ class Scheme:
             if file_type == 'fastq' and key not in conserved and snp.reads >= MIXED_MIN_READS and \
                     MIXED_FRACTION[0] <= snp.fraction <= MIXED_FRACTION[1]:
                 result.mixed.append(snp)
-        def enough(n, group):
-            return n >= MIN_SNPS and n >= self.min_fraction * covered.get(group, 0)
-        result.called = [group for group in info if enough(positives.get(group, 0), group)]
+        def enough(n, group, fraction):
+            return n >= MIN_SNPS and n >= fraction * covered.get(group, 0)
+        result.called = [group for group in info if enough(positives.get(group, 0), group, self.min_fraction)]
+        if self.require_parent:
+            result.called = [g for g in result.called if all(p in result.called for p in self.ancestors(g)[1:])]
         used = [s for s in result.snps if not (contaminated and '{}|{}'.format(s.lineage, s.position) in conserved)]
         mixed = confirmed_mixed(result.mixed, used, lambda group: self.ancestors(group)[1:])
-        result.mixed = [s for s in mixed if enough(sum(m.lineage == s.lineage for m in mixed), s.lineage)]
+        per_group = Counter(s.lineage for s in mixed)
+        result.mixed = [s for s in mixed if enough(per_group[s.lineage], s.lineage, self.mixed_fraction)]
         if result.mixed:
             result.lineage = 'mixed: ' + self.mixed_summary(result.mixed)
         reported = [g for g in result.called if info[g][1]]
