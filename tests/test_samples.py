@@ -1,6 +1,6 @@
 import pytest
 
-from spoligotyper.samples import find_samples, split_extension
+from spoligotyper.samples import find_samples, sample_name, split_extension
 from spoligotyper.spoligotype import SpoligoError
 
 
@@ -64,3 +64,8 @@ def test_symlinked_folders(tmp_path):
     (tmp_path / 'input' / 'linked').symlink_to(tmp_path / 'real')
     (tmp_path / 'input' / 'loop').symlink_to(tmp_path / 'input')  # Must not loop forever
     assert [s.name for s in find_samples(tmp_path / 'input')] == ['S1', 'S2']
+
+
+def test_sample_name_without_tabs():
+    """Tabs and line breaks in file names would break the table."""
+    assert sample_name('my\tsample\n1.fasta') == 'my_sample_1'

@@ -142,7 +142,8 @@ def test_user_errors(tmp_path, caplog):
     assert not (tmp_path / 'out').exists()
 
 
-@pytest.mark.parametrize('args', [['-m', '0'], ['--memory', '2'], ['-s', '../x'], ['-t', 'two']])
+@pytest.mark.parametrize('args', [['-m', '0'], ['--memory', '2'], ['-s', '../x'], ['-t', 'two'], ['-s', 'my\tname'],
+                                  ['-s', 'a\nb']])
 def test_bad_arguments(data, tmp_path, args):
     with pytest.raises(SystemExit) as e:
         main(['-r1', str(data / 'AF2122.fasta'), '-o', str(tmp_path), *args])

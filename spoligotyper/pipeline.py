@@ -400,12 +400,15 @@ def check_result(result):
                     'from an assembly of the same reads are almost always right. Type the assembly.',
                     result.read_length)
     check_species(result)
-    if not any(result.counts):
+    if '1' not in result.binary:  # No spacer present (some may be seen in a few reads)
         if result.species and result.species.species == 'M. canettii':
             result.warn('no standard spacer found, as usual for M. canettii.')
+        elif result.species and result.species.mtbc:
+            result.warn('no spacer found, although the sample is MTBC: the direct repeat locus is deleted or absent?')
         else:
             result.warn('no spacer found. Is it a Mycobacterium tuberculosis complex sample?')
-        return
+        if not any(result.counts):
+            return
     if not result.is_reads:
         return
     if result.mtbc_depth is not None and result.mtbc_depth < LOW_DEPTH:
@@ -472,7 +475,7 @@ def check_species(result):
     if call.mixed:
         result.warn('both alleles of %d lineage SNP(s) seen (%s): mixed sample?', len(call.mixed),
                     ', '.join('{} {:.0f}%'.format(s.lineage, s.fraction * 100) for s in call.mixed))
-    if result.has_sb and any(result.counts) and check.state('RD9') == species.PRESENT:
+    if result.has_sb and '1' in result.binary and check.state('RD9') == species.PRESENT:
         result.warn('%s is an SB number, but RD9 is present: SB numbers are for RD9-deleted (animal) lineages.',
                     result.sb)
 

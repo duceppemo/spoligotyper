@@ -59,10 +59,11 @@ The fasta file has more than 1,000 sequences and more than 13 Mb (3 times the ge
 `fasterq-dump --fasta`), not an assembly, and is typed as reads (minimum count 5, depth and MTBC fraction estimated).
 If it really is an assembly (e.g. a metagenome assembly), use `--min-count 1`.
 
-### Paths with spaces, commas, "xmx" or "xms"
-They are supported. Seal cannot read them (BBTools splits arguments on spaces and commas, and reads any argument
-containing "xmx" or "xms" as a Java memory setting), so spoligotyper gives Seal links with neutral names in a
-temporary folder. The same links give Seal the right extension for files named without one (e.g. Galaxy's `.dat`
+### Paths with spaces, commas, quotes, other special characters, "xmx" or "xms"
+They are supported. Seal cannot read them safely (`seal.sh` runs its command line through the shell, BBTools splits
+arguments on commas, and reads any argument containing "xmx" or "xms" as a Java memory setting), so spoligotyper gives
+Seal links with neutral names in a temporary folder for every path with characters other than letters, digits and
+`. _ - + / : @`. The same links give Seal the right extension for files named without one (e.g. Galaxy's `.dat`
 files) or gzipped without `.gz`. Only the system temporary folder itself must be free of these (set `TMPDIR`
 otherwise).
 

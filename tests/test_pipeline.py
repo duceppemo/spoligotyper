@@ -162,6 +162,10 @@ def test_safe_paths(tmp_path):
     # BBTools 40 takes any argument containing "xmx" or "xms" for a Java memory setting
     assert seal.UNSAFE.search('/tmp/spoligotyper_87mxmx1_/stats.tsv') and seal.UNSAFE.search('/d/S_XMS.fq')
     assert not seal.UNSAFE.search('/data/run1/S1_R1.fastq.gz')
+    # seal.sh runs its command line with eval: no shell character may reach it
+    for name in ('back`id`.fasta', 'sample(1).fasta', "a'b.fasta", 'dollar$HOME.fasta', 'amp&.fasta', 'x;y.fasta',
+                 'tab\tname.fasta', 'é.fasta'):
+        assert seal.UNSAFE.search(name), name
 
 
 @pytest.mark.parametrize('name, content, gz, expected', [
@@ -169,6 +173,9 @@ def test_safe_paths(tmp_path):
     ('dataset_2.dat', '>c\nACGT\n', False, 'in0.fasta'),
     ('reads.fastq', '@r\nACGT\n+\nIIII\n', True, 'in0.fastq.gz'),  # Gzipped without .gz
     ('reads.fq.gz', '@r\nACGT\n+\nIIII\n', True, None),  # Right extension: used as is
+    ('reads.fasta', '@r\nACGT\n+\nIIII\n', False, 'in0.fastq'),  # fastq named .fasta
+    ('genome.fastq', '>c\nACGT\n', False, 'in0.fasta'),  # fasta named .fastq
+    ('genome.fq.gz', '>c\nACGT\n', True, 'in0.fasta.gz'),
 ])
 def test_extension_from_content(tmp_path, name, content, gz, expected):
     path = tmp_path / name
@@ -266,3 +273,16 @@ def test_pdf_order_by_spoligotype():
     order = [(group, r.sample) for group, r in by_spoligotype(results)]
     # Largest group first, then SB numbers before unnamed patterns, samples sorted within a group, failed last
     assert order == [(0, 'S1'), (0, 'S2'), (1, 'S0'), (2, 'S3'), (3, 'bad')]
+
+
+def test_no_spacer_with_a_few_reads():
+    """Lineage 1 'zero-copy' strain (ERR718539): no spacer present, a few reads on some; MTBC, RD9 present, SB2277."""
+    check = species.SpeciesCheck(mtbc=True, regions={'RD9': species.RegionCall('present', 8, 8, 1.0)},
+                                 species='M. tuberculosis')
+    r = Result('S', counts=[0] * 18 + [2, 1, 3] + [0] * 22, binary='0' * 43, sb='SB2277', file_type='fastq',
+               data='reads', min_count=5, reads=2_000_000, bases=int(60 * 4.4e6), species=check,
+               lineage=pipeline.lineage.LineageCall())
+    check_result(r)
+    assert any('no spacer found, although the sample is MTBC' in w for w in r.warnings)
+    assert any('3 spacer(s) called absent were seen' in w for w in r.warnings)
+    assert not any('is an SB number' in w for w in r.warnings)

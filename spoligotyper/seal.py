@@ -76,9 +76,11 @@ def seal_command(inputs, refs, stats_file, threads, memory, k=KMER_SIZE, hdist=1
     return cmd
 
 
-# Paths that seal.sh cannot pass to Seal: it splits its arguments on spaces and ref= lists on commas, and BBTools 40
-# takes any argument containing "xmx" or "xms" (in any case, anywhere) for a Java memory setting.
-UNSAFE = re.compile(r'[\s,=]|xm[xs]', re.IGNORECASE)
+# Paths that seal.sh cannot pass to Seal safely: it runs its command line with eval, so any shell character (spaces,
+# quotes, $, `, ;, &, |, parentheses...) is re-interpreted, it splits ref= lists on commas, and BBTools 40 takes any
+# argument containing "xmx" or "xms" (in any case, anywhere) for a Java memory setting. Only plain characters are
+# passed as they are: the other paths are linked under a neutral name.
+UNSAFE = re.compile(r'[^A-Za-z0-9._/+:@-]|xm[xs]', re.IGNORECASE)
 
 
 def extensions(name):
@@ -117,7 +119,8 @@ def safe_paths(paths, folder, prefix, check_extension=False):
         if check_extension:
             detected = content_extension(path)
             match = SEQUENCE_EXTENSION.search(Path(path).name)
-            if not match or bool(match.group(2)) != detected.endswith('.gz'):
+            fastq = match and match.group(1).lower() in ('fastq', 'fq')
+            if not match or fastq != detected.startswith('.fastq') or bool(match.group(2)) != detected.endswith('.gz'):
                 extension = detected
         if UNSAFE.search(path) or extension != extensions(path):
             link = Path(folder) / '{}{}{}'.format(prefix, i, extension)

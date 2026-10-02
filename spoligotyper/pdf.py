@@ -11,6 +11,7 @@ from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 from reportlab.platypus import (
     Image,
+    KeepInFrame,
     KeepTogether,
     PageBreak,
     Paragraph,
@@ -499,7 +500,7 @@ def run_section(run):
         key_values([('Spoligotype database', text('{path}\n{patterns:,} patterns · MD5 {md5}'.format(**run.database),
                                                   WRAP)),
                     ('Spacer sequences', text('{path}\n{spacers} spacers · MD5 {md5}'.format(**run.spacers), WRAP))]
-                   + ([('Spacer variants', text('{path}\n{variants} known variants · MD5 {md5}'.format(
+                   + ([('Spacer variants', text('{path}\n{variants} known variant(s) · MD5 {md5}'.format(
                        **run.spacers['variants']), WRAP))] if run.spacers.get('variants') else [])
                    + [(name, text('{path}\nMD5 {md5}'.format(**info), WRAP))
                       for name, info in run.species_data.items()]
@@ -533,6 +534,14 @@ def run_section(run):
     ]
 
 
+def unwrap(flowables):
+    """The flowables with their KeepTogether blocks unwrapped, for a KeepInFrame (which keeps them together)."""
+    flat = []
+    for f in flowables:
+        flat += unwrap(f._content) if isinstance(f, KeepTogether) else [f]
+    return flat
+
+
 def write_pdf(results, run, path):
     """Write the PDF report of a run."""
     producer = 'spoligotyper {}'.format(__version__)
@@ -543,8 +552,10 @@ def write_pdf(results, run, path):
     ordered = by_spoligotype(results)
     for i, (_, result) in enumerate(ordered, 1):
         story.append(PageBreak())  # One sample per page: its tables are never split
-        story += sample_section(result, i, len(ordered), 'SB number (Mbovis.org)' if run.database.get('default', True)
-                                else 'Name (spoligotype database)')
+        section = sample_section(result, i, len(ordered), 'SB number (Mbovis.org)' if run.database.get('default', True)
+                                 else 'Name (spoligotype database)')
+        # A section too long for one page (long paths, many warnings) is scaled down slightly to fit it
+        story.append(KeepInFrame(doc.width, doc.height - 12, unwrap(section), mode='shrink'))
     story += definitions_section(run)
     story += run_section(run)
 

@@ -31,9 +31,9 @@ SITVIT2 patterns (3,850 with a SIT) published under GPL-3.0 with [SpolLineages](
 ```
 spoligotyper-download-sit
 ```
-The list is downloaded from the SpolLineages repository (a fixed version, checked with its SHA-256 checksum), or from
-its Zenodo mirror if GitHub cannot be reached, and saved in `~/.cache/spoligotyper/` (or in the folder of the
-`SPOLIGOTYPER_DATA` environment variable). spoligotyper then fills the `SIT`, `SITVIT2family` and `ClosestSIT`
+The list is downloaded from the SpolLineages repository on GitHub (a fixed version, checked with its SHA-256
+checksum; without internet access, download it elsewhere and use `--source`), and saved in `~/.cache/spoligotyper/`
+(or in the folder of the `SPOLIGOTYPER_DATA` environment variable). spoligotyper then fills the `SIT`, `SITVIT2family` and `ClosestSIT`
 columns automatically.
 
 * **Computers without internet access** (e.g. cluster nodes): run `spoligotyper-download-sit -o /shared/folder` on a

@@ -2,6 +2,7 @@
 
 import logging
 import os
+import re
 import shlex
 import sys
 import time
@@ -123,6 +124,8 @@ def check_arguments(parser, args):
         parser.error('--jobs is only used with -i')
     if args.sample is not None and (not args.sample.strip() or '/' in args.sample or args.sample in ('.', '..')):
         parser.error('--sample must be a name, not a path: "{}"'.format(args.sample))
+    if args.sample is not None and re.search(r'[\t\r\n]', args.sample):
+        parser.error('--sample cannot contain tabs or line breaks (they would break the table)')
 
 
 def main(argv=None):

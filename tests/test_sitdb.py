@@ -79,3 +79,10 @@ def test_load_rejects_other_files(tmp_path):
     other.write_text('a\tb\n')
     with pytest.raises(sitdb.SpoligoError):
         sitdb.load(other)
+
+
+def test_load_ignores_blank_lines(tmp_path):
+    db = tmp_path / 'sit.tsv'
+    db.write_text('octal\tbinary\tsit\tfamily\n777777477760771\t{}\t451\tT-H37Rv\n\n'.format(
+        '1111111111111111111001111111111100001111111'))
+    assert sitdb.load(db).lookup('1111111111111111111001111111111100001111111') == ('SIT451', 'T-H37Rv')

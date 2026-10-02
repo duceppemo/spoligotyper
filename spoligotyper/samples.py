@@ -50,7 +50,7 @@ def sample_name(path, file_type=None):
         name, file_type = parsed[0], file_type or parsed[1]
     if file_type == 'fastq':
         name = READ_SUFFIX.sub('', name) or name
-    return name
+    return re.sub(r'[\t\r\n]', '_', name)  # Tabs and line breaks would break the table
 
 
 def find_samples(folder, exclude=()):
