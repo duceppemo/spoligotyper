@@ -419,7 +419,7 @@ def definitions_section(run):
         ('Livestock lineage',
          'Lineage of the livestock-associated MTBC after Zwyer et al. (2021): La1 (M. bovis), La2 (M. caprae), La3 '
          '(M. orygis), and the La1 sublineages La1.1 to La1.8, with their former names (e.g. La1.8.1: clonal complex '
-         'Eu1; BCG belongs to La1.2). From {} of the SNPs marked as markers in the extended data of the paper (4 or 5 '
+         'Eu1; BCG belongs to La1.2). From {} of the marker SNPs of the extended data of the paper (4 or 5 '
          'per group), counted as above; a group is called when at least 2 of its SNPs carry the derived allele, as in '
          'the KvarQ test suite of the paper. La2 and La3 tell M. caprae from M. orygis, which have the same RD '
          'profile.'.format(len(livestock.read_barcode()))),
