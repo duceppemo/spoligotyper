@@ -206,11 +206,6 @@ def paged_table(title, table, first, note=None):
     return flowables, left
 
 
-def zebra(rows, first=1):
-    """Shade every other row, from the second data row (after the header)."""
-    return [('BACKGROUND', (0, r), (-1, r), ROW_SHADE) for r in range(first + 1, rows, 2)]
-
-
 def summary_section(results, run):
     counts = {s: sum(r.status == s for r in results) for s in ('ok', 'warning', 'failed')}
     story = [
@@ -239,7 +234,7 @@ def summary_section(results, run):
                      pattern(r.binary, square=2.4) if not r.error else text('-', SMALL), status_label(r.status)])
     widths = [1.0 * inch, 1.05 * inch, 0.8 * inch, 1.15 * inch, 0.7 * inch, 1.95 * inch, WIDTH - 6.65 * inch]
     table = Table(rows, colWidths=widths, repeatRows=1)
-    table.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)] + zebra(len(rows)) + lines))
+    table.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)] + lines))
     note = text('Samples with the same spoligotype are grouped, between blue lines; the sample pages follow the '
                 'same order. {}: names of the pattern in the {} and SITVIT2 databases, "-" if the pattern has none. '
                 'See "Definitions and methods".'.format(names_label, 'Mbovis.org' if default_db else
@@ -253,7 +248,7 @@ def summary_section(results, run):
         rows = [[text('Sample', SMALL), text('Warning or error', SMALL)]] + [[text(s, WRAP), text(n, SMALL)]
                                                                            for s, n in notes]
         table = Table(rows, colWidths=[1.55 * inch, WIDTH - 1.55 * inch], repeatRows=1)
-        table.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)] + zebra(len(rows))))
+        table.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)]))
         flowables, left = paged_table('Warnings and errors', table, left)
         story += flowables
 
@@ -416,7 +411,7 @@ def species_block(result):
         # One line per region (except the RD1mic of M. microti)
         t = Table(table, colWidths=[0.45 * inch, 1.2 * inch, 2.75 * inch, 0.65 * inch, 0.6 * inch, WIDTH - 5.65 * inch])
         t.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)]))
-        story += [Spacer(1, 4), t,
+        story += [Spacer(1, 10), t,
                   text('+ / \u2212: DNA of the region present in / absent from the sample, from 100 bp segments inside '
                        'the region (not from amplicon sizes). See "Definitions and methods".', SMALL)]
     informative = [s for s in call.snps if s.fraction >= 0.1]  # Not the odd read with a sequencing error
@@ -428,28 +423,35 @@ def species_block(result):
         for s in snps:
             table.append([text(s.lineage, SMALL), text('{:,}'.format(s.position), SMALL), text(s.locus, SMALL),
                           text(s.lineage_reads, SMALL), text(s.other_reads, SMALL),
-                          text('called' if s.lineage in call.called else 'mixed' if s.lineage in mixed else '-',
+                          text('detected' if s.lineage in call.called else 'mixed' if s.lineage in mixed else '-',
                                SMALL)])
         t = Table(table, colWidths=[1.2 * inch, 1.3 * inch, 1.2 * inch, 1.6 * inch, 1.0 * inch, WIDTH - 6.3 * inch],
                   repeatRows=1)
-        t.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)] + zebra(len(table))))
-        story += [Paragraph('Lineage SNPs (Coll et al. 2014)', H3), t]
+        t.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)]))
+        minimum = '{} reads'.format(lineage.MIN_READS) if result.is_reads else '1 contig'
+        story += [Paragraph('Lineage SNPs (Coll et al. 2014)', H3), t, text(
+            'Result: detected, the lineage allele is in at least {:.0f}% of the {} covering the SNP (at least {}); '
+            'mixed, both alleles in at least {:.0f}% of {} or more reads; -, not detected.'.format(
+                lineage.CALL_FRACTION * 100, result.unit, minimum, lineage.MIXED_FRACTION[0] * 100,
+                lineage.MIXED_MIN_READS), SMALL)]
     barcodes = (('Livestock lineage SNPs (Zwyer et al. 2021)', result.livestock, livestock.SCHEME),
                 ('Lineage 1 sublineage SNPs (Netikul et al. 2022)', result.l1, l1.SCHEME))
     for title, group_call, scheme in barcodes:
-        table = group_table(group_call, scheme)
+        table = group_table(group_call, scheme, result.is_reads)
         if table:
-            story += [Paragraph(title, H3), table]
+            story += [Paragraph(title, H3)] + table
     return story
 
 
-def group_table(group_call, scheme):
+def group_table(group_call, scheme, reads=True):
     """
-    One row per group of a barcode with a derived allele in at least 10% of the reads of one SNP: its SNPs covered, with
-    the derived allele (in at least 80% of their reads) and with both alleles, their reads, and the call.
+    One row per group of a barcode with a SNP carrying its derived allele, or detected or mixed: its SNPs covered,
+    with the derived allele and with both alleles (as counted for the calls), their reads, and the result; then a note
+    on what the values mean. None when no group has any.
     """
     if not group_call:
         return None
+    minimum = lineage.MIN_READS if reads else 1
     by_group = {}
     for s in group_call.snps:
         by_group.setdefault(s.lineage, []).append(s)
@@ -458,20 +460,33 @@ def group_table(group_call, scheme):
                                       'Reads with derived allele', 'Other reads', 'Result')]]
     for group, (_, _, name) in scheme.groups:
         snps = by_group.get(group, [])
-        if not any(s.fraction >= 0.1 for s in snps):
-            continue
-        result = 'called' if group in group_call.called else 'mixed' if group in mixed else '-'
-        rows.append([text(scheme.label(group), SMALL), text(name or '-', SMALL), text(len(snps), SMALL),
-                     text(sum(s.fraction >= lineage.CALL_FRACTION for s in snps), SMALL),
-                     text(sum(lineage.MIXED_FRACTION[0] <= s.fraction < lineage.CALL_FRACTION for s in snps), SMALL),
+        derived = sum(s.reads >= minimum and s.fraction >= lineage.CALL_FRACTION for s in snps)
+        both = sum(reads and s.reads >= lineage.MIXED_MIN_READS and
+                   lineage.MIXED_FRACTION[0] <= s.fraction <= lineage.MIXED_FRACTION[1] for s in snps)
+        if not derived and group not in group_call.called and group not in mixed:
+            continue  # A few stray reads on some SNPs: not shown
+        result = 'detected' if group in group_call.called else 'mixed' if group in mixed else '-'
+        rows.append([text(scheme.label(group), SMALL), text(name or '-', SMALL),
+                     text(sum(s.reads >= minimum for s in snps), SMALL), text(derived, SMALL), text(both, SMALL),
                      text(sum(s.lineage_reads for s in snps), SMALL), text(sum(s.other_reads for s in snps), SMALL),
                      text(result, SMALL)])
     if len(rows) == 1:
         return None
     table = Table(rows, colWidths=[0.85 * inch, 2.55 * inch, 0.6 * inch, 0.6 * inch, 0.6 * inch, 0.8 * inch,
                                    0.6 * inch, WIDTH - 6.6 * inch], repeatRows=1)
-    table.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)] + zebra(len(rows))))
-    return table
+    table.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)]))
+    unit = 'reads' if reads else 'contigs'
+    rule = 'at least {} SNPs with the derived allele{}{}'.format(
+        snp_groups.MIN_SNPS, ', and {:.0f}% of those covered'.format(scheme.min_fraction * 100)
+        if scheme.min_fraction else '', ', and its parent group detected' if scheme.require_parent else '')
+    note = text('SNPs covered: with at least {} {}. Derived allele: SNPs with the derived allele in at least {:.0f}% '
+                'of their {}. Both alleles: SNPs with each allele in at least {:.0f}% of {} or more reads. Result: '
+                'detected, {}; mixed, at least {} SNPs with both alleles{}; -, not detected.'.format(
+                    minimum, unit if minimum > 1 else unit[:-1], lineage.CALL_FRACTION * 100, unit,
+                    lineage.MIXED_FRACTION[0] * 100, lineage.MIXED_MIN_READS, rule, snp_groups.MIN_SNPS,
+                    ', and {:.0f}% of those covered'.format(scheme.mixed_fraction * 100)
+                    if scheme.mixed_fraction else ''), SMALL)
+    return [table, note]
 
 
 def definitions_section(run):

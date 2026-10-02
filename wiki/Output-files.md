@@ -71,7 +71,7 @@ Made for quality assurance: everything needed to check a result, and to trace ho
 
 1. **Summary**: date, operator, and for each sample the octal code, SB number and SIT, species, lineage, pattern and
    status. Samples with the same spoligotype are grouped (the largest groups first), between blue lines, and failed
-   samples come last; every other row is shaded. The warnings and errors follow in a table of the same style, then a
+   samples come last. The warnings and errors follow in a table with a header row, then a
    box for the reviewer's name, date and signature. A table longer than a page continues on the next ones, each part
    titled e.g. "Summary (page 1 of 3)", with its header row repeated.
 2. **Samples**: two pages per sample (one for a failed sample, or with `--no-species`), in the order of the summary,
@@ -86,8 +86,9 @@ Made for quality assurance: everything needed to check a result, and to trace ho
    * page 2, the species and lineage: species, lineage with its name and typical spoligotype families, livestock
      lineage, lineage 1 sublineage and amount of MTBC DNA; the regions of difference with their H37Rv coordinates,
      segments found, relative depth and result; the lineage SNPs with their reads; the livestock lineage and lineage
-     1 sublineage groups with a derived allele, with their SNPs covered, with the derived allele and with both
-     alleles, their reads and the result; and the warnings about the species and lineage.
+     1 sublineage groups with SNPs carrying the derived allele, with their SNPs covered, with the derived allele and
+     with both alleles, their reads and the result (detected, mixed or not detected, explained under each table); and
+     the warnings about the species and lineage.
 3. **Definitions and methods**: what the codes, SB number, SIT, spoligotype families, lineage, livestock lineage and
    lineage 1 sublineage mean, how the
    regions of difference were determined (H37Rv coordinates, segments and thresholds) and how they compare with PCR
