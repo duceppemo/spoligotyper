@@ -285,9 +285,13 @@ def sample_section(result, number=1, total=1, db_label='SB number (Mbovis.org)')
     story += [key_values(rows)]
     if result.species:
         story.append(KeepTogether(species_block(result)))
+    variant_notes = [text('Spacer {}: counted from its known variant {} ({}): {} {} (standard sequence: {}).'.format(
+        int(spacer[-2:]), variant, description, reads,
+        plural(unit, reads), spacer_reads), SMALL)
+        for spacer, (variant, reads, spacer_reads, description) in result.spacer_variants.items()]
     story += [KeepTogether([Paragraph('{} per spacer'.format(unit.capitalize()), H3), spacer_table(result),
                             text('Blue: present (count ≥ {}). Orange: called absent but seen in some {}.'.format(
-                                result.min_count, unit), SMALL)])]
+                                result.min_count, unit), SMALL)] + variant_notes)]
     if result.warnings:
         story += [Paragraph('Warnings', H3)] + [text('• ' + w, SMALL) for w in result.warnings]
     return [KeepTogether(story[:4])] + story[4:]
@@ -442,7 +446,10 @@ def definitions_section(run):
     spacers = (
         'Spacers are counted with Seal (BBTools): each of the {n} spacers is searched as a single {k}-mer on both '
         'strands, allowing 1 mismatch (k={k}, hdist=1, rcomp=t, maskmiddle=f, ambiguous=all). A spacer is present when '
-        'it is found in at least the minimum count of reads (contigs for assemblies). The fraction of MTBC reads is '
+        'it is found in at least the minimum count of reads (contigs for assemblies). Known variants of standard '
+        'spacers, too different to be found as the spacer (more than 1 mismatch) but named as present in the '
+        'spoligotype databases, are searched the same way and counted for their spacer (e.g. spacer 3 of M. orygis, '
+        '2 mismatches): the sample page says so. The fraction of MTBC reads is '
         'the depth of the control regions divided by the depth expected from the number of bases.'
     ).format(n=N_SPACERS, k=KMER_SIZE)
     return [
@@ -475,6 +482,8 @@ def run_section(run):
         key_values([('Spoligotype database', text('{path}\n{patterns:,} patterns · MD5 {md5}'.format(**run.database),
                                                   WRAP)),
                     ('Spacer sequences', text('{path}\n{spacers} spacers · MD5 {md5}'.format(**run.spacers), WRAP))]
+                   + ([('Spacer variants', text('{path}\n{variants} known variants · MD5 {md5}'.format(
+                       **run.spacers['variants']), WRAP))] if run.spacers.get('variants') else [])
                    + [(name, text('{path}\nMD5 {md5}'.format(**info), WRAP))
                       for name, info in run.species_data.items()]
                    + [('SIT database', text('{path}\n{patterns:,} patterns, {sits:,} SITs · SHA-256 {sha256}\n'

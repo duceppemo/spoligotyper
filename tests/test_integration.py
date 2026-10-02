@@ -4,6 +4,7 @@ import gzip
 import json
 import logging
 import os
+import random
 import re
 import subprocess
 import sys
@@ -14,9 +15,9 @@ import pytest
 from spoligotyper import __version__, seal
 from spoligotyper.cli import main
 from spoligotyper.pipeline import spoligotype
-from spoligotyper.spoligotype import SPOLIGOTYPE_DB
+from spoligotyper.spoligotype import SPACER_VARIANTS, SPACERS_FASTA, SPOLIGOTYPE_DB
 
-from .conftest import H37RV, SB0120, SB0140
+from .conftest import DR, H37RV, SB0120, SB0140, random_seq, read_fasta
 
 pytestmark = pytest.mark.skipif(seal.executable() is None, reason='seal.sh (BBTools) is not installed')
 
@@ -333,3 +334,21 @@ def test_default_database_by_relative_path(data, tmp_path, capsys, monkeypatch):
     monkeypatch.chdir(SPOLIGOTYPE_DB.parent)
     row = run(capsys, '-r1', data / 'H37Rv.fna', '-o', tmp_path, '--db', SPOLIGOTYPE_DB.name)
     assert row['SB'] == 'Not in Mbovis.org'
+
+
+def test_spacer_variant(tmp_path, capsys):
+    """M. orygis: spacer 3 as its known variant (2 mismatches) is counted for spacer 3, and reported."""
+    rng = random.Random(3)
+    variant = read_fasta(SPACER_VARIANTS)['spacer03_v1']
+    spacers = list(read_fasta(SPACERS_FASTA).values())
+    locus = DR + spacers[0] + DR + spacers[1] + DR + variant + DR
+    path = tmp_path / 'orygis.fasta'
+    path.write_text('>contig\n{}{}{}\n'.format(random_seq(rng, 2000), locus, random_seq(rng, 2000)))
+    result = spoligotype(path, threads=2, memory='500m', species_check=False)
+    assert result.binary == '111' + '0' * 40 and result.counts[2] == 1
+    assert result.spacer_variants == {'spacer03': ('spacer03_v1', 1, 0, '2 mismatches, found in M. orygis')}
+    # Not with other spacer sequences (--spacers)
+    custom = tmp_path / 'spacers.fasta'
+    custom.write_text(SPACERS_FASTA.read_text())
+    result = spoligotype(path, threads=2, memory='500m', species_check=False, spacers=custom)
+    assert result.binary == '11' + '0' * 41 and result.spacer_variants == {}

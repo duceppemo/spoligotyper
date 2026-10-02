@@ -49,8 +49,8 @@ the data, simulates the read sets (BBTools `randomreads.sh`, fixed seeds) and ch
 | M_africanum_RB30065 | M. africanum RB30065 (lineage not documented) | Not in Mbovis.org | Orphan (AFRI_2) | 474077607177071 | M. africanum (lineage 5) (+ + p - +) | 5 | not documented | - | OK |
 | M_caprae_Allgaeu | M. caprae Allgaeu | SB0418 | SIT647 (BOV_4-CAPRAE) | 200003777377600 | M. caprae (+ + - - -) | BOV | BOV | La2 | OK |
 | M_caprae_SY-1 | M. caprae SY-1 | SB0418 | SIT647 (BOV_4-CAPRAE) | 200003777377600 | M. caprae (+ + - - -) | BOV | BOV | La2 | OK |
-| M_orygis_51145 | M. orygis 51145 | Not in Mbovis.org | Not in SITVIT2 list | 600000000000271 | M. orygis (+ + - - -) | BOV | BOV | La3 | OK |
-| M_orygis_NIAB | M. orygis NIAB_BDWBCSHFL_1 | Not in Mbovis.org | Not in SITVIT2 list | 600740007774671 | M. orygis (+ + - - -) | BOV | BOV | La3 | OK |
+| M_orygis_51145 | M. orygis 51145 | Not in Mbovis.org | Not in SITVIT2 list | 700000000000271 | M. orygis (+ + - - -) | BOV | BOV | La3 | OK |
+| M_orygis_NIAB | M. orygis NIAB_BDWBCSHFL_1 | SB0422 | SIT587 (Unknown) | 700740007774671 | M. orygis (+ + - - -) | BOV | BOV | La3 | OK |
 | M_microti_OV254 | M. microti OV254 | SB0118 | SIT539 (microti) | 000000000000600 | M. microti (p + - - +) | BOV_AFRI | BOV_AFRI | - | OK |
 | M_microti_MausIV | M. microti Maus IV | SB0118 | SIT539 (microti) | 000000000000600 | M. microti (p + - - +) | BOV_AFRI | BOV_AFRI | - | OK |
 | M_microti_94-2272 | M. microti 94-2272 | SB0118 | SIT539 (microti) | 000000000000600 | M. microti (p + - - +) | BOV_AFRI | BOV_AFRI | - | OK |
@@ -78,10 +78,8 @@ genomes above:
 * **ERR027297**: *M. microti* Maus IV, Illumina GAII paired-end (2010, first 1.5 million pairs). With the strong GC
   bias of these reads, one RD1<sup>mic</sup> segment gets a few stray reads and one GC-rich RD1 segment none:
   *M. microti* is still recognised from its RD1<sup>mic</sup> deletion, which tolerates one error on each side.
-* **SRR16643349**: *M. orygis* 51145, Illumina MiniSeq paired-end. 8 reads (median of the present spacers: 73) carry
-  a variant of spacer 3 with one SNP, flanked by direct repeats, absent from the PacBio assembly of the strain: a
-  minority population or cross-contamination. Spacer 3 is called present (octal 700000000000271, instead of
-  600000000000271 for the assembly), and flagged; the octal code is not checked.
+* **SRR16643349**: *M. orygis* 51145, Illumina MiniSeq paired-end: the same pattern as its assembly, with spacer 3
+  as the *M. orygis* variant (124 reads; see [Livestock lineages](#livestock-lineages)).
 * **ERR2383628**: *M. africanum* RB30001 (lineage 6), Illumina HiSeq 2500 paired-end (first million pairs).
 * **SRR18636082**, **SRR23035463**: *M. canettii* ET1291, Illumina NextSeq paired-end, and nanopore (first 30,000
   reads, mean length 4.3 kb): the nanopore reads get the long-read warning.
@@ -97,7 +95,7 @@ Simulated reads:
 | ERR1744454 | SB0140 | 664073777777600 | M. bovis | BOV | La1.8.1 | 1.00 | - | OK |
 | SRR12006063 | Not in Mbovis.org | 777777477760731 | M. tuberculosis | 4.9 | - | 0.69 | spacers with few reads, mixed sample | OK |
 | ERR027297 | SB0118 | 000000000000600 | M. microti | BOV_AFRI | - | 0.70 | - | OK |
-| SRR16643349 | Not in Mbovis.org | 700000000000271 | M. orygis | BOV | La3 | 0.87 | mixed sample | OK |
+| SRR16643349 | Not in Mbovis.org | 700000000000271 | M. orygis | BOV | La3 | 0.87 | - | OK |
 | ERR2383628 | SB0147 | 770777777777671 | M. africanum (lineage 6) | 6 | - | 1.00 | - | OK |
 | SRR18636082 | SB2277 | 000000000000000 | M. canettii | - | - | 0.86 | RD4 partially deleted, no spacer (M. canettii) | OK |
 | SRR23035463 | SB2277 | 000000000000000 | M. canettii | - | - | 0.95 | long reads, RD4 partially deleted, no spacer (M. canettii) | OK |
@@ -122,10 +120,16 @@ One run per lineage and sublineage of the livestock-associated complex, from the
 and the SB number given in the paper (first 600,000 read pairs; all the reads for the three runs whose reads are
 sorted by position: their first reads cover only part of the genome). The check is the livestock lineage and the
 species; "SNPs" gives, for each group called, the SNPs with the derived allele out of those covered.
-spoligotyper finds the SB number of the paper for 13 of the 14 runs. The *M. orygis* run (ERR2659154) differs from
-the paper's SB0422 at spacer 3 only: 140 of its reads carry a variant of spacer 3 with 2 mismatches
-(CCGTGCTTCCAGTGATC**A**CCTT**G**TA), which spoligotyper, allowing 1 mismatch per spacer, does not count, while the
-paper's in silico typing (KvarQ) does. The *M. orygis* NIAB genome above also differs from SB0422 at spacer 3 only.
+The SB number is checked too: spoligotyper finds the SB number of the paper for all 14 runs.
+
+*M. orygis* carries spacer 3 as a variant with 2 mismatches (CCGTGCTTCCAGTGATC**A**CCTT**G**TA), too different to
+be found as spacer 3 with 1 mismatch. Its patterns are named with spacer 3 present (SB0422 for ERR2659154, in the
+paper and in Mbovis.org, where the pattern without spacer 3 is not named), so the spoligotyping membrane detects it.
+spoligotyper counts this known variant for spacer 3, and says so on the sample page. The variant was searched in
+all the genomes and reads of this page: only the *M. orygis* genomes and reads have it, except lineage 6, whose
+spacer 3 is 1 mismatch from both the standard sequence and the variant (already present, unchanged). Without the
+variant, the *M. orygis* run got SB0422 minus spacer 3, a pattern not named in Mbovis.org.
+
 SRR1173570 (from a chimpanzee) has only about 50% of MTBC reads, which spoligotyper flags.
 
 | Run | Origin | Expected | La lineage | SNPs | Species | SB (paper) | SB | Result |
@@ -143,7 +147,7 @@ SRR1173570 (from a chimpanzee) has only about 50% of MTBC reads, which spoligoty
 | SRR7851304 | France, cattle | La1.8.2 | La1.8.2 | La1 4/4, La1.8 4/4, La1.8.2 5/5 | M. bovis | SB0134 | SB0134 | OK |
 | SRR1792479 | USA, cervid | La1.8.X | La1.8.X | La1 4/4, La1.8 4/4, La1.8.X-unk6 5/5 | M. bovis | SB1069 | SB1069 | OK |
 | SRR13888769 | Spain, goat | La2 | La2 | La2 5/5 | M. caprae | SB0415 | SB0415 | OK |
-| ERR2659154 | Australia, human | La3 | La3 | La3 5/5 | M. orygis | SB0422 | Not in Mbovis.org | OK |
+| ERR2659154 | Australia, human | La3 | La3 | La3 5/5 | M. orygis | SB0422 | SB0422 | OK |
 
 ## Comparison with SpoTyping
 [SpoTyping](https://github.com/xiaeryu/SpoTyping-v2.0) 2.1 (Xia *et al.* 2016, BLAST-based), an independent in silico

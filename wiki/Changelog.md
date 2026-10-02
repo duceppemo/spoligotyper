@@ -12,6 +12,10 @@
   lineage allele (in at least 15% of its reads). A lone lineage 2.1 SNP at 23% in an *M. bovis* strain no longer
   makes it "mixed". A livestock lineage group is mixed when at least 2 of its SNPs have both alleles, and a mix of
   sublineages of one lineage keeps its species (e.g. "M. bovis, mixed sample?").
+* Spacer 3 of *M. orygis*, a variant with 2 mismatches detected by the spoligotyping membrane, is counted for spacer 3
+  (`spacer_variants.fasta`), and the sample page says so: *M. orygis* now gets its Mbovis.org name (e.g. SB0422).
+  The variant is only found in *M. orygis* among the validation genomes and reads (and in lineage 6, whose spacer 3
+  is between the two sequences and already present).
 * Validation (59 of 59 checks): one public run of each livestock lineage and sublineage, from the genomes of the
   paper, with its sublineage and SB number. The validation script downloads complete runs when they are small, and
   whole runs whose reads are sorted by position.

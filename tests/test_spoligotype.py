@@ -4,11 +4,13 @@ from spoligotyper.spoligotype import (
     NOT_FOUND,
     SPOLIGOTYPE_DB,
     SpoligoError,
+    add_variants,
     binary_to_hex,
     binary_to_octal,
     load_database,
     lookup,
     read_spacer_names,
+    read_spacer_variants,
     to_binary,
 )
 
@@ -82,3 +84,14 @@ def test_bad_database(tmp_path, content, message):
     db.write_text(content)
     with pytest.raises(SpoligoError, match=message):
         load_database(db)
+
+
+def test_spacer_variants():
+    variants = read_spacer_variants()
+    assert variants == {'spacer03_v1': ('spacer03', '2 mismatches, found in M. orygis')}
+    counts = {'spacer03_v1': 244, 'spacer03': 0}  # M. orygis: only the variant
+    assert add_variants(counts, variants) == {'spacer03': 'spacer03_v1'} and counts['spacer03'] == 244
+    counts = {'spacer03_v1': 74, 'spacer03': 72}  # Lineage 6: between the two, the same reads match both
+    assert add_variants(counts, variants) == {'spacer03': 'spacer03_v1'} and counts['spacer03'] == 74
+    counts = {'spacer03_v1': 0, 'spacer03': 50}  # H37Rv
+    assert add_variants(counts, variants) == {} and counts['spacer03'] == 50

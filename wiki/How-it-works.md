@@ -23,6 +23,9 @@ flowchart LR
 1. **Spacer detection.** [Seal](https://sourceforge.net/projects/bbmap/) (BBTools) counts the reads (or contigs)
    that contain each spacer. The spacers are 25 bp long, so each spacer is searched as a single 25-mer, on both
    strands, allowing 1 mismatch (sequencing errors, SNPs). A read containing several spacers counts for each of them.
+   Known variants of a spacer, too different to be found with 1 mismatch but detected by the spoligotyping membrane,
+   are searched too and counted for their spacer (`spoligotyper/data/spacer_variants.fasta`; so far spacer 3 of
+   *M. orygis*, 2 mismatches): the sample page of the PDF report says so.
 2. **Presence or absence.** A spacer is present if it is found in at least `--min-count` reads.
 3. **Codes.** The binary pattern is converted to the standard [octal and hexadecimal codes](Output-files).
 4. **Name.** The pattern is looked up in the [Mbovis.org](https://www.mbovis.org/) database of SB numbers

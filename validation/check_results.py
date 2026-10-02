@@ -18,9 +18,8 @@ READS = {
     # repeats during passage; SIT1647, T-H37Rv family). The reference genome has spacers 40-43 (SIT451)
     'SRR12006063': ('M. tuberculosis', '4.9', '777777477760731', 'mixed sample', ''),
     'ERR027297': ('M. microti', 'BOV_AFRI', '000000000000600', '', ''),  # M. microti Maus IV, 2010 GAII reads
-    # M. orygis 51145: 8 reads with a 1-SNP variant of spacer 3, not in the PacBio assembly (minority population or
-    # cross-contamination): spacer 3 is called present, and flagged. Octal not checked
-    'SRR16643349': ('M. orygis', 'BOV', '', 'mixed sample', 'La3'),
+    # M. orygis 51145: spacer 3 as the M. orygis variant (2 mismatches), as in the assembly
+    'SRR16643349': ('M. orygis', 'BOV', '700000000000271', '', 'La3'),
     'ERR2383628': ('M. africanum (lineage 6)', '6', '770777777777671', '', ''),  # M. africanum RB30001
     'SRR18636082': ('M. canettii', '', '000000000000000', 'as usual for M. canettii', ''),  # M. canettii ET1291
     'SRR23035463': ('M. canettii', '', '000000000000000', 'long reads', ''),  # ET1291, nanopore
@@ -130,7 +129,7 @@ def main():
             continue
         row = la_rows[exp['run']]
         species = {'La2': 'M. caprae', 'La3': 'M. orygis'}.get(exp['expected_la'], 'M. bovis')
-        ok = row['LaLineage'] == exp['expected_la'] and row['Species'] == species
+        ok = row['LaLineage'] == exp['expected_la'] and row['Species'] == species and row['SB'] == exp['expected_sb']
         failures += not ok
         lines.append('| {} | {} | {} | {} | {} | {} | {} | {} | {} |'.format(
             exp['run'], '{}, {}'.format(exp['country'], exp['host']), exp['expected_la'], row['LaLineage'] or '-',

@@ -23,9 +23,11 @@ from .species import SpeciesCheck
 from .spoligotype import (
     NOT_FOUND,
     NOT_FOUND_CUSTOM,
+    SPACER_VARIANTS,
     SPACERS_FASTA,
     SPOLIGOTYPE_DB,
     SpoligoError,
+    add_variants,
     binary_to_hex,
     binary_to_octal,
     closest,
@@ -33,6 +35,7 @@ from .spoligotype import (
     load_database,
     lookup,
     read_spacer_names,
+    read_spacer_variants,
     to_binary,
 )
 
@@ -96,6 +99,8 @@ class Result:
     error: str = ''
     seconds: float = 0.0
     closest: list = field(default_factory=list)  # Closest database patterns when not found: [(SB, [spacers])]
+    # Spacers counted from a known variant: {spacer: (variant, variant reads, spacer reads, description)}
+    spacer_variants: dict = field(default_factory=dict)
     sit: str = ''  # e.g. "SIT451", "Orphan" (SITVIT2 pattern without SIT), "Not in SITVIT2 list"; "" without database
     sit_family: str = ''  # SITVIT2 family, e.g. "T-H37Rv"
     closest_sit: list = field(default_factory=list)  # Closest SITs when the pattern has none: [(SIT, [spacers])]
@@ -225,6 +230,9 @@ class RunInfo:
                          'default': is_default_database(database)}
         info.spacers = {'path': str(Path(str(spacers)).resolve()), 'md5': file_md5(spacers),
                         'spacers': len(read_spacer_names(spacers))}
+        if Path(str(spacers)).resolve() == Path(str(SPACERS_FASTA)).resolve():
+            info.spacers['variants'] = {'path': str(Path(str(SPACER_VARIANTS)).resolve()),
+                                        'md5': file_md5(SPACER_VARIANTS), 'variants': len(read_spacer_variants())}
         info.species_data = {name: {'path': str(Path(str(path)).resolve()), 'md5': file_md5(path)}
                              for name, path in (('Species markers', species.MARKERS_FASTA),
                                                 ('Lineage SNP barcode', lineage.BARCODE),
@@ -317,8 +325,10 @@ def spoligotype(r1, r2=None, sample=None, min_count=None, threads=1, memory='1g'
     db = load_database(database)  # Before running Seal, to report a bad database right away
 
     log.info('Spoligotyping %s (%s, minimum count %d)', result.sample, kind, result.min_count)
-    # Spacers and species markers in one pass: both are searched with 25-mers and 1 mismatch
-    refs = [spacers, species.MARKERS_FASTA] if species_check else [spacers]
+    # Spacers, their known variants (with the standard spacers only) and species markers in one pass: all are searched
+    # with 25-mers and 1 mismatch
+    variants = read_spacer_variants() if Path(str(spacers)).resolve() == Path(str(SPACERS_FASTA)).resolve() else {}
+    refs = [spacers] + ([SPACER_VARIANTS] if variants else []) + ([species.MARKERS_FASTA] if species_check else [])
     stats = seal.run_seal(inputs, refs, threads=threads, memory=memory)
     result.reads, result.bases = stats.reads, stats.bases
     many_sequences = (stats.reads or 0) > FASTA_READS_MIN_SEQUENCES and (stats.bases or 0) > FASTA_READS_MIN_BASES
@@ -328,6 +338,9 @@ def spoligotype(r1, r2=None, sample=None, min_count=None, threads=1, memory='1g'
             result.min_count = MIN_COUNT['reads']
         result.warn('%d sequences, %.0f Mb: typed as reads in fasta format (minimum count %d), not as an assembly. '
                     'For an assembly, use --min-count 1.', stats.reads, stats.bases / 1e6, result.min_count)
+    original = {spacer: stats.counts.get(spacer, 0) for spacer, _ in variants.values()}
+    result.spacer_variants = {spacer: (variant, stats.counts[variant], original[spacer], variants[variant][1])
+                              for spacer, variant in add_variants(stats.counts, variants).items()}
     result.counts = [stats.counts.get(name, 0) for name in spacer_names]
     result.binary = to_binary(stats.counts, spacer_names, result.min_count)
     result.octal, result.hexadecimal = binary_to_octal(result.binary), binary_to_hex(result.binary)

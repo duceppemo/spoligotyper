@@ -79,6 +79,14 @@ assembly.
 Yes: spacer detection and the binary, octal and hexadecimal codes work for the whole complex. Only the SB number
 is specific to the animal-adapted lineages (see above).
 
+### Why is spacer 3 of my *M. orygis* sample "counted from its known variant"?
+*M. orygis* carries spacer 3 with 2 mismatches, too many to be found as spacer 3 with the 1 mismatch spoligotyper
+allows. Its patterns are named with spacer 3 present (e.g. SB0422 in [Mbovis.org](https://www.mbovis.org/) and in
+[Zwyer *et al.* 2021](https://doi.org/10.12688/openreseurope.14029.2)), while the same patterns without spacer 3
+are not named: the spoligotyping membrane detects this variant. spoligotyper therefore counts it for spacer 3, and the
+sample page of the PDF report (and `spacer_variants` in the JSON) says so, with the reads of the variant and of the
+standard sequence. See [Validation](Validation#livestock-lineages).
+
 ### Why are there 43 spacers?
 The 43 spacers are those of the standard spoligotyping membrane
 ([Kamerbeek *et al.* 1997](https://doi.org/10.1128/jcm.35.4.907-914.1997)), so that *in silico* results can be

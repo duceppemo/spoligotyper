@@ -54,7 +54,7 @@ hexadecimal number.
 
 ## JSON: `spoligotyping.json` or `<sample>_spoligotyping.json`
 Everything in the table and the PDF report, for pipelines: for each sample the input files, codes, spacer counts,
-closest patterns, species check (with the depth of each region), lineage and livestock lineage (`livestock`, with
+closest patterns, spacers counted from a known variant (`spacer_variants`), species check (with the depth of each region), lineage and livestock lineage (`livestock`, with
 the groups called and the reads supporting each SNP allele) and warnings, and the run information (software versions, parameters, checksums of the reference data).
 
 ## MultiQC: `spoligotyping_mqc.json` or `<sample>_spoligotyping_mqc.json`

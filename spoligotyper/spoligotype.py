@@ -24,6 +24,9 @@ def data_file(name):
 
 
 SPACERS_FASTA = data_file('spoligo_spacers.fasta')
+# Known variants of standard spacers, too different (more than 1 mismatch) to be found as the spacer itself, but
+# detected by the spoligotyping membrane: e.g. spacer 3 of M. orygis, whose patterns are named with spacer 3 present
+SPACER_VARIANTS = data_file('spacer_variants.fasta')
 SPOLIGOTYPE_DB = data_file('spoligotype_db.txt')
 
 
@@ -34,6 +37,36 @@ def read_spacer_names(fasta=SPACERS_FASTA):
     if len(names) != N_SPACERS or len(set(names)) != N_SPACERS:
         raise SpoligoError('{} must contain {} distinct spacers (found {})'.format(fasta, N_SPACERS, len(set(names))))
     return names
+
+
+def read_spacer_variants(fasta=SPACER_VARIANTS):
+    """
+    {variant name: (spacer name, description)}, e.g. {"spacer03_v1": ("spacer03", "2 mismatches, found in M. orygis")},
+    from fasta descriptions such as "spacer=spacer03 mismatches=2 found_in=M. orygis".
+    """
+    variants = {}
+    with open(fasta) as f:
+        for line in f:
+            if line.startswith('>'):
+                name, _, description = line[1:].strip().partition(' ')
+                description, _, found_in = description.partition(' found_in=')  # found_in can contain spaces
+                fields = dict(field.split('=', 1) for field in description.split())
+                variants[name] = (fields['spacer'], '{} mismatches, found in {}'.format(fields['mismatches'], found_in))
+    return variants
+
+
+def add_variants(counts, variants):
+    """
+    Count the reads of known spacer variants as reads of their spacer: the spacer count becomes the higher of the two
+    (a read between the spacer and its variant matches both). Returns {spacer: variant reads} for the spacers whose
+    count comes from a variant.
+    """
+    used = {}
+    for variant, (spacer, _) in variants.items():
+        if counts.get(variant, 0) > counts.get(spacer, 0):
+            counts[spacer] = counts[variant]
+            used[spacer] = variant
+    return used
 
 
 def check_binary(binary):
