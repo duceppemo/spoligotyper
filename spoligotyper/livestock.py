@@ -36,7 +36,7 @@ GROUPS = {
     'La1.7.1': ('La1.7', 'La1.7.1', 'Eu2'),
     'La1.7.X-unk4': ('La1.7', 'La1.7.X', 'unknown4'),
     'La1.7.X-unk5': ('La1.7', 'La1.7.X', 'unknown5'),
-    'La1.8': ('La1', 'La1.8', 'Eu1, unknown6, unknown7'),
+    'La1.8': ('La1', 'La1.8', 'Eu1, unknown6, unknown7, unknown8'),
     'La1.8.1': ('La1.8', 'La1.8.1', 'Eu1'),
     'La1.8.2': ('La1.8', 'La1.8.2', 'unknown7'),
     'La1.8.X-unk6': ('La1.8', 'La1.8.X', 'unknown6'),

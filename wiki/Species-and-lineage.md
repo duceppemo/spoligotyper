@@ -45,7 +45,7 @@ The regions are usually deleted in:
 
 | Region | Deleted in |
 |---|---|
-| RD1 | BCG and the Dassie bacillus |
+| RD1 | BCG; partly: *M. microti* (RD1<sup>mic</sup>) and the Dassie bacillus (RD1<sup>das</sup>) |
 | RD4 | *M. bovis* and BCG (and some *M. canettii*) |
 | RD7 | Lineage 6 (*M. africanum* West African 2) and all the animal-adapted lineages |
 | RD9 | *M. africanum* (lineages 5 and 6) and all the animal-adapted lineages |
@@ -55,17 +55,18 @@ The regions are usually deleted in:
 |---|---|---|---|---|---|
 | + | + | + | + | + | *M. tuberculosis*; *M. canettii* when there is no standard spacer and no specific lineage SNP |
 | + | + | + | − | + | *M. africanum* (lineage 5, West African 1) |
-| + | + | − | − | + | *M. africanum* (lineage 6, West African 2), *M. microti*, *M. pinnipedii* or *M. mungi*: lineage 6 with its SNP; *M. microti* when RD1 is partially deleted by RD1<sup>mic</sup>; otherwise the three, with the BOV_AFRI SNP |
+| + | + | − | − | + | *M. africanum* (lineage 6, West African 2), *M. microti*, *M. pinnipedii*, *M. mungi* or the Dassie bacillus: lineage 6 with its SNP; *M. microti* when RD1 is partially deleted by RD1<sup>mic</sup>; the Dassie bacillus when it is partially deleted by RD1<sup>das</sup>; otherwise *M. microti*, *M. pinnipedii* or *M. mungi*, with the BOV_AFRI SNP |
 | + | − or + | + | + or − | − or + | *M. canettii*, when RD7 is present but RD4 or RD12 is deleted |
 | + | + | − | − | − | *M. caprae* (La2) or *M. orygis* (La3), from the livestock lineage SNPs; *M. orygis* or *M. caprae* without them |
 | + | − | − | − | − | *M. bovis* |
 | − | − | − | − | − | *M. bovis* BCG |
-| − | + | − | − | + | Dassie bacillus |
 
 Any other combination is reported as an unusual RD profile. Notes:
 * In some RD tables, lineage 5 and lineage 6 are called *M. africanum* "1b" and "1a": lineage 5 keeps RD7, lineage 6
   (like *M. africanum* GM041182) lost it, like the animal lineages.
-* *M. microti* has its own deletion, RD1<sup>mic</sup>, which removes the part of RD1 from Rv3871 to Rv3876: RD1 is
+* *M. microti* has its own deletion, RD1<sup>mic</sup> (14 kb, Rv3864 to Rv3876;
+  [Brodin *et al.* 2002](https://doi.org/10.1128/IAI.70.10.5568-5578.2002)), which removes the part of RD1 from
+  Rv3871 to Rv3876: RD1 is
   reported as partially deleted (11 of 20 segments found, H37Rv 4,350,651-4,354,450 missing, in three *M. microti*
   genomes) and counts as + in the RD profile, as *M. microti* is RD1 + in the RD PCR scheme. This RD1<sup>mic</sup>
   pattern identifies *M. microti* among the three species of its row. One error is tolerated on each
@@ -76,9 +77,16 @@ Any other combination is reported as an unusual RD profile. Notes:
   coordinates and do not change the species.
 * *M. canettii* is diverse: of four *M. canettii* genomes, one lacks RD12, one lacks RD4, and two have the RD profile
   of *M. tuberculosis*. None has any of the 43 standard spacers, which identifies them. Some carry the lineage 4 SNP
-  (the only lineage defined by the H37Rv allele): the lineage SNPs are not reliable for *M. canettii*.
+  (lineages 4 and 4.9 are defined by the H37Rv allele): the lineage SNPs are not reliable for *M. canettii*, and
+  lineages 4 and 4.9 alone do not make a strain *M. tuberculosis*.
 * *M. caprae* and *M. orygis* carry the SNP of the *M. bovis* clade (BOV) of the barcode.
-* No genome of the Dassie bacillus is publicly available: its row follows the RD PCR scheme and was not validated.
+* The Dassie bacillus has its own, smaller deletion of RD1, RD1<sup>das</sup> (Rv3874 to Rv3877, H37Rv 4,352,274 to
+  4,356,542; [Mostowy *et al.* 2004](https://doi.org/10.1128/jb.186.1.104-109.2003)), and lacks RD7 and RD9 like
+  *M. microti*: RD1 segments 4 to 12 are missing (11 of 20 found, counted as +), which identifies it, with the same
+  tolerance as RD1<sup>mic</sup>. No genome of the Dassie bacillus is publicly available: this is from the
+  coordinates of the deletion, and was not validated.
+* RD profiles of *M. orygis* ([van Ingen *et al.* 2012](https://doi.org/10.3201/eid1804.110888)) and *M. mungi*
+  ([Alexander *et al.* 2010](https://doi.org/10.3201/eid1608.100314)) as described with these species.
 
 The RD segments and the control regions are 100 bp pieces of the H37Rv genome, chosen by
 [`scripts/make_reference_data.py`](https://github.com/duceppemo/spoligotyper/blob/main/scripts/make_reference_data.py)

@@ -3,7 +3,7 @@ Species check from regions of difference (RD), and amount of MTBC DNA in the sam
 
 markers.fasta holds 100 bp chunks of the H37Rv genome (see scripts/make_reference_data.py):
   MTBC  control chunks, found in all MTBC genomes and in no non-tuberculous mycobacteria
-  RD1   deleted in BCG and the Dassie bacillus
+  RD1   deleted in BCG; partly deleted in M. microti (RD1mic) and the Dassie bacillus (RD1das)
   RD4   deleted in M. bovis and BCG (and some M. canettii)
   RD7   deleted in lineage 6 (M. africanum) and the animal-adapted lineages
   RD9   deleted in M. africanum (lineages 5 and 6) and the animal-adapted lineages, including M. bovis
@@ -36,6 +36,11 @@ REGION_EXTENTS = {'RD1': (4350251, 4359740), 'RD4': (1696001, 1708740), 'RD7': (
 # M. microti lost part of RD1 with its own deletion, RD1mic (Brodin et al. 2002), which ends in Rv3876: in three
 # M. microti genomes, the RD1 segments up to H37Rv 4,354,450 are missing and those from 4,354,851 are present.
 RD1MIC = (4348827, 4354800)
+# The Dassie bacillus lost a smaller part of RD1, RD1das: Rv3874 to Rv3877 (Mostowy et al. 2004), H37Rv 4,352,274 to
+# 4,356,542, RD1 segments 4 to 12. No genome is public: from the coordinates only.
+RD1DAS = (4352274, 4356542)
+# Species identified by a partial deletion of RD1, reported in the RD table rather than as a warning
+RD1_SPECIES = {'M. microti': 'RD1mic of M. microti', 'Dassie bacillus': 'RD1das of the Dassie bacillus'}
 MIN_CONTROL_READS = 3  # Median reads per control chunk to call the species from reads
 MIN_CONTROL_FRACTION = 0.5  # Fraction of the control chunks found
 CHUNK = 100
@@ -144,22 +149,32 @@ def call_region(counts, region, control_depth, file_type='fastq'):
     return RegionCall(state, len(found), len(names), ratio, missing if state == PARTIAL else [])
 
 
-def rd1mic(check):
+def rd1_deletion(check, extent):
     """
-    True when RD1 lacks its segments in the RD1mic deletion of M. microti (Rv3871 to Rv3876) and has the others. As
-    for the regions, one error in ten (at least one) is tolerated on each side: in real reads, a segment inside RD1mic
-    can get a few stray reads, and a GC-rich segment outside it can get none.
+    True when RD1 lacks its segments inside extent (H37Rv start, end) and has the others. As for the regions, one error
+    in ten (at least one) is tolerated on each side: in real reads, a segment inside the deletion can get a few stray
+    reads, and a GC-rich segment outside it can get none.
     """
     call = check.regions.get('RD1')
     if call is None or call.state != PARTIAL:
         return False
     names = [n for n in segments() if n.startswith('RD1_')]
-    inside = {n for n in names if segments()[n][0] >= RD1MIC[0] and segments()[n][1] <= RD1MIC[1]}
+    inside = {n for n in names if segments()[n][0] >= extent[0] and segments()[n][1] <= extent[1]}
     missing = {n for n in names if any(start <= segments()[n][0] and segments()[n][1] <= end
                                        for start, end in call.missing)}
     outside = set(names) - inside
     return (bool(inside) and len(inside - missing) <= max(1, round(MISSING_TOLERANCE * len(inside)))
             and len(missing & outside) <= max(1, round(MISSING_TOLERANCE * len(outside))))
+
+
+def rd1mic(check):
+    """RD1mic of M. microti: the 14 kb deletion of Rv3864 to Rv3876, which overlaps RD1 from Rv3871 on."""
+    return rd1_deletion(check, RD1MIC)
+
+
+def rd1das(check):
+    """RD1das of the Dassie bacillus: the deletion of Rv3874 to Rv3877, within RD1."""
+    return rd1_deletion(check, RD1DAS)
 
 
 def expected_control_reads(depth, read_length, paired):
@@ -221,7 +236,6 @@ RD_PROFILES = {
     '++---': 'M. orygis or M. caprae',
     '+----': 'M. bovis',
     '-----': 'M. bovis BCG',
-    '-+--+': 'Dassie bacillus',
 }
 
 
@@ -240,7 +254,9 @@ def promoted_regions(check):
     make a species. Empty when the profile is known as it is.
     """
     profile = rd_profile(check)
-    if profile in RD_PROFILES:
+    rd1, rd4, rd7, rd9, rd12 = profile
+    if profile in RD_PROFILES or any(check.state(r) == REDUCED for r in REGIONS) or \
+            (rd7 == '+' and (rd4 == '-' or rd12 == '-')):  # Known profile, or called before: mixed, M. canettii
         return []
     partial = [r for r, sign in zip(REGIONS, profile, strict=True) if check.state(r) == PARTIAL and sign == '-']
     present = ''.join('+' if r in partial else s for r, s in zip(REGIONS, profile, strict=True))
@@ -268,9 +284,9 @@ def call_species(check, lineages=(), spacers=True, livestock=''):
         return 'MTBC (unusual RD profile: {})'.format(', '.join(
             '{}{}'.format(r, s) for r, s in zip(REGIONS, profile, strict=True)))
     if profile == '+++++':
-        # Lineage 4 is the only lineage defined by the H37Rv allele, which some M. canettii strains carry: only a
-        # sublineage of lineage 4, or lineages 1, 2, 3 or 7, are specific to M. tuberculosis
-        specific = [lin for lin in lineages if lin[0] in '1237' or lin.startswith('4.')]
+        # Lineages 4 and 4.9 are defined by the H37Rv allele, which some M. canettii strains carry: only the other
+        # sublineages of lineage 4, or lineages 1, 2, 3 or 7, are specific to M. tuberculosis
+        specific = [lin for lin in lineages if lin[0] in '1237' or (lin.startswith('4.') and lin != '4.9')]
         if specific:
             return 'M. tuberculosis'
         if not spacers:
@@ -287,6 +303,8 @@ def call_species(check, lineages=(), spacers=True, livestock=''):
             return 'M. africanum (lineage 6)'
         if rd1mic(check):
             return 'M. microti'
+        if rd1das(check):
+            return 'Dassie bacillus'
         if 'BOV_AFRI' in main:  # The clade of the animal lineages and lineage 6, without the lineage 6 SNP
             return 'M. microti, M. pinnipedii or M. mungi'
     return species

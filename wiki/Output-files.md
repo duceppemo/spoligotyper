@@ -70,26 +70,32 @@ Made for quality assurance: everything needed to check a result, and to trace ho
 ![Summary page of the PDF report](https://raw.githubusercontent.com/duceppemo/spoligotyper/main/assets/report_summary.png)
 
 1. **Summary**: date, operator, and for each sample the octal code, SB number and SIT, species, lineage, pattern and
-   status. Samples with the same spoligotype are grouped (the largest groups first; alternate groups shaded), and
-   failed samples come last. Warnings and errors are listed below, followed by a box for the reviewer's name, date
-   and signature.
-2. **Samples**: one page per sample, in the order of the summary, so its tables are never split, with
-   * the spoligotype: octal, hexadecimal and binary codes, and the pattern, then its SB number and SIT;
-   * the input files: full path (and the real file when it is a symbolic link), size, modification date and MD5
-     checksum;
-   * the number of reads and bases, estimated depth, minimum count, number of present spacers and their median count;
-   * the closest known patterns, when the pattern is not in the database;
-   * the species and lineage: regions of difference with their H37Rv coordinates, segments found, relative depth
-     and result, lineage with its name and typical
-     spoligotype families, amount of MTBC DNA, and the reads supporting each lineage SNP;
-   * the reads (or contigs) per spacer: present spacers in blue, absent spacers seen in some reads in orange;
-   * the warnings, or the error of a failed sample.
-3. **Definitions and methods**: what the codes, SB number, SIT, spoligotype families and lineage mean, how the
+   status. Samples with the same spoligotype are grouped (the largest groups first), between blue lines, and failed
+   samples come last; every other row is shaded. The warnings and errors follow in a table of the same style, then a
+   box for the reviewer's name, date and signature. A table longer than a page continues on the next ones, each part
+   titled e.g. "Summary (page 1 of 3)", with its header row repeated.
+2. **Samples**: two pages per sample (one for a failed sample, or with `--no-species`), in the order of the summary,
+   so their tables are never split (a page too long, with long input paths or many warnings, is scaled down slightly
+   to fit):
+   * page 1, the spoligotype: octal, hexadecimal and binary codes, and the pattern, its SB number and SIT, the
+     closest known patterns when it has no name; the input files: full path (and the real file when it is a symbolic
+     link), size, modification date and MD5 checksum; the number of reads and bases, estimated depth, minimum count,
+     number of present spacers and their median count; the reads (or contigs) per spacer, present spacers in blue,
+     absent spacers seen in some reads in orange; the spacers counted from a known variant (spacer 3 of
+     *M. orygis*); and the warnings about the spacers;
+   * page 2, the species and lineage: species, lineage with its name and typical spoligotype families, livestock
+     lineage, lineage 1 sublineage and amount of MTBC DNA; the regions of difference with their H37Rv coordinates,
+     segments found, relative depth and result; the lineage SNPs with their reads; the livestock lineage and lineage
+     1 sublineage groups with a derived allele, with their SNPs covered, with the derived allele and with both
+     alleles, their reads and the result; and the warnings about the species and lineage.
+3. **Definitions and methods**: what the codes, SB number, SIT, spoligotype families, lineage, livestock lineage and
+   lineage 1 sublineage mean, how the
    regions of difference were determined (H37Rv coordinates, segments and thresholds) and how they compare with PCR
    assays, and how the spacers were counted.
 4. **Run information**: operator, user, computer, operating system, start and end time (with time zone), working
    directory, the exact command, parameters, versions of spoligotyper, Python, BBTools and Java, path and MD5
-   checksum of the spoligotype database and of the spacer sequences, and references.
+   checksum of the spoligotype database, of the spacer sequences and variants, and of the species and lineage
+   reference data, and references.
 
 Every page has the spoligotyper version, the date, user and computer, and "Page x of y" in the footer.
 

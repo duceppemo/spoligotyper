@@ -32,14 +32,16 @@ PALE_BLUE = colors.HexColor('#9DB3D4')
 MAGENTA = colors.HexColor('#C8215F')
 GREY = colors.HexColor('#56627A')
 LIGHT = colors.HexColor('#EEF2F8')
-GROUP_SHADE = colors.HexColor('#F0F3F8')  # Every other group of samples with the same spoligotype
+ROW_SHADE = colors.HexColor('#F0F3F8')  # Every other row of the summary tables
 AMBER = colors.HexColor('#F6D8A8')
 STATUS_COLOURS = {'ok': colors.HexColor('#2E7D32'), 'warning': colors.HexColor('#B26A00'),
                   'failed': colors.HexColor('#C62828')}
 
 PAGE_WIDTH, PAGE_HEIGHT = letter
 MARGIN = 0.6 * inch
+BOTTOM_MARGIN = 0.75 * inch
 WIDTH = PAGE_WIDTH - 2 * MARGIN
+FRAME_HEIGHT = PAGE_HEIGHT - MARGIN - BOTTOM_MARGIN - 12  # Height available on a page (the frame has 6 pt paddings)
 LOGO_ASPECT = 500 / 1560
 
 _styles = getSampleStyleSheet()
@@ -56,8 +58,8 @@ SUBTITLE = ParagraphStyle('subtitle', parent=BODY, textColor=GREY, fontSize=9)
 
 GRID = [('GRID', (0, 0), (-1, -1), 0.4, PALE_BLUE),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 1.5),  # Compact rows: each sample fits on one page
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 1.5),
+        ('TOPPADDING', (0, 0), (-1, -1), 2.5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2.5),
         ('LEFTPADDING', (0, 0), (-1, -1), 4),
         ('RIGHTPADDING', (0, 0), (-1, -1), 4)]
 
@@ -106,6 +108,8 @@ def pattern(binary, square=3.6, numbers=False):
 
 
 def key_values(rows, key_width=1.45 * inch):
+    if not rows:
+        return Spacer(1, 0)
     table = Table([[text(k, SMALL), v if not isinstance(v, str) else text(v, SMALL)] for k, v in rows],
                   colWidths=[key_width, WIDTH - key_width])
     table.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (0, -1), LIGHT)]))
@@ -158,6 +162,55 @@ def by_spoligotype(results):
             for r in sorted(members, key=lambda r: r.sample)]
 
 
+def height(flowable, width=WIDTH):
+    """Height of a flowable on the page, with the space before and after it."""
+    style = getattr(flowable, 'style', None)
+    return flowable.wrap(width, FRAME_HEIGHT)[1] + (style.spaceBefore + style.spaceAfter if style else 0)
+
+
+def split_table(table, first, rest):
+    """The table split into parts of at most first, then rest points high (the header row is repeated)."""
+    parts, available = [], first
+    while True:
+        if table.wrap(WIDTH, available)[1] <= available:
+            return parts + [table]
+        pieces = table.split(WIDTH, available)
+        if len(pieces) < 2:  # A row taller than the page: let ReportLab place it
+            return parts + [table]
+        parts.append(pieces[0])
+        table, available = pieces[1], rest
+
+
+def paged_table(title, table, first, note=None):
+    """
+    A table over as many pages as needed, each part with its title, "(page 1 of 2)" when there are several, and the
+    header row. first: the height left on the current page. Returns the flowables, and the height left after them.
+    """
+    heading = height(Paragraph(title + ' (page 9 of 9)', H2))
+    note_height = height(note) if note else 0
+    margin = 12  # Safety margin for the spaces that are not measured
+    if first - heading - note_height - margin < 80:  # Not even the header and a few rows: start on the next page
+        flowables, first = [PageBreak()], FRAME_HEIGHT
+    else:
+        flowables = []
+    parts = split_table(table, first - heading - note_height - margin, FRAME_HEIGHT - heading - margin)
+    for i, part in enumerate(parts, 1):
+        if i > 1:
+            flowables.append(PageBreak())
+        flowables.append(Paragraph(title + (' (page {} of {})'.format(i, len(parts)) if len(parts) > 1 else ''), H2))
+        if i == 1 and note:
+            flowables.append(note)
+        flowables.append(part)
+    left = (first if len(parts) == 1 else FRAME_HEIGHT) - heading - (note_height if len(parts) == 1 else 0) - \
+        parts[-1].wrap(WIDTH, FRAME_HEIGHT)[1] - margin
+    return flowables, left
+
+
+def zebra(rows, first=1):
+    """Shade every other row, from the second data row (after the header)."""
+    return [('BACKGROUND', (0, r), (-1, r), ROW_SHADE) for r in range(first + 1, rows, 2)]
+
+
 def summary_section(results, run):
     counts = {s: sum(r.status == s for r in results) for s in ('ok', 'warning', 'failed')}
     story = [
@@ -167,16 +220,17 @@ def summary_section(results, run):
         text('{} · {} sample{} · {} ok, {} with warnings, {} failed · operator: {}'.format(
             run.started.strftime('%Y-%m-%d %H:%M %Z').strip(), len(results), 's' * (len(results) != 1), counts['ok'],
             counts['warning'], counts['failed'], run.operator), SUBTITLE),
-        Paragraph('Summary', H2),
     ]
+    used = sum(height(f) for f in story)
     default_db = run.database.get('default', True)
     names_label = 'SB / SIT' if default_db else 'Name / SIT'
     header = [text(h, SMALL) for h in ('Sample', 'Spoligotype (octal)', names_label, 'Species', 'Lineage',
                                        'Pattern (spacers 1 to 43)', 'Status')]
-    rows, shading = [header], []
+    rows, lines, previous = [header], [], None
     for row, (group, r) in enumerate(by_spoligotype(results), 1):
-        if group % 2:
-            shading.append(('BACKGROUND', (0, row), (-1, row), GROUP_SHADE))
+        if previous is not None and group != previous:  # A line between the groups with the same spoligotype
+            lines.append(('LINEABOVE', (0, row), (-1, row), 1.2, BLUE))
+        previous = group
         names = '\n'.join(x for x in (r.sb if r.found else '', r.sit if r.sit.startswith('SIT') else '')
                            if x)
         rows.append([text(r.sample, WRAP), text(r.octal or '-', MONO), text(names or '-', SMALL),
@@ -185,19 +239,23 @@ def summary_section(results, run):
                      pattern(r.binary, square=2.4) if not r.error else text('-', SMALL), status_label(r.status)])
     widths = [1.0 * inch, 1.05 * inch, 0.8 * inch, 1.15 * inch, 0.7 * inch, 1.95 * inch, WIDTH - 6.65 * inch]
     table = Table(rows, colWidths=widths, repeatRows=1)
-    table.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)] + shading))
-    story += [table, text('Samples with the same spoligotype are grouped; the sample pages follow the same order. '
-                          '{}: names of the pattern in the {} and SITVIT2 databases, "-" if the pattern has none. '
-                          'See "Definitions and methods".'.format(names_label, 'Mbovis.org' if default_db else
-                                                                  'spoligotype (--db)'), SMALL)]
+    table.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)] + zebra(len(rows)) + lines))
+    note = text('Samples with the same spoligotype are grouped, between blue lines; the sample pages follow the '
+                'same order. {}: names of the pattern in the {} and SITVIT2 databases, "-" if the pattern has none. '
+                'See "Definitions and methods".'.format(names_label, 'Mbovis.org' if default_db else
+                                                        'spoligotype (--db)'), SMALL)
+    flowables, left = paged_table('Summary', table, FRAME_HEIGHT - used, note)
+    story += flowables
 
     notes = [(r.sample, r.error.splitlines()[0] if r.error else w) for _, r in by_spoligotype(results)
              for w in ([r.error] if r.error else r.warnings)]
     if notes:
-        story.append(Paragraph('Warnings and errors', H2))
-        table = Table([[text(s, WRAP), text(n, SMALL)] for s, n in notes], colWidths=[1.55 * inch, WIDTH - 1.55 * inch])
-        table.setStyle(TableStyle(GRID))
-        story.append(table)
+        rows = [[text('Sample', SMALL), text('Warning or error', SMALL)]] + [[text(s, WRAP), text(n, SMALL)]
+                                                                           for s, n in notes]
+        table = Table(rows, colWidths=[1.55 * inch, WIDTH - 1.55 * inch], repeatRows=1)
+        table.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)] + zebra(len(rows))))
+        flowables, left = paged_table('Warnings and errors', table, left)
+        story += flowables
 
     review_block = [Paragraph('Review', H2),
                     text('Spoligotypes are called from whole genome sequencing data. The evidence for each call (reads '
@@ -236,10 +294,25 @@ def spacer_table(result):
     return table
 
 
+def sample_title(result, number, total, page, pages):
+    return [text('Sample {} of {}{}'.format(number, total, ' · page {} of {}'.format(page, pages) if pages > 1 else ''),
+                 SUBTITLE),
+            Paragraph('{} &nbsp; <font size="9" color="{}">{}</font>'.format(
+                escape(result.sample), _hex(STATUS_COLOURS[result.status]), result.status.upper()), H2)]
+
+
+def warning_list(result, topic):
+    warnings = [w for w, t in zip(result.warnings, result.warning_topics, strict=True) if t == topic]
+    return [Paragraph('Warnings', H3)] + [text('• ' + w, SMALL) for w in warnings] if warnings else []
+
+
 def sample_section(result, number=1, total=1, db_label='SB number (Mbovis.org)'):
-    story = [text('Sample {} of {}'.format(number, total), SUBTITLE),
-             Paragraph('{} &nbsp; <font size="9" color="{}">{}</font>'.format(
-                 escape(result.sample), _hex(STATUS_COLOURS[result.status]), result.status.upper()), H2)]
+    """
+    The pages of a sample: 1. its spoligotype, input and spacer counts, with their warnings; 2. its species and
+    lineage, with their warnings (without species check or for a failed sample, page 1 only).
+    """
+    pages = 2 if result.species and not result.error else 1
+    story = sample_title(result, number, total, 1, pages)
     files = [text('{}{}\n{} · modified {}{}'.format(f.path, '\n→ {}'.format(f.target) if f.target else '',
                                                     human_size(f.size), f.modified,
                                                     ' · MD5 {}'.format(f.md5) if f.md5 else ''), WRAP)
@@ -247,7 +320,7 @@ def sample_section(result, number=1, total=1, db_label='SB number (Mbovis.org)')
     file_label = 'Input files' if len(result.files) > 1 else 'Input file'
     if result.error:
         story.append(key_values([(file_label, files or '-'), ('Error', text(result.error, MONO))]))
-        return story
+        return [story]
 
     kind = ('reads ({}, {})'.format(result.file_type, 'paired-end' if result.paired else 'single-end')
             if result.is_reads else 'assembly ({})'.format(result.file_type))
@@ -284,40 +357,22 @@ def sample_section(result, number=1, total=1, db_label='SB number (Mbovis.org)')
         closest_sit = ' · closest: {}'.format(describe_closest(result.closest_sit)) if result.closest_sit else ''
         rows.insert(position, ('SIT (SITVIT2)', sit + family + closest_sit))
     story += [key_values(rows)]
-    if result.species:
-        story.append(KeepTogether(species_block(result)))
     variant_notes = [text('Spacer {}: counted from its known variant {} ({}): {} {} (standard sequence: {}).'.format(
         int(spacer[-2:]), variant, description, reads,
         plural(unit, reads), spacer_reads), SMALL)
         for spacer, (variant, reads, spacer_reads, description) in result.spacer_variants.items()]
-    story += [KeepTogether([Paragraph('{} per spacer'.format(unit.capitalize()), H3), spacer_table(result),
-                            text('Blue: present (count ≥ {}). Orange: called absent but seen in some {}.'.format(
-                                result.min_count, unit), SMALL)] + variant_notes)]
-    if result.warnings:
-        story += [Paragraph('Warnings', H3)] + [text('• ' + w, SMALL) for w in result.warnings]
-    return [KeepTogether(story[:4])] + story[4:]
+    story += [Paragraph('{} per spacer'.format(unit.capitalize()), H3), spacer_table(result),
+              text('Blue: present (count ≥ {}). Orange: called absent but seen in some {}.'.format(
+                  result.min_count, unit), SMALL)] + variant_notes + warning_list(result, 'spacers')
+    if pages == 1:
+        return [story]
+    return [story, sample_title(result, number, total, 2, 2) + species_block(result) + warning_list(result, 'species')]
 
 
-DELETED_IN = {'RD1': 'BCG, Dassie bacillus', 'RD4': 'M. bovis, BCG (some M. canettii)',
+DELETED_IN = {'RD1': 'BCG (in part: M. microti, Dassie bacillus)', 'RD4': 'M. bovis, BCG (some M. canettii)',
               'RD7': 'M. africanum lineage 6, animal lineages',
               'RD9': 'M. africanum (lineages 5, 6), animal lineages',
               'RD12': 'M. bovis, BCG, M. caprae, M. orygis (some M. canettii)'}
-
-
-def group_support(la, scheme):
-    """
-    e.g. " · SNPs with the derived allele: La1 4 of 4, La1.8 4 of 4", for the groups with derived alleles. Nothing for a
-    mixed sample, whose lineage text gives the fraction of reads with each group's derived allele.
-    """
-    if la.mixed:
-        return ''
-    groups = {}
-    for s in la.snps:
-        groups.setdefault(s.lineage, []).append(s)
-    support = ['{} {} of {}'.format(scheme.label(g), sum(s.fraction >= lineage.CALL_FRACTION for s in groups[g]),
-                                    len(groups[g]))
-               for g in scheme.group_info if any(s.fraction >= 0.1 for s in groups.get(g, []))]
-    return ' · SNPs with the derived allele: ' + ', '.join(support) if support else ''
 
 
 def species_block(result):
@@ -331,12 +386,12 @@ def species_block(result):
         rows.append(('Lineage', 'no lineage SNP found (lineages 1 to 7 and animal lineages are not detected)'))
     la = result.livestock
     if la and la.lineage:
-        rows.append(('Livestock lineage', '{}{} (Zwyer et al. 2021){}'.format(
-            la.lineage, ' · {}'.format(la.name) if la.name else '', group_support(la, livestock.SCHEME))))
+        rows.append(('Livestock lineage', '{}{} (Zwyer et al. 2021)'.format(
+            la.lineage, ' · {}'.format(la.name) if la.name else '')))
     sub = result.l1
     if sub and sub.lineage:
-        rows.append(('L1 sublineage', '{}{} (Netikul et al. 2022){}'.format(
-            sub.lineage, ' · {}'.format(sub.name) if sub.name else '', group_support(sub, l1.SCHEME))))
+        rows.append(('L1 sublineage', '{}{} (Netikul et al. 2022)'.format(
+            sub.lineage, ' · {}'.format(sub.name) if sub.name else '')))
     unit = result.unit
     fraction = check.mtbc_fraction
     rows.append(('MTBC DNA', 'median {:g} {} per control region, {:.0f}% of the control regions found{}'.format(
@@ -351,8 +406,8 @@ def species_block(result):
             # Short: the coordinates of a partial deletion are in the warnings, except for RD1mic (no warning)
             state = {species.PARTIAL: 'partially deleted', species.REDUCED: 'present at reduced depth: mixed sample?'
                      }.get(region_call.state, region_call.state)
-            if region == 'RD1' and check.species == 'M. microti':
-                state = region_call.describe() + ' (RD1mic of M. microti)'
+            if region == 'RD1' and check.species in species.RD1_SPECIES:
+                state = '{} ({})'.format(region_call.describe(), species.RD1_SPECIES[check.species])
             result_text = '{} {}'.format(region_call.sign.replace('-', '\u2212'), state)
             table.append([text(region, SMALL), text('{:,}-{:,}'.format(start, end), SMALL),
                           text(DELETED_IN[region], SMALL), text('{} of {}'.format(region_call.found, region_call.total),
@@ -368,14 +423,55 @@ def species_block(result):
     if informative or call.mixed:
         snps = sorted({s.position: s for s in informative + call.mixed}.values(), key=lambda s: s.position)
         table = [[text(h, SMALL) for h in ('Lineage SNP', 'Position (H37Rv)', 'Gene', 'Reads with lineage allele',
-                                          'Other reads')]]
+                                          'Other reads', 'Result')]]
+        mixed = {s.lineage for s in call.mixed}
         for s in snps:
             table.append([text(s.lineage, SMALL), text('{:,}'.format(s.position), SMALL), text(s.locus, SMALL),
-                          text(s.lineage_reads, SMALL), text(s.other_reads, SMALL)])
-        t = Table(table, colWidths=[1.2 * inch, 1.3 * inch, 1.2 * inch, 1.8 * inch, WIDTH - 5.5 * inch], repeatRows=1)
-        t.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)]))
-        story += [Spacer(1, 4), t]
+                          text(s.lineage_reads, SMALL), text(s.other_reads, SMALL),
+                          text('called' if s.lineage in call.called else 'mixed' if s.lineage in mixed else '-',
+                               SMALL)])
+        t = Table(table, colWidths=[1.2 * inch, 1.3 * inch, 1.2 * inch, 1.6 * inch, 1.0 * inch, WIDTH - 6.3 * inch],
+                  repeatRows=1)
+        t.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)] + zebra(len(table))))
+        story += [Paragraph('Lineage SNPs (Coll et al. 2014)', H3), t]
+    barcodes = (('Livestock lineage SNPs (Zwyer et al. 2021)', result.livestock, livestock.SCHEME),
+                ('Lineage 1 sublineage SNPs (Netikul et al. 2022)', result.l1, l1.SCHEME))
+    for title, group_call, scheme in barcodes:
+        table = group_table(group_call, scheme)
+        if table:
+            story += [Paragraph(title, H3), table]
     return story
+
+
+def group_table(group_call, scheme):
+    """
+    One row per group of a barcode with a derived allele in at least 10% of the reads of one SNP: its SNPs covered, with
+    the derived allele (in at least 80% of their reads) and with both alleles, their reads, and the call.
+    """
+    if not group_call:
+        return None
+    by_group = {}
+    for s in group_call.snps:
+        by_group.setdefault(s.lineage, []).append(s)
+    mixed = {s.lineage for s in group_call.mixed}
+    rows = [[text(h, SMALL) for h in ('Group', 'Name', 'SNPs covered', 'Derived allele', 'Both alleles',
+                                      'Reads with derived allele', 'Other reads', 'Result')]]
+    for group, (_, _, name) in scheme.groups:
+        snps = by_group.get(group, [])
+        if not any(s.fraction >= 0.1 for s in snps):
+            continue
+        result = 'called' if group in group_call.called else 'mixed' if group in mixed else '-'
+        rows.append([text(scheme.label(group), SMALL), text(name or '-', SMALL), text(len(snps), SMALL),
+                     text(sum(s.fraction >= lineage.CALL_FRACTION for s in snps), SMALL),
+                     text(sum(lineage.MIXED_FRACTION[0] <= s.fraction < lineage.CALL_FRACTION for s in snps), SMALL),
+                     text(sum(s.lineage_reads for s in snps), SMALL), text(sum(s.other_reads for s in snps), SMALL),
+                     text(result, SMALL)])
+    if len(rows) == 1:
+        return None
+    table = Table(rows, colWidths=[0.85 * inch, 2.55 * inch, 0.6 * inch, 0.6 * inch, 0.6 * inch, 0.8 * inch,
+                                   0.6 * inch, WIDTH - 6.6 * inch], repeatRows=1)
+    table.setStyle(TableStyle(GRID + [('BACKGROUND', (0, 0), (-1, 0), LIGHT)] + zebra(len(rows))))
+    return table
 
 
 def definitions_section(run):
@@ -507,7 +603,8 @@ def run_section(run):
                    + [('SIT database', text('{path}\n{patterns:,} patterns, {sits:,} SITs · SHA-256 {sha256}\n'
                                             '{source}'.format(**run.sit_database), WRAP)
                        if run.sit_database else 'not installed (spoligotyper-download-sit)')]),
-        Paragraph('References', H3),
+        PageBreak(),  # The references on a page of their own, at the end
+        Paragraph('References', H2),
         text('Kamerbeek J et al. Simultaneous detection and strain differentiation of Mycobacterium tuberculosis for '
              'diagnosis and epidemiology. J Clin Microbiol 35:907-914 (1997). '
              'doi:10.1128/jcm.35.4.907-914.1997', SMALL),
@@ -518,6 +615,12 @@ def run_section(run):
              'doi:10.1016/j.meegid.2011.08.002', SMALL),
         text('Brosch R et al. A new evolutionary scenario for the Mycobacterium tuberculosis complex. Proc Natl Acad '
              'Sci USA 99:3684-3689 (2002). doi:10.1073/pnas.052548299', SMALL),
+        text('Brodin P et al. Bacterial artificial chromosome-based comparative genomic analysis identifies '
+             'Mycobacterium microti as a natural ESAT-6 deletion mutant. Infect Immun 70:5568-5578 (2002). '
+             'doi:10.1128/IAI.70.10.5568-5578.2002 (RD1mic)', SMALL),
+        text('Mostowy S, Cousins D, Behr MA. Genomic interrogation of the dassie bacillus reveals it as a unique RD1 '
+             'mutant within the Mycobacterium tuberculosis complex. J Bacteriol 186:104-109 (2004). '
+             'doi:10.1128/jb.186.1.104-109.2003 (RD1das)', SMALL),
         text('Couvin D, Segretier W, Stattner E, Rastogi N. Novel methods included in SpolLineages tool for fast and '
              'precise prediction of Mycobacterium tuberculosis complex spoligotype families. Database (Oxford) '
              '2020:baaa108. doi:10.1093/database/baaa108 (SIT database, from SITVIT2)', SMALL),
@@ -546,16 +649,17 @@ def write_pdf(results, run, path):
     """Write the PDF report of a run."""
     producer = 'spoligotyper {}'.format(__version__)
     doc = SimpleDocTemplate(str(path), pagesize=letter, leftMargin=MARGIN, rightMargin=MARGIN, topMargin=MARGIN,
-                            bottomMargin=0.75 * inch, title='Spoligotyping report', author=run.operator,
+                            bottomMargin=BOTTOM_MARGIN, title='Spoligotyping report', author=run.operator,
                             subject=producer, creator=producer)
     story = summary_section(results, run)
     ordered = by_spoligotype(results)
     for i, (_, result) in enumerate(ordered, 1):
-        story.append(PageBreak())  # One sample per page: its tables are never split
-        section = sample_section(result, i, len(ordered), 'SB number (Mbovis.org)' if run.database.get('default', True)
-                                 else 'Name (spoligotype database)')
-        # A section too long for one page (long paths, many warnings) is scaled down slightly to fit it
-        story.append(KeepInFrame(doc.width, doc.height - 12, unwrap(section), mode='shrink'))
+        pages = sample_section(result, i, len(ordered), 'SB number (Mbovis.org)' if run.database.get('default', True)
+                               else 'Name (spoligotype database)')
+        for page in pages:  # Each page of a sample on its own page: its tables are never split
+            story.append(PageBreak())
+            # A page too long (long paths, many warnings) is scaled down slightly to fit
+            story.append(KeepInFrame(doc.width, doc.height - 12, unwrap(page), mode='shrink'))
     story += definitions_section(run)
     story += run_section(run)
 

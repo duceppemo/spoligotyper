@@ -353,3 +353,23 @@ def test_spacer_variant(tmp_path, capsys):
     custom.write_text(SPACERS_FASTA.read_text())
     result = spoligotype(path, threads=2, memory='500m', species_check=False, spacers=custom)
     assert result.binary == '11' + '0' * 41 and result.spacer_variants == {}
+
+
+def test_pdf_many_samples(tmp_path):
+    """150 samples: the summary and warnings tables run over several pages, each part titled "(page i of n)" with
+    the header row repeated; two pages per sample with a species check, one without."""
+    from spoligotyper.pdf import write_pdf
+    from spoligotyper.pipeline import Result, RunInfo
+    results = []
+    for i in range(150):
+        r = Result('S{:03d}'.format(i), counts=[10] * 43, binary='1' * 43, octal='777777777777771', sb='-',
+                   file_type='fasta', data='assembly', min_count=1)
+        r.warn('warning %d', i)
+        results.append(r)
+    run = RunInfo.collect('spoligotyper -i x', spacers=SPACERS_FASTA)
+    write_pdf(results, run, tmp_path / 'report.pdf')
+    pages, content = pdf_text(tmp_path / 'report.pdf')
+    assert 'Summary (page 1 of ' in content and 'Warnings and errors (page 1 of ' in content
+    n = int(content.split('Summary (page 1 of ')[1].split(')')[0])
+    assert n >= 3 and content.count('Spoligotype (octal)') >= n  # The header row on every part
+    assert 'Sample 150 of 150' in content and 'page 1 of 2' not in content  # No species check: one page each

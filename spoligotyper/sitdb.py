@@ -2,9 +2,10 @@
 Shared international types (SIT) and SITVIT2 spoligotype families.
 
 The SITVIT2 database is not openly licensed, so it is not included with spoligotyper. The SpolLineages tool (Couvin
-et al. 2020, GPL-3.0) publishes a list of 9,658 SITVIT2 spoligotype patterns, 3,850 of them with a SIT, all with their
-SITVIT2 family. spoligotyper-download-sit downloads this list from the SpolLineages repository (or from a mirror,
-once one is listed in URLS), checks its SHA-256 checksum, and converts it into the SIT database used by spoligotyper.
+et al. 2020, GPL-3.0) publishes a list of 9,658 SITVIT2 spoligotype patterns (9,656 usable: 2 orphans have a spacer of
+unknown state), 3,850 of them with a SIT, all with their SITVIT2 family. spoligotyper-download-sit downloads this list
+from the SpolLineages repository (or from a mirror, once one is listed in URLS), checks its SHA-256 checksum, and
+converts it into the SIT database used by spoligotyper.
 """
 
 import csv

@@ -33,7 +33,7 @@ spoligotyper -r1 data/AF2122_97.fastq.gz -o results/
 ```
 ```
 12:00:00 INFO    Spoligotyping AF2122_97 (fastq, minimum count 5)
-12:00:07 INFO    AF2122_97: SB0140 (octal 664073777777600), M. bovis, lineage BOV
+12:00:07 INFO    AF2122_97: SB0140 (octal 664073777777600), M. bovis, lineage BOV La1.8.1
 Sample     SpacerCount           Binary                                       Octal            ...  SB      ...  Species   Lineage  ...
 AF2122_97  56:47:0:58:63:0:...   1101101000001110111111111111111111111100000  664073777777600  ...  SB0140  ...  M. bovis  BOV      ...
 12:00:07 INFO    Report saved in results/AF2122_97_spoligotyping.txt
@@ -53,11 +53,13 @@ The main columns of the table:
 | RD1, RD4, RD7, RD9, RD12 | present, deleted, deleted, deleted, deleted |
 | Lineage | BOV |
 | MTBCFraction | 1.00 |
+| LaLineage | La1.8.1 |
 
 The sample is named after the file, and the results are saved as a table and a PDF report. Each spacer is either
 found in about 30 to 80 reads (present), or in none (absent): a clear-cut result. The depth, 65x, is estimated from
 the number of bases, and all the reads appear to be MTBC (`MTBCFraction` 1.00). The species, *M. bovis*, comes from
-the regions of difference (RD4, RD7, RD9 and RD12 deleted, RD1 present), and the lineage from the SNP barcode: see
+the regions of difference (RD4, RD7, RD9 and RD12 deleted, RD1 present), and the lineage from the SNP barcode; the
+livestock lineage, La1.8.1, is the sublineage of *M. bovis* formerly called clonal complex Eu1: see
 [Species and lineage](Species-and-lineage). Spacer 25 has about twice as many reads as the others because it is
 present twice in the DR locus of AF2122/97. With paired-end reads, add `-r2 R2.fastq.gz`.
 

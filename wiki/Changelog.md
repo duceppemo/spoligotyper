@@ -12,10 +12,32 @@
 * A region partially deleted in one strain no longer makes the RD profile "unusual": when the profile is unknown, a
   partially deleted region counts as present if that gives a known profile (e.g. a lineage 1 strain lacking 9 kb of
   RD7 stays *M. tuberculosis*; the partial deletion is still reported).
-* PDF report: more compact tables, and short RD results (the coordinates of partial deletions are in the warnings),
-  so that each sample, with its warnings, fits on one page: checked on the 84 samples of the validation.
+* **PDF report**, reorganized: two pages per sample, (1) the spoligotype, input and reads per spacer, with their
+  warnings, (2) the species and lineage, with tables of the livestock lineage and lineage 1 sublineage groups (SNPs
+  covered, with the derived allele, with both alleles, reads, result) and their warnings; a page too long (long input
+  paths, many warnings) is scaled down to fit. Summary and warnings tables: every other row shaded, groups of samples
+  with the same spoligotype between blue lines, a header row for the warnings, and tables over several pages titled
+  "(page 1 of n)" with their header repeated. Short RD results (the coordinates of partial deletions are in the
+  warnings). Checked on the 84 samples of the validation (176 pages).
 * Validation (84 of 84 checks): one public run of each of the 25 terminal lineage 1 sublineages, from the genomes of
   the paper.
+* **Dassie bacillus**: identified from its own partial deletion of RD1, RD1<sup>das</sup> (Rv3874 to Rv3877), in the
+  row of *M. microti* (RD1 segments 4 to 12 missing; 11 of 20 found, counted as +). Before, its row required RD1
+  deleted, which its RD1<sup>das</sup> never gives: it would have been reported as "*M. microti*, *M. pinnipedii* or
+  *M. mungi*". Not validated: no genome is public.
+* Lineages 4 and 4.9 (both the H37Rv allele, which some *M. canettii* carry) no longer make a strain without
+  standard spacers *M. tuberculosis* (4.9 did).
+* **File names**: only paths of plain characters are given to `seal.sh` (which runs its command line through the
+  shell); others (quotes, `$`, backquotes, `;`, `&`, parentheses...) are linked under neutral names. A file name
+  could run a command. A fastq file named `.fasta` (or the reverse) is now read as its content says.
+* Sample names: tabs and line breaks are rejected (`--sample`) or replaced. SIT database: blank lines are ignored.
+* Warnings: "no spacer found" when no spacer is present, even with a few reads on some (with a specific text for
+  MTBC samples: deletion of the direct repeat locus?); no "is an SB number" warning for the pattern without spacers.
+* Data: spacers 1 and 2 in the standard orientation (no effect: both strands are searched); spoligotype families of
+  lineage 4.6.2 without a double space; La1.8 includes unknown8.
+* Docs: Dassie bacillus and RD1<sup>mic</sup> (Brodin *et al.* 2002, Mostowy *et al.* 2004 cited), lineage 4.9,
+  installation with pip until the bioconda package is available, no Zenodo mirror of the SIT list, Validation page
+  claims corrected, SpoTyping results of the comparison in `validation/spotyping.tsv`.
 * The livestock lineages and the lineage 1 sublineages share one implementation (`snp_groups`). JSON: `livestock`
   and `l1` have two new keys, `main` and `mixed_within`, and only the SNPs of the groups with a derived allele (not
   all 1,835 for every sample). Mixed texts list at most 6 groups.

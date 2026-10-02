@@ -56,7 +56,7 @@ lineage	position	ref	alt	lineage_allele	locus	gene	name	spoligotypes
 4.6.1	4260268	G	C	alt	Rv3800c	pks13	Euro-American (Uganda)	T2-Uganda;T2
 4.6.1.1	874787	G	A	alt	Rv0781	ptrBa	Euro-American	T2-Uganda
 4.6.1.2	1501468	G	C	alt	Rv1332		Euro-American	T2
-4.6.2	4125058	G	C	alt	Rv3683		Euro-American	LAM10-CAM; T3
+4.6.2	4125058	G	C	alt	Rv3683		Euro-American	LAM10-CAM;T3
 4.6.2.1	3570528	C	G	alt	Rv3198c	uvrD2	Euro-American	T3
 4.6.2.2	2875883	C	T	alt	Rv2555c	alaS	Euro-American (Cameroon)	LAM10-CAM
 4.7	4249732	C	G	alt	Rv3795	embB	Euro-American (mainly T)	T1;T5

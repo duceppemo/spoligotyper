@@ -96,6 +96,7 @@ class Result:
     reads: int | None = None  # Reads (or contigs) in the input, from Seal
     bases: int | None = None
     warnings: list = field(default_factory=list)
+    warning_topics: list = field(default_factory=list)  # For each warning: "spacers" or "species" (page of the PDF)
     error: str = ''
     seconds: float = 0.0
     closest: list = field(default_factory=list)  # Closest database patterns when not found: [(SB, [spacers])]
@@ -163,6 +164,7 @@ class Result:
     def warn(self, message, *args):
         message = message % args
         self.warnings.append(message)
+        self.warning_topics.append('spacers')
         log.warning('%s: %s', self.sample, message)
 
     def row(self):
@@ -430,7 +432,15 @@ def check_result(result):
                     'mixed sample?', ', '.join(str(i) for i in weak), WEAK_SPACER * 100, median)
 
 
+
 def check_species(result):
+    """Warnings about the species and lineage: their topic is "species"."""
+    start = len(result.warnings)
+    species_warnings(result)
+    result.warning_topics[start:] = ['species'] * (len(result.warnings) - start)
+
+
+def species_warnings(result):
     check, call = result.species, result.lineage or lineage.LineageCall()
     if check is None:
         return
@@ -445,7 +455,7 @@ def check_species(result):
     for region, region_call in check.regions.items():
         if region_call.state == species.REDUCED:
             result.warn('%s %s', region, region_call.describe())
-        elif region_call.state == species.PARTIAL and not (region == 'RD1' and check.species == 'M. microti'):
+        elif region_call.state == species.PARTIAL and not (region == 'RD1' and check.species in species.RD1_SPECIES):
             result.warn('%s %s (%s).', region, region_call.describe(),
                         'counted as present for the species: no species has this RD profile with {} deleted'.format(
                             region) if region in species.promoted_regions(check) else

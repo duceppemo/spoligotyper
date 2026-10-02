@@ -6,22 +6,22 @@
 * [BBTools](https://sourceforge.net/projects/bbmap/) 38 or later, for `seal.sh`, and Java (installed with BBTools by
   conda)
 
-## With conda (recommended)
-```
-conda create -n spoligotyper -c conda-forge -c bioconda spoligotyper
-conda activate spoligotyper
-spoligotyper --version
-```
-This installs BBTools and Java too.
-
 ## With pip
 ```
+conda create -n spoligotyper -c conda-forge -c bioconda python bbmap   # BBTools and Java
+conda activate spoligotyper
 pip install spoligotyper
 spoligotyper --version
 ```
 BBTools is not available from PyPI and must be installed separately, for example with
-`conda install -c bioconda bbmap`, or from the [BBTools downloads](https://sourceforge.net/projects/bbmap/).
+`conda install -c bioconda bbmap` as above, or from the [BBTools downloads](https://sourceforge.net/projects/bbmap/).
 `spoligotyper` finds `seal.sh` in your `PATH`, or next to the Python interpreter it runs with.
+
+## With conda
+The bioconda package is under review. Once it is available, it installs BBTools and Java too:
+```
+conda create -n spoligotyper -c conda-forge -c bioconda spoligotyper
+```
 
 ## SIT database
 SB numbers (Mbovis.org) are included with spoligotyper. Shared international types (SIT) and SITVIT2 families come

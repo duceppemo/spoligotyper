@@ -28,6 +28,7 @@ def profile_counts(profile):
     ('+++++', [], False, 'M. canettii'),  # No standard spacer
     ('+++++', ['4'], False, 'M. canettii'),  # Some M. canettii carry the H37Rv (lineage 4) allele
     ('+++++', ['4'], True, 'M. tuberculosis'),
+    ('+++++', ['4', '4.9'], False, 'M. canettii'),  # 4.9 is also defined by the H37Rv allele
     ('+++-+', ['5'], True, 'M. africanum (lineage 5)'),
     ('++--+', ['6', 'BOV_AFRI'], True, 'M. africanum (lineage 6)'),
     ('++--+', ['BOV_AFRI'], True, 'M. microti, M. pinnipedii or M. mungi'),
@@ -38,7 +39,7 @@ def profile_counts(profile):
     ('++---', ['BOV', 'BOV_AFRI'], True, 'M. orygis or M. caprae'),
     ('+----', ['BOV', 'BOV_AFRI'], True, 'M. bovis'),
     ('-----', ['BOV', 'BOV_AFRI'], True, 'M. bovis BCG'),
-    ('-+--+', [], True, 'Dassie bacillus'),
+    ('-+--+', [], True, 'MTBC (unusual RD profile: RD1-, RD4+, RD7-, RD9-, RD12+)'),  # Dassie: RD1das, see below
     ('+-++-', [], True, 'M. canettii'),
     ('-++++', [], True, 'MTBC (unusual RD profile: RD1-, RD4+, RD7+, RD9+, RD12+)'),
 ])
@@ -287,3 +288,27 @@ def test_strain_specific_partial_deletion():
     assert check.regions['RD7'].state == species.PARTIAL and check.regions['RD7'].sign == '-'
     species.name_species(check, ['1', '1.2', '1.2.1'])
     assert check.species == 'M. tuberculosis' and species.promoted_regions(check) == ['RD7']
+
+
+def test_dassie_bacillus():
+    """RD1das (Rv3874 to Rv3877): RD1 segments 4 to 12 missing, the others present; RD7 and RD9 deleted."""
+    counts = marker_counts(30, rd7=0, rd9=0)
+    names = rd1_segments()
+    das = [n for n in names
+           if species.RD1DAS[0] <= species.segments()[n][0] and species.segments()[n][1] <= species.RD1DAS[1]]
+    assert das == names[3:12]
+    counts.update({n: 0 for n in das})
+    check = species.check_species(counts, 'fastq')
+    assert check.regions['RD1'].sign == '+' and species.rd1das(check) and not species.rd1mic(check)
+    species.name_species(check, ['BOV_AFRI'])
+    assert check.species == 'Dassie bacillus'
+
+
+def test_no_promotion_for_m_canettii():
+    """M. canettii ET1291: RD4 partially deleted (9 of 20) makes it M. canettii; RD4 is not counted as present."""
+    counts = marker_counts(30)
+    rd4 = sorted((n for n in species.segments() if n.startswith('RD4_')), key=lambda n: species.segments()[n])
+    counts.update({n: 0 for n in rd4[:11]})
+    check = species.check_species(counts, 'fasta')
+    species.name_species(check, [], spacers=False)
+    assert check.species == 'M. canettii' and species.promoted_regions(check) == []

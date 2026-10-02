@@ -3,7 +3,8 @@
 spoligotyper was checked on public reference genomes and on read sets of known species, lineage and
 spoligotype. Everything below is reproducible with
 [`validation/run_validation.sh`](https://github.com/duceppemo/spoligotyper/tree/main/validation), which downloads
-the data, simulates the read sets (BBTools `randomreads.sh`, fixed seeds) and checks each result.
+the data, simulates the read sets (BBTools `randomreads.sh`, fixed seeds) and checks each result; the SpoTyping
+results of the comparison at the end are in `validation/spotyping.tsv`.
 
 **Result: 84 of 84 checks passed.**
 
@@ -14,10 +15,11 @@ the data, simulates the read sets (BBTools `randomreads.sh`, fixed seeds) and ch
   spoligotypes: H37Rv 777777477760771 (SIT451), AF2122/97 SB0140, BCG SB0120, and the Beijing signature (spacers
   1-34 absent, 35-43 present) for CCDC5079.
 * Other members of the complex (*M. caprae*, *M. orygis*, *M. microti*, *M. pinnipedii*, *M. mungi*, *M. africanum*,
-  *M. canettii*): the expected species is the NCBI taxonomy of the genome, with the RD profile of the RD PCR scheme
-  (see [Species and lineage](Species-and-lineage)), and the lineage the clade of the barcode (BOV: *M. bovis* clade;
-  BOV_AFRI: animal lineages and lineage 6). These genomes were not used to choose the RD segments: they are an
-  independent test. The *M. africanum* RB30001 genome has the spoligotype of GM041182 (AFRI_1, lineage 6); the
+  *M. canettii*): the expected species is the NCBI taxonomy of the genome, or, for *M. pinnipedii* and *M. mungi*,
+  the group of species that share their RD profile and lineage SNPs (see [Species and lineage](Species-and-lineage));
+  the lineage is the clade of the barcode (BOV: *M. bovis* clade; BOV_AFRI: animal lineages and lineage 6). These
+  genomes were not used to choose the RD segments: they are an independent test (except for the extent of
+  RD1<sup>mic</sup>, set from the three *M. microti* genomes). The *M. africanum* RB30001 genome has the spoligotype of GM041182 (AFRI_1, lineage 6); the
   lineage of RB30065 is not documented.
 * L1 sublineage: the lineage 1 sublineage ([Netikul *et al.* 2022](https://doi.org/10.1038/s41598-022-05524-0)):
   the two lineage 1 genomes get sublineages of the Coll *et al.* predictions (1.1 and 1.2.2, that is L1.1 and L1.3).
@@ -75,7 +77,8 @@ genomes above:
 * **SRR12006063**: *M. tuberculosis* H37Rv, Illumina HiSeq 4000 paired-end. This lab stock is not quite the reference
   genome: in most reads, spacer 39 is followed directly by the direct repeat and the sequence that follows spacer 43
   in the reference, so most cells lost spacers 40 to 43, and a minority kept spacers 41 to 43 (recombination between
-  direct repeats during passage). Another H37Rv run (ERR15989112) also lacks spacer 40. The resulting pattern,
+  direct repeats during passage). Another H37Rv run (ERR15989112, checked separately, not part of the validation)
+  also lacks spacer 40. The resulting pattern,
   777777477760731, is SIT1647 of the T-H37Rv family in SITVIT2. spoligotyper flags the minority as a mixed sample.
 * **ERR027297**: *M. microti* Maus IV, Illumina GAII paired-end (2010, first 1.5 million pairs). With the strong GC
   bias of these reads, one RD1<sup>mic</sup> segment gets a few stray reads and one GC-rich RD1 segment none:
@@ -112,8 +115,9 @@ Simulated reads:
 * At 10x, three present spacers get fewer than 5 reads and are called absent: the pattern is wrong, but flagged
   ("low depth", "spacers with few reads"). Use `--min-count 2` or `3` for low depth data, see
   [How it works](How-it-works#minimum-count).
-* The mixed sample is detected from both alleles of the lineage SNPs; its spoligotype is the union of the two
-  strains' patterns.
+* The mixed sample is detected from both alleles of the lineage SNPs. Its spoligotype is the union of the two
+  strains' patterns except spacer 33 (present in AF2122/97 only, the 30% strain: 4 reads, below the minimum count of
+  5, flagged).
 * The contaminated sample keeps its spoligotype, species and lineage, with a contamination warning.
 
 ## Livestock lineages
@@ -156,8 +160,8 @@ One run per terminal sublineage of lineage 1, from the genomes of
 [Netikul *et al.* 2022](https://doi.org/10.1038/s41598-022-05524-0) (Supplementary Table S2), with the sublineage
 given in the paper (first 600,000 read pairs; all the reads for the nine runs whose reads are sorted by position).
 The check is the lineage 1 sublineage and the species; "SNPs" gives, for each sublineage called, the SNPs with the
-derived allele out of those covered. The `Lineage` column (Coll *et al.*) uses the older names: 1.2.1 for L1.2.2 and
-1.2.2 for L1.3. The octal code of the paper (SpoTyping) is shown for comparison, not checked. It differs for 4 runs, all of one
+derived allele out of those covered. The `Lineage` column (Coll *et al.*) uses other names: 1.2.1 for L1.2 (L1.2.1 and
+L1.2.2), 1.2.2 for L1.3, 1.1.2 for L1.1.2.2 (L1.1.2.1 strains are 1.1). The octal code of the paper (SpoTyping) is shown for comparison, not checked. It differs for 4 runs, all of one
 study (SRR5709758, SRR5709913, SRR5709920, SRR5709924): each spacer that differs is absent in the paper and present
 here with 14 to 34 reads, like the other present spacers of these runs (about 30 reads).
 
@@ -194,7 +198,7 @@ first chosen for L1.3.2: SRR5709924 replaced it.
 | SRR5709924 | Thailand | L1.3.2 | L1.3.2 | L1.3 21/21, L1.3.2 97/97 | M. tuberculosis | 1.2.2 | 755777777413531 | 777777777413731 | OK |
 
 ## Comparison with SpoTyping
-[SpoTyping](https://github.com/xiaeryu/SpoTyping-v2.0) 2.1 (Xia *et al.* 2016, BLAST-based), an independent in silico
+[SpoTyping](https://github.com/xiaeryu/SpoTyping) 2.1 (Xia *et al.* 2016, BLAST-based), an independent in silico
 spoligotyping tool, was run on the 13 original MTBC genomes (`--seq`): the spoligotypes are identical for 12 of
 13 genomes.
 
@@ -215,4 +219,4 @@ spoligotyping tool, was run on the 13 original MTBC genomes (`--seq`): the spoli
 | M_canettii | 000000000000000 | 000000000000000 | identical |
 
 SpoTyping's EAI5/NITR206 pattern has spacers 24, 37 and 38 present. In this assembly, the closest sequences to these
-spacers have 6, 4 and 5 mismatches out of 25 bp, so spoligotyper, which allows 1 mismatch, calls them absent.
+spacers have 5, 4 and 5 mismatches out of 25 bp (both strands), so spoligotyper, which allows 1 mismatch, calls them absent.
