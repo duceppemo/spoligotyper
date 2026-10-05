@@ -52,11 +52,9 @@ the species and the lineage, and flags contaminated or mixed samples.
 
 ## Installation
 ```
-conda install -c bioconda bbmap    # BBTools (seal.sh), if not installed yet
-pip install spoligotyper
+conda install -c conda-forge -c bioconda spoligotyper
 ```
-A bioconda package (`conda install -c conda-forge -c bioconda spoligotyper`, with BBTools) is under review: use pip
-until it is available.
+Or with pip, if BBTools is already installed (`conda install -c bioconda bbmap`): `pip install spoligotyper`.
 See [Installation](https://github.com/duceppemo/spoligotyper/wiki/Installation) for other options. For SIT numbers,
 run `spoligotyper-download-sit` once.
 
