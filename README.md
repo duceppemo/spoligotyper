@@ -12,7 +12,7 @@
   <a href="https://pypi.org/project/spoligotyper/"><img src="https://img.shields.io/pypi/v/spoligotyper?cacheSeconds=3600" alt="PyPI"></a>
   <a href="https://bioconda.github.io/recipes/spoligotyper/README.html"><img src="https://img.shields.io/conda/vn/bioconda/spoligotyper?label=bioconda&cacheSeconds=3600" alt="Bioconda"></a>
   <img src="https://img.shields.io/badge/python-3.10%E2%80%933.14-blue" alt="Python 3.10–3.14">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/duceppemo/spoligotyper" alt="License"></a>
+  <a href="https://github.com/duceppemo/spoligotyper/blob/main/LICENSE"><img src="https://img.shields.io/github/license/duceppemo/spoligotyper" alt="License"></a>
   <a href="https://github.com/duceppemo/spoligotyper/wiki"><img src="https://img.shields.io/badge/docs-wiki-informational" alt="Documentation"></a>
   <a href="https://doi.org/10.5281/zenodo.22926160"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.22926160.svg" alt="DOI"></a>
 </p>
@@ -27,7 +27,7 @@ the species and the lineage, and flags contaminated or mixed samples.
   <img src="https://raw.githubusercontent.com/duceppemo/spoligotyper/main/assets/report_summary.png" width="49%" alt="Summary page of the PDF report, with the spoligotype pattern of three samples">
   <img src="https://raw.githubusercontent.com/duceppemo/spoligotyper/main/assets/report_sample.png" width="49%" alt="Sample page of the PDF report, with the reads supporting each spacer">
   <br>
-  <sub>PDF report of the <a href="https://github.com/duceppemo/spoligotyper/wiki/Tutorial">tutorial</a>: summary, and the evidence for each sample. <a href="assets/example_report.pdf">Full example report (PDF)</a>.</sub>
+  <sub>PDF report of the <a href="https://github.com/duceppemo/spoligotyper/wiki/Tutorial">tutorial</a>: summary, and the evidence for each sample. <a href="https://github.com/duceppemo/spoligotyper/blob/main/assets/example_report.pdf">Full example report (PDF)</a>.</sub>
 </p>
 
 ## Features
@@ -46,7 +46,7 @@ the species and the lineage, and flags contaminated or mixed samples.
   parameters, operator, date, and a review box. Plus a table, JSON and a MultiQC section for pipelines.
 * **Validated** on 31 reference genomes, 46 public and 7 simulated read sets of known species, lineage and spoligotype
   ([Validation](https://github.com/duceppemo/spoligotyper/wiki/Validation)).
-* **Workflow ready**: nf-core module and Galaxy tool in [`integrations/`](integrations/).
+* **Workflow ready**: nf-core module and Galaxy tool in [`integrations/`](https://github.com/duceppemo/spoligotyper/tree/main/integrations).
 * **Transparent**: borderline calls, low depth and failed samples are flagged, never hidden.
 * **Fast**: a few seconds per sample, with 1 GB of memory.
 
@@ -106,10 +106,10 @@ and, for the lineage 1 sublineages:
 > Lineage 1 in endemic regions of Asia and Africa. *Sci Rep* 12, 1565 (2022). https://doi.org/10.1038/s41598-022-05524-0
 
 ## Contributing
-Bug reports, questions and pull requests are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
+Bug reports, questions and pull requests are welcome: see [CONTRIBUTING.md](https://github.com/duceppemo/spoligotyper/blob/main/CONTRIBUTING.md).
 
 ## Author
 Marc-Olivier Duceppe, Canadian Food Inspection Agency (CFIA): marc-olivier.duceppe@inspection.gc.ca
 
 ## License
-[MIT](LICENSE)
+[MIT](https://github.com/duceppemo/spoligotyper/blob/main/LICENSE)
